@@ -1,0 +1,20 @@
+# All possible options and their defaults: https://github.com/zitadel/zitadel/blob/main/cmd/defaults.yaml
+Log:
+  Level: 'info'
+
+ExternalDomain: wvl.app
+ExternalPort: 443
+ExternalSecure: true
+
+TLS:
+  Enabled: false
+
+Database:
+  postgres:
+    Host: 'db.jsoogyolaxuidbzchmkq.supabase.co'
+    Port: 5432
+    Database: zitadel
+    User:
+      Username: 'zitadel_user'
+    Admin:
+      Username: 'zitadel_root'
