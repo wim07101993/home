@@ -1,0 +1,18 @@
+services:
+  smtp4dev:
+    restart: "unless-stopped"
+    networks:
+      - "reverse-proxy_reverse-proxy-network"
+    image: rnwood/smtp4dev:v3
+    ports:
+      - "5000:80"
+      - "25:25"
+      - "143:143"
+    environment:
+      - ServerOptions__Urls=http://*:80
+    volumes:
+      - /docker-volumes/smtp4dev/data:/smtp4dev
+
+networks:
+  reverse-proxy_reverse-proxy-network:
+    external: true
