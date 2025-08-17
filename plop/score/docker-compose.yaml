@@ -1,0 +1,25 @@
+services:
+  score-api:
+    restart: "unless-stopped"
+    networks:
+      - "reverse-proxy_reverse-proxy-network"
+      - "db_db-network"
+    image: "wim07101993/score:latest"
+    command: --config /run/secrets/score_api_secrets
+    ports:
+      - "7001:7001"
+    environment:
+      TOKEN_INTROSPECTION_CLIENT_ID: ""
+      TOKEN_INTROSPECTION_URL: ""
+    secrets:
+      - score_api_secrets
+
+secrets:
+  score_api_secrets:
+    file: /docker-volumes/secrets/score_api_secrets.json
+
+networks:
+  db_db-network:
+    external: true
+  reverse-proxy_reverse-proxy-network:
+    external: true
