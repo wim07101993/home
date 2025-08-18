@@ -5,18 +5,21 @@ services:
       - "reverse-proxy_reverse-proxy-network"
       - "db_db-network"
     image: "ghcr.io/zitadel/zitadel:latest"
-    command: start-from-init --config /zitadel-config.yaml --config /run/secrets/zitadel_secrets --steps /zitadel-init-steps.yaml --masterkey "${ZITADEL_MASTERKEY}" --tlsMode disabled
+    command: start-from-init --config /zitadel_config.yaml --config /run/secrets/zitadel_secrets --steps /zitadel_init_steps.yaml --masterkeyFile /run/secrets/zitadel_masterkey --tlsMode disabled
     ports:
       - "8080:8080"
     volumes:
-      - /docker-volumes/zitadel/init-steps.yaml:/zitadel-init-steps.yaml:ro
-      - /docker-volumes/zitadel/zitadel-config.yaml:/zitadel-config.yaml:ro
+      - /docker-volumes/zitadel/init_steps.yaml:/zitadel_init_steps.yaml:ro
+      - /docker-volumes/zitadel/zitadel_config.yaml:/zitadel_config.yaml:ro
     secrets:
       - zitadel_secrets
+      - zitadel_masterkey_file
 
 secrets:
   zitadel_secrets:
     file: /docker-volumes/secrets/zitadel_secrets.yaml
+  zitadel_masterkey:
+    file: /docker-volumes/secrets/zitadel_masterkey
 
 networks:
   db_db-network:
