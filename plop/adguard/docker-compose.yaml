@@ -1,0 +1,18 @@
+services:
+  adguard:
+    restart: "unless-stopped"
+    networks:
+      - "reverse-proxy_reverse-proxy-network"
+    image: adguard/adguardhome:v0.107.64
+    ports:
+      - "8083:80"
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "3000:3000"
+    volumes:
+      - /docker-volumes/adguard/conf:/opt/adguardhome/conf:rw
+      - /docker-volumes/adguard/work:/opt/adguardhome/work:rw
+
+networks:
+  reverse-proxy_reverse-proxy-network:
+    external: true
