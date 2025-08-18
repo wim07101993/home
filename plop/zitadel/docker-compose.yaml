@@ -13,7 +13,7 @@ services:
       - /docker-volumes/zitadel/zitadel_config.yaml:/zitadel_config.yaml:ro
     secrets:
       - zitadel_secrets
-      - zitadel_masterkey_file
+      - zitadel_masterkey
 
 secrets:
   zitadel_secrets:
