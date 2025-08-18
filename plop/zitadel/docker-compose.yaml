@@ -22,7 +22,7 @@ secrets:
     file: /docker-volumes/secrets/zitadel_masterkey
 
 networks:
-  db_db-network:
+  database_db-network:
     external: true
   reverse-proxy_reverse-proxy-network:
     external: true
