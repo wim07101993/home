@@ -4,8 +4,8 @@ services:
     networks:
       - "reverse-proxy_reverse-proxy-network"
       - "database_db-network"
-    image: "ghcr.io/zitadel/zitadel:latest"
-    command: start-from-init --config /zitadel_config.yaml --config /run/secrets/zitadel_secrets --steps /zitadel_init_steps.yaml --masterkeyFile /run/secrets/zitadel_masterkey --tlsMode disabled
+    image: "ghcr.io/zitadel/zitadel:4.0.2"
+    command: start-from-init --init-projections true --config /zitadel_config.yaml --config /run/secrets/zitadel_secrets --steps /zitadel_init_steps.yaml --masterkeyFile /run/secrets/zitadel_masterkey --tlsMode disabled
     ports:
       - "8080:8080"
     volumes:
