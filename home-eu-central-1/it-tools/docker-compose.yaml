@@ -10,8 +10,6 @@ services:
       - "traefik.http.routers.it-tools.rule=HOST(`it-tools.wvl.app`)"
       - "traefik.http.routers.it-tools.entrypoints=websecure"
       - "traefik.http.routers.it-tools.tls.certresolver=le"
-      - "api.dashboard=true"
-      - "api.insecure=true"
     networks:
       - it-tools-network
     healthcheck:
