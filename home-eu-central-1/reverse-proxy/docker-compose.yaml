@@ -1,16 +1,23 @@
 services:
   reverse-proxy:
-    image: nginx:mainline-alpine
+    image: traefik:v3.4
     restart: unless-stopped
-    volumes:
-      - /docker-volumes/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - /docker-volumes/nginx/conf.d:/etc/nginx/conf.d:ro
-    ports:
-      - "443:443"
-      - "80:80"
+    security_opt:
+      - no-new-privileges:true
     networks:
       - reverse-proxy-network
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=reverse-proxy-network"
+      - "--entryPoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
 
 networks:
   reverse-proxy-network:
     driver: bridge
+
