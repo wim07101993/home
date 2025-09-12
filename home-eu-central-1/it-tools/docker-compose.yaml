@@ -19,6 +19,7 @@ services:
       - ALL
     cap_add:
       - CHOWN
+      - SETGID
     deploy:
       resources:
         limits:
