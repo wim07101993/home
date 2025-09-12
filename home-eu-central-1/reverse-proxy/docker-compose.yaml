@@ -1,3 +1,4 @@
+name: reverse-proxy
 services:
   reverse-proxy:
     image: traefik:v3.4
