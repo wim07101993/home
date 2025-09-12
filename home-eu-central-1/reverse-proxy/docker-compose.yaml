@@ -22,7 +22,7 @@ services:
       - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.dashboard.rule=Host(`wvl.app`)"
+      - "traefik.http.routers.dashboard.rule=HOST(`wvl.app`)"
       - "traefik.http.routers.dashboard.entrypoints=websecure"
       - "traefik.http.routers.dashboard.service=api@internal"
       - "traefik.http.routers.dashboard.tls=true"
@@ -30,7 +30,6 @@ services:
     ports:
       - "80:80"
       - "443:443"
-      - "8080:8080"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "/docker-volumes/traefik/letsencrypt:/letsencrypt"

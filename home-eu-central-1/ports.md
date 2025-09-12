@@ -7,4 +7,3 @@
 | 3000 | it-tools            |
 | 3001 | zitadel             |
 | 5432 | database            |
-| 8080 | traefik dashboard   |
