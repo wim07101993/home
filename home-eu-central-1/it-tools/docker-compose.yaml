@@ -5,3 +5,17 @@ services:
     restart: unless-stopped
     ports:
       - "3000:80"
+    networks:
+      - it-tools-network
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          pids: 99
+
+networks:
+  it-tools-network:
