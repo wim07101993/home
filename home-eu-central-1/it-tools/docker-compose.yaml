@@ -8,10 +8,13 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.it-tools.rule=Host(`it-tools.wvl.app`)"
-      - "traefik.http.routers.it-tools.entrypoints=web"
-      - "traefik.http.routers.it-tools.tls=true"
+      - "traefik.http.routers.it-tools.entrypoints=websecure"
       - "traefik.http.routers.it-tools.tls.certresolver=le"
       - "traefik.http.services.it-tools.loadbalancer.server.port=80"
+      - "traefik.http.routers.it-tools-web.rule=Host(`it-tools.wvl.app`)"
+      - "traefik.http.routers.it-tools-web.entrypoints=web"
+      - "traefik.http.routers.it-tools-web.middlewares=redirect-to-https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
     networks:
       - it-tools-network
       - reverse-proxy_reverse-proxy-network
