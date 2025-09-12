@@ -1,12 +1,14 @@
 name: it-tools
 services:
   it-tools:
-    image: corentinth/it-tools:latest
+    image: corentinth/it-tools:2024.10.22-7ca5933
     restart: unless-stopped
     ports:
       - "3000:80"
     networks:
       - it-tools-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
     read_only: true
     security_opt:
       - no-new-privileges:true
