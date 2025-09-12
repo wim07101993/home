@@ -7,7 +7,7 @@ services:
     image: "ghcr.io/zitadel/zitadel:latest"
     command: start-from-init --config /zitadel-config.yaml --config /run/secrets/zitadel_secrets --steps /zitadel-init-steps.yaml --masterkey "${ZITADEL_MASTERKEY}" --tlsMode disabled
     ports:
-      - "8080:8080"
+      - "3001:8080"
     volumes:
       - /docker-volumes/zitadel/init-steps.yaml:/zitadel-init-steps.yaml:ro
       - /docker-volumes/zitadel/zitadel-config.yaml:/zitadel-config.yaml:ro
