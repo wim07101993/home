@@ -13,7 +13,7 @@ services:
       - "--api.dashboard=true"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
-      - "--providers.docker.network=reverse-proxy-network"
+      - "--providers.docker.network=reverse-proxy_reverse-proxy-network"
       - "--entryPoints.web.address=:80"
       - "--entryPoints.websecure.address=:443"
       - "--certificatesresolvers.le.acme.httpchallenge=true"
