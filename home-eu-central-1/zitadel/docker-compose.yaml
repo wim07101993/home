@@ -8,11 +8,11 @@ services:
     image: "ghcr.io/zitadel/zitadel:latest"
     command:
       - "start-from-init"
-      - "--config /zitadel-config.yaml"
-      - "--config /run/secrets/zitadel_secrets"
-      - "--steps /zitadel-init-steps.yaml"
-      - "--masterkey /run/secrets/zitadel_masterkey"
-      - "--tlsMode disabled"
+      - "--config=/zitadel-config.yaml"
+      - "--config=/run/secrets/zitadel_secrets"
+      - "--steps=/zitadel-init-steps.yaml"
+      - "--masterkey=/run/secrets/zitadel_masterkey"
+      - "--tlsMode=disabled"
     ports:
       - "3001:8080"
     labels:
