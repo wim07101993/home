@@ -44,7 +44,7 @@ secrets:
   zitadel_secrets:
     file: /docker-volumes/secrets/zitadel_secrets.yaml
   zitadel_masterkey:
-    file: /docker-volumes/secrets/zitadel_masterkey.yaml
+    file: /docker-volumes/secrets/zitadel_masterkey
 
 networks:
   zitadel-network:
