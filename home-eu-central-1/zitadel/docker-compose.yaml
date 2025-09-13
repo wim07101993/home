@@ -48,7 +48,7 @@ secrets:
 
 networks:
   zitadel-network:
-  db_db-network:
+  database_db-network:
     external: true
   reverse-proxy_reverse-proxy-network:
     external: true
