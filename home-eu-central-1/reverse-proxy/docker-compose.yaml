@@ -1,7 +1,7 @@
 name: reverse-proxy
 services:
   reverse-proxy:
-    image: traefik:v3.4
+    image: traefik:v3.5
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
@@ -33,7 +33,7 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "/docker-volumes/traefik/letsencrypt:/letsencrypt"
     healthcheck:
-      test: [ "CMD", "traefik"]
+      test: [ "CMD", "traefik", "healthcheck"]
       interval: 10s
       timeout: 60s
       retries: 5
