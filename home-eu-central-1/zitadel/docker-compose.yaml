@@ -4,20 +4,47 @@ services:
     networks:
       - "reverse-proxy_reverse-proxy-network"
       - "db_db-network"
+      - "zitadel-network"
     image: "ghcr.io/zitadel/zitadel:latest"
-    command: start-from-init --config /zitadel-config.yaml --config /run/secrets/zitadel_secrets --steps /zitadel-init-steps.yaml --masterkey "${ZITADEL_MASTERKEY}" --tlsMode disabled
+    command:
+      - "start-from-init"
+      - "--config /zitadel-config.yaml"
+      - "--config /run/secrets/zitadel_secrets"
+      - "--steps /zitadel-init-steps.yaml"
+      - '--masterkey "${ZITADEL_MASTERKEY}"'
+      - "--tlsMode disabled"
     ports:
       - "3001:8080"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.it-tools.rule=Host(`auth.wvl.app`)"
+      - "traefik.http.routers.it-tools.entrypoints=websecure"
+      - "traefik.http.routers.it-tools.tls.certresolver=le"
     volumes:
       - /docker-volumes/zitadel/init-steps.yaml:/zitadel-init-steps.yaml:ro
       - /docker-volumes/zitadel/zitadel-config.yaml:/zitadel-config.yaml:ro
     secrets:
       - zitadel_secrets
+    healthcheck:
+      test: [ "CMD", "/app/zitadel", "ready" ]
+      interval: 10s
+      timeout: 60s
+      retries: 5
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          pids: 99
 
 secrets:
   zitadel_secrets:
     file: /docker-volumes/secrets/zitadel_secrets.yaml
 
 networks:
+  zitadel-network:
   reverse-proxy_reverse-proxy-network:
     external: true
