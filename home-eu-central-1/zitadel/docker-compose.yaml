@@ -3,7 +3,7 @@ services:
     restart: "unless-stopped"
     networks:
       - "reverse-proxy_reverse-proxy-network"
-      - "db_db-network"
+      - "database_db-network"
       - "zitadel-network"
     image: "ghcr.io/zitadel/zitadel:latest"
     command:
