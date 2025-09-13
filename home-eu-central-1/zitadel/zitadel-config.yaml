@@ -7,11 +7,11 @@ ExternalPort: 443
 ExternalSecure: true
 
 TLS:
-  Enabled: false
+  Enabled: true
 
 Database:
   postgres:
-    Host: 'db.jsoogyolaxuidbzchmkq.supabase.co'
+    Host: 'db'
     Port: 5432
     Database: zitadel
     User:

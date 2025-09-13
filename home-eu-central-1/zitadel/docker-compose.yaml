@@ -11,7 +11,7 @@ services:
       - "--config /zitadel-config.yaml"
       - "--config /run/secrets/zitadel_secrets"
       - "--steps /zitadel-init-steps.yaml"
-      - '--masterkey "${ZITADEL_MASTERKEY}"'
+      - "--masterkey /run/secrets/zitadel_masterkey"
       - "--tlsMode disabled"
     ports:
       - "3001:8080"
@@ -43,8 +43,11 @@ services:
 secrets:
   zitadel_secrets:
     file: /docker-volumes/secrets/zitadel_secrets.yaml
+  zitadel_masterkey:
+    file: /docker-volumes/secrets/zitadel_masterkey.yaml
 
 networks:
   zitadel-network:
+  db_db-network:
   reverse-proxy_reverse-proxy-network:
     external: true

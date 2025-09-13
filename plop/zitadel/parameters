@@ -1,3 +1,0 @@
-${ZITADEL_MASTERKEY} (docker-compose)
-${ZITADEL_DB_USER_PASSWORD} (/docker-volumes/secrets/zitadel_secrets.yaml)
-${ZITADEL_DB_ROOT_PASSWORD} (/docker-volumes/secrets/zitadel_secrets.yaml)
