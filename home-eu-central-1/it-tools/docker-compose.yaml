@@ -9,9 +9,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.it-tools.rule=Host(`it-tools.wvl.app`)"
       - "traefik.http.routers.it-tools.entrypoints=websecure"
-      - "traefik.http.routers.it-tools.tls=true"
       - "traefik.http.routers.it-tools.tls.certresolver=le"
-      - "traefik.http.services.it-tools.loadbalancer.server.port=80"
     networks:
       - it-tools-network
       - reverse-proxy_reverse-proxy-network
