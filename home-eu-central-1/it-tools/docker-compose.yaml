@@ -15,10 +15,10 @@ services:
       - reverse-proxy_reverse-proxy-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80"]
-      interval: "60s"
-      timeout: "30s"
-      retries: "5"
-      start_period: "20s"
+      interval: 60s
+      timeout: 30s
+      retries: 5
+      start_period: 20s
     security_opt:
       - no-new-privileges:true
     cap_drop:
