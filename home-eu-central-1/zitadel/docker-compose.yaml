@@ -9,9 +9,9 @@ services:
     command:
       - "start-from-init"
       - "--config=/zitadel-config.yaml"
-      - "--config=/run/secrets/zitadel_secrets"
+      #- "--config=/run/secrets/zitadel_secrets"
       - "--steps=/zitadel-init-steps.yaml"
-      - "--masterkey=/run/secrets/zitadel_masterkey"
+      - "--masterkeyFile=/run/secrets/zitadel_masterkey"
       - "--tlsMode=disabled"
     ports:
       - "3001:8080"
@@ -25,6 +25,7 @@ services:
       - /docker-volumes/zitadel/zitadel-config.yaml:/zitadel-config.yaml:ro
     secrets:
       - zitadel_secrets
+      - zitadel_masterkey
     healthcheck:
       test: [ "CMD", "/app/zitadel", "ready" ]
       interval: 10s
@@ -41,10 +42,10 @@ services:
           pids: 99
 
 secrets:
-  zitadel_secrets:
-    file: /docker-volumes/secrets/zitadel_secrets.yaml
+#  zitadel_secrets:
+#    file: /docker-volumes/zitadel/zitadel_secrets.yaml
   zitadel_masterkey:
-    file: /docker-volumes/secrets/zitadel_masterkey
+    file: /docker-volumes/zitadel/zitadel_masterkey
 
 networks:
   zitadel-network:
