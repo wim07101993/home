@@ -26,4 +26,4 @@ networks:
 
 secrets:
   db_password:
-    file: /docker-volumes/secrets/db_password.txt
+    file: /docker-volumes/db/db_password.txt
