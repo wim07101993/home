@@ -25,12 +25,6 @@ services:
     secrets:
       - zitadel_secrets
       - zitadel_masterkey
-#    healthcheck:
-#      test: [ "CMD", "/app/zitadel", "ready" ]
-#      interval: 10s
-#      timeout: 60s
-#      retries: 5
-#      start_period: 10s
     security_opt:
       - no-new-privileges:true
     cap_drop:
