@@ -1,7 +1,7 @@
 name: reverse-proxy
 services:
   reverse-proxy:
-    image: traefik:v3.5
+    image: traefik:v3.5.3
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
