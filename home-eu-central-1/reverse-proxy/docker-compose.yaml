@@ -33,7 +33,7 @@ services:
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "/docker-volumes/traefik/letsencrypt:/letsencrypt"
-      - "/docker-volumes/reverse-proxy/config.yaml:/config.yaml:ro"
+      - "/docker-volumes/traefik/config.yaml:/config.yaml:ro"
 
 networks:
   reverse-proxy-network:
