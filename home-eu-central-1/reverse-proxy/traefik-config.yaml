@@ -1,0 +1,25 @@
+log:
+  level: "INFO"
+
+api:
+  insecure: false
+  dashboard: true
+
+providers:
+  docker:
+    exposedbydefault: false
+    network: reverse_proxy-proxy-network
+
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+
+certificatesresolvers:
+  le:
+    acme:
+      httpchallenge:
+        entrypoint: "web"
+      email: "wvl@wvl.app"
+      storage: "/letsencrypt/acme.json"
