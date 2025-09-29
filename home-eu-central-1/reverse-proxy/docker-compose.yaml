@@ -9,18 +9,6 @@ services:
       - reverse-proxy-network
     command:
       - "--configFile=/config.yaml"
-#      - "--log.level=INFO"
-#      - "--api.insecure=false"
-#      - "--api.dashboard=true"
-#      - "--providers.docker=true"
-#      - "--providers.docker.exposedbydefault=false"
-#      - "--providers.docker.network=reverse-proxy_reverse-proxy-network"
-#      - "--entryPoints.web.address=:80"
-#      - "--entryPoints.websecure.address=:443"
-#      - "--certificatesresolvers.le.acme.httpchallenge=true"
-#      - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
-#      - "--certificatesresolvers.le.acme.email=wvl@wvl.app"
-#      - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.dashboard.rule=Host(`wvl.app`)"
