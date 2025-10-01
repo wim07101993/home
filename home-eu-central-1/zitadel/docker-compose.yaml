@@ -5,21 +5,20 @@ services:
       - "reverse-proxy_reverse-proxy-network"
       - "database_db-network"
       - "zitadel-network"
-    image: "ghcr.io/zitadel/zitadel:latest"
+    image: "ghcr.io/zitadel/zitadel:v4.3.0"
     command:
       - "start-from-init"
       - "--config=/zitadel-config.yaml"
       #- "--config=/run/secrets/zitadel_secrets"
       - "--steps=/zitadel-init-steps.yaml"
       - "--masterkeyFile=/run/secrets/zitadel_masterkey"
-    ports:
-      - "3001:8080"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.zitadel.rule=Host(`auth.wvl.app`)"
+      - "traefik.http.routers.zitadel.rule=Host(`auth.wvl.app`) && !PathPrefix(`/ui/v2/login`)"
       - "traefik.http.routers.zitadel.entrypoints=websecure"
       - "traefik.http.routers.zitadel.tls.certresolver=le"
     volumes:
+      - /docker-volumes/zitadel/login-client:/login-client:rw
       - /docker-volumes/zitadel/init-steps.yaml:/zitadel-init-steps.yaml:ro
       - /docker-volumes/zitadel/zitadel-config.yaml:/zitadel-config.yaml:ro
     secrets:
@@ -33,6 +32,25 @@ services:
       resources:
         limits:
           pids: 99
+
+  zitadel-login:
+    restart: 'unless-stopped'
+    image: 'ghcr.io/zitadel/zitadel-login:v4.3.0'
+    environment:
+      - ZITADEL_API_URL=http://zitadel:8080
+      - NEXT_PUBLIC_BASE_PATH=/ui/v2/login
+      - ZITADEL_SERVICE_USER_TOKEN_FILE=/current-dir/login-client.pat
+      - CUSTOM_REQUEST_HEADERS=Host:127.0.0.1.sslip.io
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.zitadel.rule=Host(`auth.wvl.app`) && PathPrefix(`/ui/v2/login`)"
+      - "traefik.http.routers.zitadel.entrypoints=websecure"
+      - "traefik.http.routers.zitadel.tls.certresolver=le"
+    volumes:
+      - /docker-volumes/zitadel/login-client:/login-client:ro
+    networks:
+      - zitadel-network
+      - reverse-proxy_reverse-proxy-network
 
 secrets:
   zitadel_secrets:
