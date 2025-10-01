@@ -17,6 +17,8 @@ services:
       - "traefik.http.routers.zitadel.rule=Host(`auth.wvl.app`) && !PathPrefix(`/ui/v2/login`)"
       - "traefik.http.routers.zitadel.entrypoints=websecure"
       - "traefik.http.routers.zitadel.tls.certresolver=le"
+    ports:
+      - "3001:8080"
     volumes:
       - /docker-volumes/zitadel/login-client:/login-client:rw
       - /docker-volumes/zitadel/init-steps.yaml:/zitadel-init-steps.yaml:ro
@@ -43,14 +45,24 @@ services:
       - CUSTOM_REQUEST_HEADERS=Host:127.0.0.1.sslip.io
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.zitadel.rule=Host(`auth.wvl.app`) && PathPrefix(`/ui/v2/login`)"
-      - "traefik.http.routers.zitadel.entrypoints=websecure"
-      - "traefik.http.routers.zitadel.tls.certresolver=le"
+      - "traefik.http.routers.zitadel-login.rule=Host(`auth.wvl.app`) && PathPrefix(`/ui/v2/login`)"
+      - "traefik.http.routers.zitadel-login.entrypoints=websecure"
+      - "traefik.http.routers.zitadel-login.tls.certresolver=le"
+    ports:
+      - "3002:3000"
     volumes:
       - /docker-volumes/zitadel/login-client:/login-client:ro
     networks:
       - zitadel-network
       - reverse-proxy_reverse-proxy-network
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          pids: 99
 
 secrets:
   zitadel_secrets:

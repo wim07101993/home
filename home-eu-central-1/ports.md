@@ -6,4 +6,5 @@
 | 443  | reverse-proxy https |
 | 3000 | it-tools            |
 | 3001 | zitadel             |
+| 3002 | zitadel-login       |
 | 5432 | database            |
