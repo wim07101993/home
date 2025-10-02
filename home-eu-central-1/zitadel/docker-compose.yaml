@@ -1,5 +1,8 @@
 services:
   zitadel:
+    # if errors say something about mirgations failing because of duplicate keys:
+    # check logs from the first time the container booted. It wil have an error,
+    # but it will only come up once.
     restart: "unless-stopped"
     networks:
       - "reverse-proxy_reverse-proxy-network"
