@@ -11,6 +11,9 @@ services:
       - "traefik.http.routers.it-tools.rule=Host(`it-tools.wvl.app`)"
       - "traefik.http.routers.it-tools.entrypoints=websecure"
       - "traefik.http.routers.it-tools.tls.certresolver=le"
+    networks:
+      - it-tools-network
+      - reverse-proxy_reverse-proxy-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80"]
       interval: 60s
@@ -31,5 +34,6 @@ services:
           pids: 99
 
 networks:
+  it-tools-network:
   reverse-proxy_reverse-proxy-network:
     external: true
