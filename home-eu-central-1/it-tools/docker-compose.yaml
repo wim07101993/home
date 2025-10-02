@@ -28,3 +28,7 @@ services:
       resources:
         limits:
           pids: 99
+
+networks:
+  reverse-proxy_reverse-proxy-network:
+    external: true
