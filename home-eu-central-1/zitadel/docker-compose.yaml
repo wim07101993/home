@@ -45,6 +45,7 @@ services:
       - CUSTOM_REQUEST_HEADERS=Host:127.0.0.1.sslip.io
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=reverse-proxy_reverse-proxy-network"
       - "traefik.http.routers.zitadel-login.rule=Host(`auth.wvl.app`) && PathPrefix(`/ui/v2/login`)"
       - "traefik.http.routers.zitadel-login.entrypoints=websecure"
       - "traefik.http.routers.zitadel-login.tls.certresolver=le"
