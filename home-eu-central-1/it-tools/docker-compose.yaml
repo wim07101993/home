@@ -7,6 +7,7 @@ services:
       - "3000:80"
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=reverse-proxy_reverse-proxy-network"
       - "traefik.http.routers.it-tools.rule=Host(`it-tools.wvl.app`)"
       - "traefik.http.routers.it-tools.entrypoints=websecure"
       - "traefik.http.routers.it-tools.tls.certresolver=le"
