@@ -14,6 +14,7 @@ services:
       - "--masterkeyFile=/run/secrets/zitadel_masterkey"
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=reverse-proxy_reverse-proxy-network"
       - "traefik.http.routers.zitadel.rule=Host(`auth.wvl.app`) && !PathPrefix(`/ui/v2/login`)"
       - "traefik.http.routers.zitadel.entrypoints=websecure"
       - "traefik.http.routers.zitadel.tls.certresolver=le"
@@ -41,8 +42,9 @@ services:
     environment:
       - ZITADEL_API_URL=http://zitadel:8080
       - NEXT_PUBLIC_BASE_PATH=/ui/v2/login
-      - ZITADEL_SERVICE_USER_TOKEN_FILE=/current-dir/login-client.pat
-      - CUSTOM_REQUEST_HEADERS=Host:127.0.0.1.sslip.io
+      - DEBUG=true
+      - ZITADEL_SERVICE_USER_TOKEN_FILE=/login-client/login-client.pat
+      - CUSTOM_REQUEST_HEADERS=Host:auth.wvl.app
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=reverse-proxy_reverse-proxy-network"
