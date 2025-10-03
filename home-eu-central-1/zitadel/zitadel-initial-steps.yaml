@@ -1,6 +1,17 @@
 FirstInstance:
-  LoginClientPatPath: /current-dir/login-client.pat
+  LoginClientPatPath: /login-client/login-client.pat
   Org:
+    Name: Home
+    Human:
+      UserName: wim
+      FirstName: Wim
+      LastName: Van Laer
+      Email:
+        Address: van.laer.wim@wvl.app
+        Verified: true
+      PreferredLanguage: en
+      Password: Password1234!
+      PasswordChangeRequired: true
     LoginClient:
       Machine:
         UserName: login-client
