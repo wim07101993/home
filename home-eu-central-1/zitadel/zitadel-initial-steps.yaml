@@ -1,7 +1,7 @@
 FirstInstance:
   LoginClientPatPath: /login-client/login-client.pat
   Org:
-    Name: Home
+    Name: Zitadel
     Human:
       UserName: wim
       FirstName: Wim
