@@ -16,7 +16,7 @@ services:
 
 secrets:
   score_api_secrets:
-    file: /docker-volumes/secrets/score_api_secrets.json
+    file: /docker-volumes/score/score_api_secrets.json
 
 networks:
   database_db-network:
