@@ -5,12 +5,9 @@ services:
       - "reverse-proxy_reverse-proxy-network"
       - "database_db-network"
     image: "wim07101993/score:latest"
-    command: --config /run/secrets/score_api_secrets
+    command: --config=/run/secrets/score_api_secrets
     ports:
       - "7001:7001"
-    environment:
-      TOKEN_INTROSPECTION_CLIENT_ID: ""
-      TOKEN_INTROSPECTION_URL: ""
     secrets:
       - score_api_secrets
 
