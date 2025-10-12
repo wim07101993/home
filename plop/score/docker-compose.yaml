@@ -4,12 +4,53 @@ services:
     networks:
       - "reverse-proxy_reverse-proxy-network"
       - "database_db-network"
-    image: "wim07101993/score:latest"
+    image: "wim07101993/score:dev-latest"
     command: --config=/run/secrets/score_api_secrets
     ports:
       - "7001:7001"
     secrets:
       - score_api_secrets
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7001/healthz"]
+      interval: 60s
+      timeout: 30s
+      retries: 5
+      start_period: 20s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          pids: 99
+
+  score-web-app:
+    restart: "unless-stopped"
+    networks:
+      - "reverse-proxy_reverse-proxy-network"
+    image: "wim07101993/score-frontend:dev-latest"
+    ports:
+      - "7000:80"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 60s
+      timeout: 30s
+      retries: 5
+      start_period: 20s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    deploy:
+      resources:
+        limits:
+          pids: 99
+
 
 secrets:
   score_api_secrets:
