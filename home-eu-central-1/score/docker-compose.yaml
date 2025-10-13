@@ -4,12 +4,19 @@ services:
     networks:
       - "reverse-proxy_reverse-proxy-network"
       - "database_db-network"
-    image: "wim07101993/score:dev-latest"
+      - "score-network"
+    image: "wim07101993/score:latest"
     command: --config=/run/secrets/score_api_secrets
     ports:
-      - "7001:7001"
+      - "3005:7001"
     secrets:
       - score_api_secrets
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=reverse-proxy_reverse-proxy-network"
+      - "traefik.http.routers.score-api.rule=Host(`score-api.wvl.app`)"
+      - "traefik.http.routers.score-api.entrypoints=websecure"
+      - "traefik.http.routers.score-api.tls.certresolver=le"
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -22,10 +29,17 @@ services:
   score-web-app:
     restart: "unless-stopped"
     networks:
+      - "score-network"
       - "reverse-proxy_reverse-proxy-network"
-    image: "wim07101993/score-frontend:dev-latest"
+    image: "wim07101993/score-frontend:latest"
     ports:
-      - "7000:80"
+      - "3006:80"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=reverse-proxy_reverse-proxy-network"
+      - "traefik.http.routers.score-web-app.rule=Host(`score.wvl.app`)"
+      - "traefik.http.routers.score-web-app.entrypoints=websecure"
+      - "traefik.http.routers.score-web-app.tls.certresolver=le"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80/"]
       interval: 60s
@@ -51,6 +65,7 @@ secrets:
     file: /docker-volumes/score/score_api_secrets.json
 
 networks:
+  score-network:
   database_db-network:
     external: true
   reverse-proxy_reverse-proxy-network:
