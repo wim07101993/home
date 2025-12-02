@@ -12,7 +12,7 @@ services:
     command:
       - "start-from-init"
       - "--config=/zitadel-config.yaml"
-      - "--config=/run/secrets/zitadel_secrets"
+      - "--config=/run/secrets/zitadel_secrets.yaml"
       - "--steps=/zitadel-init-steps.yaml"
       - "--masterkeyFile=/run/secrets/zitadel_masterkey"
     labels:
@@ -28,7 +28,7 @@ services:
       - /docker-volumes/zitadel/init-steps.yaml:/zitadel-init-steps.yaml:ro
       - /docker-volumes/zitadel/zitadel-config.yaml:/zitadel-config.yaml:ro
     secrets:
-      - zitadel_secrets
+      - "zitadel_secrets.yaml"
       - zitadel_masterkey
     security_opt:
       - no-new-privileges:true
