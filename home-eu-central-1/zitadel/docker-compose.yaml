@@ -12,7 +12,7 @@ services:
     command:
       - "start-from-init"
       - "--config=/zitadel-config.yaml"
-      #- "--config=/run/secrets/zitadel_secrets"
+      - "--config=/run/secrets/zitadel_secrets"
       - "--steps=/zitadel-init-steps.yaml"
       - "--masterkeyFile=/run/secrets/zitadel_masterkey"
     labels:
