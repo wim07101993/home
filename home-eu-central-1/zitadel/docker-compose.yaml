@@ -8,7 +8,7 @@ services:
       - "reverse-proxy_reverse-proxy-network"
       - "database_db-network"
       - "zitadel-network"
-    image: "ghcr.io/zitadel/zitadel:v4.4.0"
+    image: "ghcr.io/zitadel/zitadel:v4.7.0"
     command:
       - "start-from-init"
       - "--config=/zitadel-config.yaml"
@@ -41,7 +41,7 @@ services:
 
   zitadel-login:
     restart: 'unless-stopped'
-    image: 'ghcr.io/zitadel/zitadel-login:v4.3.0'
+    image: 'ghcr.io/zitadel/zitadel-login:v4.7.0'
     environment:
       - ZITADEL_API_URL=http://zitadel:8080
       - NEXT_PUBLIC_BASE_PATH=/ui/v2/login
