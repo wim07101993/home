@@ -71,7 +71,7 @@ services:
           pids: 99
 
 secrets:
-  zitadel_secrets:
+  "zitadel_secrets.yaml":
     file: /docker-volumes/zitadel/zitadel_secrets.yaml
   zitadel_masterkey:
     file: /docker-volumes/zitadel/zitadel_masterkey
