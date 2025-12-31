@@ -23,6 +23,7 @@ services:
       - "traefik.http.middlewares.baby-redir-mw.redirectregex.replacement=https://destination-url.com/$$1"
       - "traefik.http.middlewares.baby-redir-mw.redirectregex.permanent=true"
       - "traefik.http.routers.baby-redirect.middlewares=baby-redir-mw"
+      - "traefik.http.routers.baby-redirect.tls.certresolver=le"
     ports:
       - "80:80"
       - "443:443"
