@@ -23,21 +23,3 @@ certificatesresolvers:
         entrypoint: "web"
       email: "wvl@wvl.app"
       storage: "/letsencrypt/acme.json"
-
-http:
-  routers:
-    babylist-redirect:
-      rule: "Host(`baby.wlv.app`)"
-      entryPoints:
-        - websecure
-      middlewares:
-        - babylist-redirect-mw
-      service: noop@internal
-      tls: {}
-
-  middlewares:
-    babylist-redirect-mw:
-      redirectRegex:
-        regex: "^https://baby.wvl.app/"
-        replacement: "https://www.babeeworld.com/en/birthlists/871?access_token=0TGRQ226TCN7TZO"
-        permanent: true

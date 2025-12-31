@@ -15,6 +15,14 @@ services:
       - "traefik.http.routers.dashboard.entrypoints=websecure"
       - "traefik.http.routers.dashboard.service=api@internal"
       - "traefik.http.routers.dashboard.tls.certresolver=le"
+
+      - "traefik.http.routers.baby-redirect.rule=Host(`baby.wvl.app`)"
+      - "traefik.http.routers.baby-redirect.entrypoints=websecure"
+      - "traefik.http.routers.baby-redirect.tls=true"
+      - "traefik.http.middlewares.baby-redir-mw.redirectregex.regex=^https://baby.wvl.app/(.*)"
+      - "traefik.http.middlewares.baby-redir-mw.redirectregex.replacement=https://destination-url.com/$$1"
+      - "traefik.http.middlewares.baby-redir-mw.redirectregex.permanent=true"
+      - "traefik.http.routers.baby-redirect.middlewares=baby-redir-mw"
     ports:
       - "80:80"
       - "443:443"
