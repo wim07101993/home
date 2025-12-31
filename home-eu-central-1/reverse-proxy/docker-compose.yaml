@@ -20,7 +20,7 @@ services:
       - "traefik.http.routers.baby-redirect.entrypoints=websecure"
       - "traefik.http.routers.baby-redirect.tls=true"
       - "traefik.http.middlewares.baby-redir-mw.redirectregex.regex=^https://baby.wvl.app/(.*)"
-      - "traefik.http.middlewares.baby-redir-mw.redirectregex.replacement=https://destination-url.com/$$1"
+      - "traefik.http.middlewares.baby-redir-mw.redirectregex.replacement=https://babeeworld.com/birthlists/871?access_token=0TGGQ226TCN7TZO"
       - "traefik.http.middlewares.baby-redir-mw.redirectregex.permanent=true"
       - "traefik.http.routers.baby-redirect.middlewares=baby-redir-mw"
       - "traefik.http.routers.baby-redirect.tls.certresolver=le"
