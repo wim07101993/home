@@ -1,0 +1,23 @@
+services:
+  ersatztv:
+    image: ghcr.io/ersatztv/ersatztv
+    restart: unless-stopped
+    ports:
+      - "8409:8409"
+    environment:
+      - TZ=Europe/Brussels
+    volumes:
+      - /docker-volumes/ersatztv/config:/config
+      - /docker-volumes/ersatztv/media:/media:ro
+    tmpfs:
+      - /transcode
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          pids: 99
+          cpus: 6
+          memory: 8gb
