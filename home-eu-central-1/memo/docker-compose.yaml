@@ -16,9 +16,9 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=reverse-proxy_reverse-proxy-network"
-      - "traefik.http.routers.score-web-app.rule=Host(`memo.wvl.app`)"
-      - "traefik.http.routers.score-web-app.entrypoints=websecure"
-      - "traefik.http.routers.score-web-app.tls.certresolver=le"
+      - "traefik.http.routers.memo.rule=Host(`memo.wvl.app`)"
+      - "traefik.http.routers.memo.entrypoints=websecure"
+      - "traefik.http.routers.memo.tls.certresolver=le"
     security_opt:
       - no-new-privileges:true
     cap_drop:
