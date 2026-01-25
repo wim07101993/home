@@ -1,14 +1,16 @@
 services:
   memo:
     restart: "unless-stopped"
+    image: neosmemo/memos:stable
     networks:
       - "reverse-proxy_reverse-proxy-network"
       - "database_db-network"
       - "memo-network"
-    image: neosmemo/memos:stable
     environment:
       - MEMOS_DRIVER=postgres
       - MEMOS_DSN_FILE=/run/secrets/db_connection_string
+    secrets:
+      - db_connection_string
     ports:
       - "3007:5230"
     labels:
