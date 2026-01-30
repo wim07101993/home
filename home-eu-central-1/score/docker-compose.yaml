@@ -5,7 +5,7 @@ services:
       - "reverse-proxy_reverse-proxy-network"
       - "database_db-network"
       - "score-network"
-    image: "wim07101993/score:v0.3.0"
+    image: "wim07101993/score:latest"
     command: --config=/run/secrets/score_api_secrets
     ports:
       - "3005:7001"
@@ -31,7 +31,7 @@ services:
     networks:
       - "score-network"
       - "reverse-proxy_reverse-proxy-network"
-    image: "wim07101993/score-frontend:v0.3.0"
+    image: "wim07101993/score-frontend:latest"
     ports:
       - "3006:80"
     labels:

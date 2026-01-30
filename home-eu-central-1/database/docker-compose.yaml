@@ -1,7 +1,7 @@
 services:
   db:
     restart: unless-stopped
-    image: postgres:17-alpine
+    image: postgres:latest
     environment:
       PGUSER: postgres
       POSTGRES_PASSWORD_FILE: /run/secrets/db_password
