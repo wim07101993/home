@@ -1,0 +1,29 @@
+services:
+  homeassistant:
+    restart: unless-stopped
+    image: "ghcr.io/home-assistant/home-assistant:stable"
+    environment:
+      TZ: Europe/Brussels
+    ports:
+      - "8123:8123"
+    networks:
+      - home-assistant-network
+    volumes:
+      - /docker-volumes/homeassistant/config:/config
+      - /etc/localtime:/etc/localtime:ro
+      - /run/dbus:/run/dbus:ro
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          pids: 99
+          cpus: 6
+          memory: 8gb
+
+networks:
+  home-assistant-network:
