@@ -8,10 +8,19 @@ services:
     networks:
       - reverse-proxy-network
     command:
-      - "--configFile=/config.yaml"
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=reverse-proxy_reverse-proxy-network"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.le.acme.httpchallenge=true"
+      - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.le.acme.email=wvl@wvl.app"
+      - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.dashboard.rule=Host(`wvl.app`)"
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.wvl.app`)"
       - "traefik.http.routers.dashboard.entrypoints=websecure"
       - "traefik.http.routers.dashboard.service=api@internal"
       - "traefik.http.routers.dashboard.tls.certresolver=le"
@@ -30,9 +39,7 @@ services:
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "/docker-volumes/traefik/letsencrypt:/letsencrypt"
-      - "/docker-volumes/traefik/config.yaml:/config.yaml:ro"
 
 networks:
   reverse-proxy-network:
     driver: bridge
-

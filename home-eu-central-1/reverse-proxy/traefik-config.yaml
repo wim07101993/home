@@ -7,7 +7,7 @@ api:
 
 providers:
   docker:
-    exposedbydefault: false
+    exposedByDefault: false
     network: reverse_proxy-proxy-network
 
 entryPoints:
@@ -16,10 +16,10 @@ entryPoints:
   websecure:
     address: ":443"
 
-certificatesresolvers:
+certificatesResolvers:
   le:
     acme:
-      httpchallenge:
-        entrypoint: "web"
+      httpChallenge:
+        entryPoint: "web"
       email: "wvl@wvl.app"
       storage: "/letsencrypt/acme.json"
