@@ -1,0 +1,14 @@
+services:
+  plex:
+    container_name: plex
+    image: plexinc/pms-docker:latest
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      - VERSION=docker
+    volumes:
+      - /docker-volumes/plex:/config
+      - /srv/dev-disk-by-uuid-25d0f3ec-68a9-4ce0-891e-0966088e5300/media:/media
