@@ -13,7 +13,7 @@ services:
     secrets:
       - db_password
     volumes:
-      - /docker-volumes/backup-server/data:/data/postgres
+      - /docker-volumes/backup-server/db/data:/data/postgres
     healthcheck:
       test: ["CMD-SHELL", "pg_isready"]
       interval: 10s
@@ -26,4 +26,4 @@ networks:
 
 secrets:
   db_password:
-    file: /docker-volumes/backup-server/db_password.txt
+    file: /docker-volumes/backup-server/db/db_password.txt
