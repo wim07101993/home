@@ -6,4 +6,4 @@ services:
     ports:
       - "4005:4005"
     volumes:
-      - /docker-volumes/backup-server/databasus/data:/databasus-data
+      - ./docker-volumes/backup-server/databasus/data:/databasus-data
