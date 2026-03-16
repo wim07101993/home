@@ -4,6 +4,7 @@
 |------|---------------------|
 | 80   | reverse-proxy http  |
 | 443  | reverse-proxy https |
+| 2283 | immich              |
 | 3000 | it-tools            |
 | 3001 | zitadel             |
 | 3002 | zitadel-login       |
