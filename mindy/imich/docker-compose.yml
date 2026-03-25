@@ -18,18 +18,9 @@ services:
     depends_on:
       - redis
       - database
-    networks:
-      - immich-network
-      - reverse-proxy_reverse-proxy-network
     restart: always
     healthcheck:
       disable: false
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=reverse-proxy_reverse-proxy-network"
-      - "traefik.http.routers.photos.rule=Host(`photos.wvl.app`)"
-      - "traefik.http.routers.photos.entrypoints=websecure"
-      - "traefik.http.routers.photos.tls.certresolver=le"
 
   immich-machine-learning:
     container_name: immich_machine_learning
@@ -43,20 +34,16 @@ services:
       - model-cache:/cache
     env_file:
       - .env
-    networks:
-      - immich-network
     restart: always
     healthcheck:
       disable: false
 
   redis:
     container_name: immich_redis
-    image: docker.io/valkey/valkey:9@sha256:546304417feac0874c3dd576e0952c6bb8f06bb4093ea0c9ca303c73cf458f63
+    image: docker.io/valkey/valkey:9@sha256:3eeb09785cd61ec8e3be35f8804c8892080f3ca21934d628abc24ee4ed1698f6
     healthcheck:
       test: redis-cli ping || exit 1
     restart: always
-    networks:
-      - immich-network
 
   database:
     container_name: immich_postgres
@@ -73,19 +60,8 @@ services:
       - ${DB_DATA_LOCATION}:/var/lib/postgresql/data
     shm_size: 128mb
     restart: always
-    networks:
-      - immich-network
     healthcheck:
       disable: false
 
 volumes:
   model-cache:
-
-networks:
-  immich-network:
-  reverse-proxy_reverse-proxy-network:
-    external: true
-
-secrets:
-  db_password:
-    file: /docker-volumes/immich/db_password.txt
