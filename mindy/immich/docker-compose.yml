@@ -32,6 +32,10 @@ services:
       disable: false
     security_opt:
       - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 4g
 
   immich-machine-learning:
     container_name: immich_machine_learning
@@ -54,6 +58,10 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 4g
 
   redis:
     container_name: immich_redis
@@ -70,6 +78,10 @@ services:
       - SETGID
     security_opt:
       - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 2g
 
   database:
     container_name: immich_postgres
@@ -92,6 +104,10 @@ services:
       disable: false
     security_opt:
       - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 4g
 
 volumes:
   model-cache:
