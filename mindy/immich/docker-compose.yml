@@ -94,6 +94,6 @@ volumes:
   model-cache:
 
 networks:
-  photos-network:
+  immich-network:
   reverse-proxy_reverse-proxy-network:
     external: true
