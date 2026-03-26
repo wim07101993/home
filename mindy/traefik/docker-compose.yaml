@@ -1,12 +1,13 @@
-name: reverse-proxy
+name: traefik
 services:
-  reverse-proxy:
+  traefik:
+    container_name: traefik
     image: traefik:latest
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
     networks:
-      - reverse-proxy-network
+      - traefik-network
     command:
       - "--log.level=DEBUG"
       - "--api.dashboard=true"
@@ -39,5 +40,5 @@ services:
       - "/docker-volumes/traefik/letsencrypt:/letsencrypt"
 
 networks:
-  reverse-proxy-network:
+  traefik-network:
     driver: bridge

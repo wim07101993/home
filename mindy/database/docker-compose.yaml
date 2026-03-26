@@ -2,6 +2,7 @@ services:
   db:
     restart: unless-stopped
     image: postgres:17-alpine
+    container_name: db
     environment:
       PGUSER: postgres
       POSTGRES_PASSWORD_FILE: /run/secrets/db_password

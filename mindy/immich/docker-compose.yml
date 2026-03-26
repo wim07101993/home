@@ -95,5 +95,5 @@ volumes:
 
 networks:
   immich-network:
-  reverse-proxy_reverse-proxy-network:
+  traefik_traefik-network:
     external: true
