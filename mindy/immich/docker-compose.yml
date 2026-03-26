@@ -5,8 +5,8 @@ services:
     container_name: immich
     image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
     networks:
-      - "reverse-proxy_reverse-proxy-network"
-      - "immich-network"
+      - traefik_traefik-network
+      - immich-network
     # extends:
     #   file: hwaccel.transcoding.yml
     #   service: cpu # set to one of [nvenc, quicksync, rkmpp, vaapi, vaapi-wsl] for accelerated transcoding
