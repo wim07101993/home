@@ -67,6 +67,7 @@ services:
       - ALL
     cap_add:
       - SETUID
+      - SETGID
     security_opt:
       - no-new-privileges:true
 
