@@ -65,6 +65,8 @@ services:
     restart: always
     cap_drop:
       - ALL
+    cap_add:
+      - SETUID
     security_opt:
       - no-new-privileges:true
 
