@@ -14,7 +14,7 @@ services:
       - "traefik.http.routers.it-tools.tls.certresolver=le"
     networks:
       - it-tools-network
-      - reverse-proxy_reverse-proxy-network
+      - traefik_traefik-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80"]
       interval: 60s
