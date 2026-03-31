@@ -24,7 +24,7 @@ services:
     restart: always
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=reverse-proxy_reverse-proxy-network"
+      - "traefik.docker.network=traefik_traefik-network"
       - "traefik.http.routers.photos.rule=Host(`photos.wvl.app`)"
       - "traefik.http.routers.photos.entrypoints=websecure"
       - "traefik.http.routers.photos.tls.certresolver=le"
