@@ -2,9 +2,30 @@ server:
   port: 80
   database: "postgres://filebrowser:${PASSWORD}@db:5432/filebrowser?sslmode=disable"
   sources:
-    - path: "/files"
+    - path: "/files/wim"
+      name: "Wim privé"
       config:
-        defaultEnabled: true
+        defaultEnabled: false
+    - path: "/files/sara"
+      name: "Sara privé"
+      config:
+        defaultEnabled: false
+    - path: "/files/gezin-officieel"
+      name: "Gezin officieel"
+      config:
+        defaultEnabled: false
+    - path: "/files/gezin-officieel-archive"
+      name: "Gezin officieel archive"
+      config:
+        defaultEnabled: false
+    - path: "/files/audio"
+      name: "Audio"
+      config:
+        defaultEnabled: false
+    - path: "/files/audio-archive"
+      name: "Audio archive"
+      config:
+        defaultEnabled: false
 
 auth:
   methods:
@@ -17,7 +38,7 @@ auth:
       # clientSecret: "your-client-secret"
       # Scopes required by Zitadel
       scopes: "openid profile email groups"
-      userIdentifier: "sub"
+      userIdentifier: "preferred_username"
       createUser: true
       groupsClaim: "groups"
       adminGroup: "fb_admins"
