@@ -4,6 +4,7 @@ services:
     image: gtstef/filebrowser:stable
     networks:
       - traefik_traefik-network
+      - database_db-network
       - filebrowser-network
     volumes:
       - /docker-volumes/filebrowser/config:/config
@@ -22,5 +23,7 @@ services:
 
 networks:
   filebrowser-network:
+  database_db-network:
+    external: true
   traefik_traefik-network:
     external: true
