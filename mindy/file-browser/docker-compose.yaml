@@ -7,13 +7,13 @@ services:
       - db_db-network
       - filebrowser-network
     volumes:
-      - /docker-volumes/filebrowser/config:/config
+      - /docker-volumes/filebrowser/config:/home/filebrowser/data
       - /docker-volumes/filebrowser/files:/files
     ports:
       - "8900:80"
     restart: unless-stopped
     environment:
-      - "FILEBROWSER_CONFIG=/config/config.yaml"
+      - "FILEBROWSER_CONFIG=/home/filebrowser/data/config.yaml"
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik_traefik-network"
