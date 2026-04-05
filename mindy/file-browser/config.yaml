@@ -1,0 +1,29 @@
+server:
+  port: 80
+  # Connection string for Postgres
+  database: "postgres://filebrowser:${PASSWORD}@db:5432/filebrowser?sslmode=disable"
+  sources:
+    - path: "/data"
+      config:
+        defaultEnabled: true
+
+auth:
+  methods:
+    password: true
+    oidc:
+      enabled: true
+      issuerUrl: "https://auth.wvl.app"
+      clientId: "367153386023354372"
+      # clientSecret: "your-client-secret"
+      # Scopes required by Zitadel
+      scopes: "openid profile email groups"
+      userIdentifier: "sub"
+      createUser: true
+      groupsClaim: "groups"
+      adminGroup: "fb_admins"
+
+# If you want to add Collabora/Euro-Office later:
+#integrations:
+#  office:
+#    enabled: true
+#    serverUrl: "https://drive.wvl.app"
