@@ -1,7 +1,7 @@
 services:
   filebrowser:
     container_name: filebrowser
-    image: gtstef/filebrowser:stable
+    image: gtstef/filebrowser:1.2.4-stable-slim
     networks:
       - traefik_traefik-network
       - db_db-network

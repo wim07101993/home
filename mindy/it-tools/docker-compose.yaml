@@ -1,14 +1,14 @@
 name: it-tools
 services:
   it-tools:
-    image: corentinth/it-tools:latest
+    image: corentinth/it-tools:2024.10.22-7ca5933
     container_name: it-tools
     restart: unless-stopped
     ports:
       - "3000:80"
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=reverse-proxy_reverse-proxy-network"
+      - "traefik.docker.network=traefik_traefik-network"
       - "traefik.http.routers.it-tools.rule=Host(`it-tools.wvl.app`)"
       - "traefik.http.routers.it-tools.entrypoints=websecure"
       - "traefik.http.routers.it-tools.tls.certresolver=le"

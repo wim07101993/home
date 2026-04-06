@@ -1,0 +1,42 @@
+services:
+  homepage:
+    image: ghcr.io/gethomepage/homepage:1.12.3
+    container_name: homepag
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      HOMEPAGE_ALLOWED_HOSTS: wvl.app # required, may need port. See gethomepage.dev/installation/#homepage_allowed_hosts
+      PUID: 1000 # optional, your user id
+      PGID: 1000 # optional, your group id
+    volumes:
+      - /docker-volumes/homepage/config:/app/config # Make sure your local config directory exists
+      - /var/run/docker.sock:/var/run/docker.sock:ro # optional, for docker integrations
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_traefik-network"
+      - "traefik.http.routers.homepage.rule=Host(`homepage.wvl.app`)"
+      - "traefik.http.routers.homepage.entrypoints=websecure"
+      - "traefik.http.routers.homepage.tls.certresolver=le"
+    networks:
+      - it-tools-network
+      - traefik_traefik-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 60s
+      timeout: 30s
+      retries: 5
+      start_period: 20s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          pids: 10
+
+networks:
+  homepage-network:
+  traefik_traefik-network:
+    external: true
