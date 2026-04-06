@@ -1,57 +1,57 @@
 - Plop:
     - Portainer:
         href: 'https://100.117.36.52:9443/'
-        icon: /config/icons/portainer.svg
+        icon: /icons/portainer-dark.svg
     - Database:
         href: 'postgresql://100.117.36.52:5432/'
-        icon: /config/icons/postresql.svg
+        icon: /icons/postresql.svg
     - HomeAssistant:
         href: 'https://100.117.36.52:8123/'
-        icon: /config/icons/home-assistant.svg
+        icon: /icons/home-assistant.svg
 
 - Samson:
     - Portainer:
         href: 'https://100.71.248.106:9443/'
-        icon: /config/icons/portainer.svg
+        icon: /icons/portainer-dark.svg
     - Databasus:
         href: 'https://100.71.248.106:4005/'
-        icon: /config/icons/databasus.svg
+        icon: /icons/databasus.svg
     - Plex:
         href: 'https://app.plex.tv/'
-        icon: /config/icons/plex.svg
+        icon: /icons/plex.svg
 
 - Bumba:
     - Portainer:
         href: 'https://100.104.241.49:9443/'
-        icon: /config/icons/portainer.svg
+        icon: /icons/portainer-dark.svg
     - Database:
         href: 'postgresql://100.104.241.49:5432/'
-        icon: /config/icons/postresql.svg
+        icon: /icons/postgresql.svg
     - Memo:
         href: 'https://memo.wvl.app'
-        icon: /config/icons/memos.svg
+        icon: /icons/memos.svg
     - Score:
         href: 'https://score.wvl.app'
     - Traefik:
         href: 'https://100.104.241.49:443'
-        icon: /config/icons/traefik.svg
+        icon: /icons/traefik.svg
     - Zitadel:
         href: 'https://auth.wvl.app'
-        icon: /config/icons/zitadel.svg
+        icon: /icons/zitadel.svg
 
 - Mindy:
     - Portainer:
         href: 'http://100.127.106.121:9443/'
-        icon: /config/icons/portainer.svg
+        icon: /icons/portainer-dark.svg
     - Drive:
         href: 'https://drive.wvl.app'
-        icon: /config/icons/filebrowser-quantum.svg
+        icon: /icons/filebrowser-quantum.svg
     - ItTools:
         href: 'https://it-tools.wvl.app'
-        icon: /config/icons/it-tools-light.svg
+        icon: /icons/it-tools-light.svg
     - Photos:
         href: 'https://photos.wvl.app'
-        icon: /config/icons/immich.svg
+        icon: /icons/immich.svg
     - Traefik:
         href: 'https://traefik.wvl.app'
-        icon: /config/icons/traefik.svg
+        icon: /icons/traefik.svg
