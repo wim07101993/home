@@ -6,7 +6,7 @@ services:
     ports:
       - "3001:3000"
     environment:
-      HOMEPAGE_ALLOWED_HOSTS: wvl.app # required, may need port. See gethomepage.dev/installation/#homepage_allowed_hosts
+      HOMEPAGE_ALLOWED_HOSTS: "wvl.app,homepage.wvl.app,100.127.106.121:3001"
       PUID: 1000 # optional, your user id
       PGID: 1000 # optional, your group id
     volumes:
@@ -29,11 +29,11 @@ services:
 #      start_period: 20s
     security_opt:
       - no-new-privileges:true
-#    cap_drop:
-#      - ALL
-#    cap_add:
-#      - SETGID
-#      - SETUID
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETGID
+      - SETUID
 #    deploy:
 #      resources:
 #        limits:
