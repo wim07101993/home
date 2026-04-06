@@ -33,6 +33,7 @@ services:
       - ALL
     cap_add:
       - SETGID
+      - SETUID
     deploy:
       resources:
         limits:
