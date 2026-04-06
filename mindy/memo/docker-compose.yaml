@@ -1,5 +1,6 @@
 services:
   memo:
+    container_name: memos
     restart: "unless-stopped"
     image: neosmemo/memos:0.26.2
     networks:
@@ -23,6 +24,8 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    cap_add:
+      - SETGID
     deploy:
       resources:
         limits:

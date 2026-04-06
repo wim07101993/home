@@ -7,5 +7,6 @@
 | 2283 | Immich      |
 | 3000 | IT-tools    |
 | 3001 | Homepage    |
+| 3007 | memo        |
 | 5432 | Postgres DB |
 | 8900 | Filebrowser |
