@@ -19,7 +19,7 @@ services:
       - "traefik.http.routers.homepage.entrypoints=websecure"
       - "traefik.http.routers.homepage.tls.certresolver=le"
     networks:
-      - it-tools-network
+      - homepage-network
       - traefik_traefik-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80"]
