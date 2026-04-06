@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 300">
+    <g id="w">
+        <use href="#parallellogram"/>
+        <use href="#triangle"
+             transform="translate(125)"/>
+        <use href="#parallellogram"
+             transform="translate(350) scale(-1, 1)"/>
+    </g>
+
+    <g id="i"
+       transform="translate(500)">
+        <use href="#parallellogram"
+             transform="scale(-1, 1)"/>
+    </g>
+
+    <g id="m"
+       transform="translate(500)">
+        <use href="#w" transform="scale(1, -1) translate(0, -300)"/>
+    </g>
+
+    <defs>
+        <path id="parallellogram" d="M 0,0 h 100 l 50,300 h -100 Z"/>
+        <path id="triangle" d="M 0,0 h 100 l -50,300 Z"/>
+    </defs>
+</svg>
