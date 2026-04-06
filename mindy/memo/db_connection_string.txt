@@ -1,1 +1,1 @@
-postgresql://memos:${PASSWORD}@db:5432/memos
+postgresql://memos:${PASSWORD}@db:5432/memos?sslmode=disable
