@@ -34,10 +34,10 @@ services:
     cap_add:
       - SETGID
       - SETUID
-#    deploy:
-#      resources:
-#        limits:
-#          pids: 10
+    deploy:
+      resources:
+        limits:
+          pids: 99
 
 networks:
   homepage-network:
