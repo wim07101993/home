@@ -1,11 +1,11 @@
 services:
   memo:
     restart: "unless-stopped"
-    image: neosmemo/memos:stable
+    image: neosmemo/memos:0.26.2
     networks:
-      - "reverse-proxy_reverse-proxy-network"
-      - "database_db-network"
-      - "memo-network"
+      - traefik_traefik-network
+      - db_db-network
+      - memo-network
     environment:
       - MEMOS_DRIVER=postgres
       - MEMOS_DSN_FILE=/run/secrets/db_connection_string
@@ -15,7 +15,7 @@ services:
       - "3007:5230"
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=reverse-proxy_reverse-proxy-network"
+      - "traefik.docker.network=traefik_traefik-network"
       - "traefik.http.routers.memo.rule=Host(`memo.wvl.app`)"
       - "traefik.http.routers.memo.entrypoints=websecure"
       - "traefik.http.routers.memo.tls.certresolver=le"
@@ -35,7 +35,7 @@ secrets:
 
 networks:
   memo-network:
-  database_db-network:
+  db_db-network:
     external: true
-  reverse-proxy_reverse-proxy-network:
+  traefik_traefik-network:
     external: true

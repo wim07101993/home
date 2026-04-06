@@ -4,9 +4,9 @@
         icon: /icons/portainer-dark.svg
     - Database:
         href: 'postgresql://100.117.36.52:5432/'
-        icon: /icons/postresql.svg
+        icon: /icons/postgresql.svg
     - HomeAssistant:
-        href: 'https://100.117.36.52:8123/'
+        href: 'http://100.117.36.52:8123/'
         icon: /icons/home-assistant.svg
 
 - Samson:
@@ -14,7 +14,7 @@
         href: 'https://100.71.248.106:9443/'
         icon: /icons/portainer-dark.svg
     - Databasus:
-        href: 'https://100.71.248.106:4005/'
+        href: 'http://100.71.248.106:4005/'
         icon: /icons/databasus.svg
     - Plex:
         href: 'https://app.plex.tv/'
@@ -32,17 +32,17 @@
         icon: /icons/memos.svg
     - Score:
         href: 'https://score.wvl.app'
-    - Traefik:
-        href: 'https://100.104.241.49:443'
-        icon: /icons/traefik.svg
     - Zitadel:
         href: 'https://auth.wvl.app'
-        icon: /icons/zitadel.svg
+        icon: /icons/zitadel-light.svg
 
 - Mindy:
     - Portainer:
-        href: 'http://100.127.106.121:9443/'
+        href: 'https://100.127.106.121:9443/'
         icon: /icons/portainer-dark.svg
+    - Database:
+        href: 'postgresql://100.127.106.121:5432/'
+        icon: /icons/postgresql.svg
     - Drive:
         href: 'https://drive.wvl.app'
         icon: /icons/filebrowser-quantum.svg
