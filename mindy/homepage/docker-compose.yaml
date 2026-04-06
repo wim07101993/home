@@ -29,11 +29,11 @@ services:
       start_period: 20s
     security_opt:
       - no-new-privileges:true
-    cap_drop:
-      - ALL
-    cap_add:
-      - SETGID
-      - SETUID
+#    cap_drop:
+#      - ALL
+#    cap_add:
+#      - SETGID
+#      - SETUID
     deploy:
       resources:
         limits:
