@@ -1,7 +1,7 @@
 resource "postgresql_role" "memo" {
   name     = "memo"
   login    = true
-  password = "memo_password_change_me" # TODO: use a generated secret
+  password = var.db_password
 }
 
 resource "postgresql_database" "memo" {

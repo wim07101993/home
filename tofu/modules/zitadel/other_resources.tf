@@ -1,13 +1,13 @@
 resource "postgresql_role" "zitadel_user" {
   name     = "zitadel_user"
   login    = true
-  password = "zitadel_user_password" # Use random_password in real setup
+  password = var.user_password
 }
 
 resource "postgresql_role" "zitadel_root" {
   name     = "zitadel_root"
   login    = true
-  password = "zitadel_root_password"
+  password = var.root_password
 }
 
 resource "postgresql_database" "zitadel" {
@@ -17,7 +17,7 @@ resource "postgresql_database" "zitadel" {
 
 resource "docker_secret" "zitadel_masterkey" {
   name = "zitadel_masterkey_v1"
-  data = base64encode("zitadel_masterkey_value_from_original_file")
+  data = base64encode(var.masterkey)
 }
 
 resource "docker_secret" "zitadel_config" {
