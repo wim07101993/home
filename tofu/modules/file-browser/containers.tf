@@ -6,7 +6,13 @@ resource "docker_service" "filebrowser" {
       image = "gtstef/filebrowser:1.2.4-stable-slim"
 
       env = {
-        FILEBROWSER_CONFIG = "/home/filebrowser/data/config.yaml"
+        FILEBROWSER_CONFIG = "/run/secrets/filebrowser_config"
+      }
+
+      secrets {
+        secret_id   = docker_secret.filebrowser_config.id
+        secret_name = docker_secret.filebrowser_config.name
+        file_name   = "filebrowser_config"
       }
 
       mounts {

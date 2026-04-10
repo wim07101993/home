@@ -22,3 +22,8 @@ resource "random_password" "zitadel_masterkey" {
   length  = 32
   special = false
 }
+
+resource "random_password" "file_browser_db_password" {
+  length  = 32
+  special = false
+}

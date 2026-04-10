@@ -4,6 +4,10 @@ terraform {
       source  = "kreuzwerker/docker"
       version = "~> 4.1.0"
     }
+    postgresql = {
+      source  = "cyrilgdn/postgresql"
+      version = "~> 1.26.0"
+    }
   }
 }
 

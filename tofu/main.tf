@@ -49,6 +49,7 @@ module "file_browser" {
   source          = "./modules/file-browser"
   traefik_network = docker_network.traefik_network.name
   db_network      = docker_network.db_network.name
+  db_password     = random_password.file_browser_db_password.result
   domain          = var.domain
 }
 
