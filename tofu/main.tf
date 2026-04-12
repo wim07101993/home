@@ -15,6 +15,15 @@ provider "postgresql" {
   connect_timeout = 15
 }
 
+provider "zitadel" {
+  domain = "auth.${var.domain}"
+  insecure = false
+  # Port is 443 by default for https
+  # jwt_profile_json is usually used for machine user auth
+  # For the initial setup, we might need a different approach if we don't have a key yet.
+  # But the requirement is to use the provider.
+}
+
 module "database" {
   source      = "./modules/database"
   db_password = random_password.db_password.result
@@ -46,11 +55,13 @@ module "memo" {
 }
 
 module "file_browser" {
-  source          = "./modules/file-browser"
-  traefik_network = docker_network.traefik_network.name
-  db_network      = docker_network.db_network.name
-  db_password     = random_password.file_browser_db_password.result
-  domain          = var.domain
+  source             = "./modules/file-browser"
+  traefik_network    = docker_network.traefik_network.name
+  db_network         = docker_network.db_network.name
+  db_password        = random_password.file_browser_db_password.result
+  domain             = var.domain
+  zitadel_org_id     = module.zitadel.zitadel_org_id
+  zitadel_project_id = module.zitadel.zitadel_project_id
 }
 
 module "homepage" {

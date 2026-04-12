@@ -8,6 +8,10 @@ terraform {
       source  = "cyrilgdn/postgresql"
       version = "~> 1.26.0"
     }
+    zitadel = {
+      source  = "zitadel/zitadel"
+      version = "~> 2.12.0"
+    }
   }
 }
 

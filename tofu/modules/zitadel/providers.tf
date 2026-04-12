@@ -12,6 +12,10 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.6.0"
     }
+    zitadel = {
+      source  = "zitadel/zitadel"
+      version = "~> 2.12.0"
+    }
   }
 }
 
