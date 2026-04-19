@@ -1,0 +1,53 @@
+services:
+
+  broker:
+    container_name: paperless-broker
+    image: docker.io/library/redis:8
+    restart: unless-stopped
+    volumes:
+      - redisdata:/data
+    networks:
+      - paperless-network
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  webserver:
+    container_name: paperless
+    image: ghcr.io/paperless-ngx/paperless-ngx:v2.20.14
+    restart: unless-stopped
+    depends_on:
+      - broker
+    networks:
+      - paperless-network
+      - traefik_traefik-network
+      - db_db-network
+    ports:
+      - "8000:8000"
+    environment:
+      PAPERLESS_REDIS: redis://broker:6379
+      PAPERLESS_DBHOST: db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_traefik-network"
+      - "traefik.http.routers.memo.rule=Host(`memo.wvl.app`)"
+      - "traefik.http.routers.memo.entrypoints=websecure"
+      - "traefik.http.routers.memo.tls.certresolver=le"
+    volumes:
+      - /docker-volumes/paperless/data:/usr/src/paperless/data
+      - /docker-volumes/paperless/media:/usr/src/paperless/media
+      - /docker-volumes/paperless/export:/usr/src/paperless/export
+      - /docker-volumes/paperless/consume:/usr/src/paperless/consume
+    env_file: docker-compose.env
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+networks:
+  paperless-network:
+  db_db-network:
+    external: true
+  traefik_traefik-network:
+    external: true

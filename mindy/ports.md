@@ -9,4 +9,5 @@
 | 3001 | Homepage    |
 | 3007 | memo        |
 | 5432 | Postgres DB |
+| 8000 | Paperless   |
 | 8900 | Filebrowser |
