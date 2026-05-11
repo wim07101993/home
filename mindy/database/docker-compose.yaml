@@ -1,7 +1,7 @@
 services:
   db:
     restart: unless-stopped
-    image: postgres:17.9-alpine3.23
+    image: postgres:18.3-alpine3.23
     container_name: db
     environment:
       PGUSER: postgres
