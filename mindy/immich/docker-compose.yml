@@ -3,7 +3,7 @@ name: immich
 services:
   immich-server:
     container_name: immich
-    image: ghcr.io/immich-app/immich-server:v2.6.3
+    image: ghcr.io/immich-app/immich-server:v2.7.4
     networks:
       - traefik_traefik-network
       - immich-network
