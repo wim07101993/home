@@ -8,7 +8,7 @@ services:
       - db_db-network
       - traefik_traefik-network
     ports:
-      - "3002:8000"
+      - "3002:8080"
     volumes:
       - /docker-volumes/kitchen-owl/data:/data
     labels:
