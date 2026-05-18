@@ -1,0 +1,40 @@
+services:
+  kitchen-owl:
+    container_name: kitchen-owl
+    image: tombursch/kitchenowl:v0.7.8
+    restart: unless-stopped
+    networks:
+      - kitchen-owl-network
+      - db_db-network
+      - traefik_traefik-network
+    ports:
+      - "3002:8000"
+    volumes:
+      - /docker-volumes/kitchen-owl/data:/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_traefik-network"
+      - "traefik.http.routers.keuken.rule=Host(`keuken.wvl.app`)"
+      - "traefik.http.routers.keuken.entrypoints=websecure"
+      - "traefik.http.routers.keuken.tls.certresolver=le"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETGID
+      - SETUID
+    deploy:
+      resources:
+        limits:
+          pids: 99
+
+volumes:
+  kitchenowl_data:
+
+networks:
+  kitchen-owl-network:
+  db_db-network:
+    external: true
+  traefik_traefik-network:
+    external: true
