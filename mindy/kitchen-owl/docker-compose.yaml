@@ -1,10 +1,28 @@
 services:
+  db:
+    image: postgres:15
+    security_opt:
+      - "no-new-privileges:true"
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - /docker-volumes/kitchen-owl/db:/var/lib/postgresql/data
+    networks:
+      - kitchen-owl-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
+      interval: 30s
+      timeout: 60s
+      retries: 5
+      start_period: 80s
+
   kitchen-owl:
     container_name: kitchen-owl
     restart: unless-stopped
     image: tombursch/kitchenowl:v0.7.8
     networks:
-      - db_db-network
+#      - db_db-network
       - kitchen-owl-network
       - traefik_traefik-network
     ports:
@@ -36,7 +54,7 @@ volumes:
 
 networks:
   kitchen-owl-network:
-  db_db-network:
-    external: true
+#  db_db-network:
+#    external: true
   traefik_traefik-network:
     external: true
