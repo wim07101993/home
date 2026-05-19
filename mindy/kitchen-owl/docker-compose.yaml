@@ -9,6 +9,8 @@ services:
       - traefik_traefik-network
     ports:
       - "3002:8080"
+    env_file:
+      - .env
     volumes:
       - /docker-volumes/kitchen-owl/data:/data
     labels:
