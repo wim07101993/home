@@ -24,6 +24,7 @@ services:
 
 networks:
   db-network:
+    name: db_db-network
 
 secrets:
   db_password:
