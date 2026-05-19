@@ -2,7 +2,6 @@ services:
   kitchen-owl:
     container_name: kitchen-owl
     image: tombursch/kitchenowl:v0.7.8
-    restart: unless-stopped
     networks:
       - kitchen-owl-network
       - db_db-network
