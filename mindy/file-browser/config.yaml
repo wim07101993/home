@@ -1,6 +1,5 @@
 server:
   port: 80
-  database: "postgres://filebrowser:${PASSWORD}@db:5432/filebrowser?sslmode=disable"
   sources:
     - path: "/files/wim"
       name: "Wim privé"
