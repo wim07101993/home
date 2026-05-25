@@ -8,7 +8,7 @@ services:
       POSTGRES_DB: kitchenowl
       POSTGRES_USER: kitchenowl
     env_file:
-      - stack.env
+      - .env
     volumes:
       - /docker-volumes/kitchen-owl/db:/var/lib/postgresql/data
     networks:
@@ -42,7 +42,7 @@ services:
       DB_NAME: kitchenowl
       DB_USER: kitchenowl
     env_file:
-      - stack.env
+      - .env
     volumes:
       - /docker-volumes/kitchen-owl/data:/data
     labels:
