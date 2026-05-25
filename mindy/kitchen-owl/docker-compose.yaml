@@ -4,6 +4,9 @@ services:
     security_opt:
       - "no-new-privileges:true"
     restart: unless-stopped
+    environment:
+      POSTGRES_DB: kitchenowl
+      POSTGRES_USER: kitchenowl
     env_file:
       - .env
     volumes:
@@ -27,6 +30,17 @@ services:
       - traefik_traefik-network
     ports:
       - "3002:8080"
+    environment:
+      FRONT_URL: https://keuken.wvl.app
+      DISABLE_USERNAME_PASSWORD_LOGIN: true
+      OIDC_ISSUER: https://auth.wvl.app
+      OIDC_CLIENT_ID: 373524057661898755
+      OIDC_NAME: Home
+      DB_DRIVER: postgresql
+      DB_PORT: 5432
+      DB_HOST: db
+      DB_NAME: kitchenowl
+      DB_USER: kitchenowl
     env_file:
       - .env
     volumes:
