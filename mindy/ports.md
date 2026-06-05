@@ -11,5 +11,6 @@
 | 3007 | memo          |
 | 5432 | Postgres DB   |
 | 5433 | Kitchenowl DB |
+| 5434 | Immich DB     |
 | 8000 | Paperless     |
 | 8900 | Filebrowser   |
