@@ -10,6 +10,6 @@
 | 3002 | KitchenOwl    |
 | 3007 | memo          |
 | 5432 | Postgres DB   |
-| 5432 | Kitchenowl DB |
+| 5433 | Kitchenowl DB |
 | 8000 | Paperless     |
 | 8900 | Filebrowser   |
