@@ -8,6 +8,8 @@ services:
       POSTGRES_DB: kitchenowl
       POSTGRES_USER: kitchenowl
       POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5433:5432"
     volumes:
       - /docker-volumes/kitchen-owl/db:/var/lib/postgresql/data
     networks:
