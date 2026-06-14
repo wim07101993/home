@@ -20,7 +20,8 @@ services:
       - "traefik.http.routers.drive.rule=Host(`drive.wvl.app`)"
       - "traefik.http.routers.drive.entrypoints=websecure"
       - "traefik.http.routers.drive.tls.certresolver=le"
-
+      - "traefik.http.middlewares.fb-size-limit.buffering.maxRequestBodyBytes=2000000000"
+      - "traefik.http.routers.filebrowser.middlewares=fb-size-limit"
 networks:
   filebrowser-network:
   db_db-network:

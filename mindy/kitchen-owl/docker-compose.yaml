@@ -26,7 +26,6 @@ services:
     restart: unless-stopped
     image: tombursch/kitchenowl:v0.7.8
     networks:
-#      - db_db-network
       - kitchen-owl-network
       - traefik_traefik-network
     ports:
@@ -69,7 +68,5 @@ volumes:
 
 networks:
   kitchen-owl-network:
-  db_db-network:
-    external: true
   traefik_traefik-network:
     external: true
