@@ -29,8 +29,6 @@ services:
       - "traefik.http.routers.photos.entrypoints=websecure"
       - "traefik.http.routers.photos.tls.certresolver=le"
       - "traefik.http.routers.photos.service=photos-service"
-      - "traefik.http.services.photos-service.loadbalancer.server.port=2283"
-      - "traefik.http.services.photos-service.loadbalancer.responseforwarding.flushinterval=100ms"
     healthcheck:
       disable: false
     security_opt:
