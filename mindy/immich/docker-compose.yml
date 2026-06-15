@@ -30,6 +30,9 @@ services:
       - "traefik.http.routers.photos.tls.certresolver=le"
       - "traefik.http.middlewares.immich-limit.buffering.maxRequestBodyBytes=50000000000"
       - "traefik.http.routers.immich.middlewares=immich-limit"
+      - "--entrypoints.websecure.transport.respondingTimeouts.readTimeout=600s"
+      - "--entrypoints.websecure.transport.respondingTimeouts.writeTimeout=600s"
+      - "--entrypoints.websecure.transport.respondingTimeouts.idleTimeout=600s"
     healthcheck:
       disable: false
     security_opt:
