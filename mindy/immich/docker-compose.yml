@@ -28,11 +28,11 @@ services:
       - "traefik.http.routers.photos.rule=Host(`photos.wvl.app`)"
       - "traefik.http.routers.photos.entrypoints=websecure"
       - "traefik.http.routers.photos.tls.certresolver=le"
-      - "traefik.http.middlewares.immich-limit.buffering.maxRequestBodyBytes=50000000000"
-      - "traefik.http.routers.immich.middlewares=immich-limit"
-      - "--entrypoints.websecure.transport.respondingTimeouts.readTimeout=600s"
-      - "--entrypoints.websecure.transport.respondingTimeouts.writeTimeout=600s"
-      - "--entrypoints.websecure.transport.respondingTimeouts.idleTimeout=600s"
+      - "traefik.http.routers.photos.middlewares=immich-stream"
+      - "traefik.http.middlewares.immich-stream.buffering.maxRequestBodyBytes=0"
+      - "traefik.http.middlewares.immich-stream.memRequestBodyBytes=0"
+      - "traefik.http.middlewares.immich-stream.maxResponseBodyBytes=0"
+      - "traefik.http.middlewares.immich-stream.memResponseBodyBytes=0"
     healthcheck:
       disable: false
     security_opt:
