@@ -21,6 +21,8 @@ services:
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.websecure.asDefault=true"
       - "--entrypoints.websecure.http.tls.certResolver=le"
+      - "--entrypoints.websecure.transport.respondingTimeouts.readTimeout=600s"
+      - "--entrypoints.websecure.transport.respondingTimeouts.writeTimeout=600s"
       # Certificate resolvers
       - "--certificatesresolvers.le.acme.httpchallenge=true"
       - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
