@@ -28,7 +28,6 @@ services:
       - "traefik.http.routers.photos.rule=Host(`photos.wvl.app`)"
       - "traefik.http.routers.photos.entrypoints=websecure"
       - "traefik.http.routers.photos.tls.certresolver=le"
-      - "traefik.http.routers.photos.service=photos-service"
     healthcheck:
       disable: false
     security_opt:
