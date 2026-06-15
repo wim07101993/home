@@ -28,11 +28,8 @@ services:
       - "traefik.http.routers.photos.rule=Host(`photos.wvl.app`)"
       - "traefik.http.routers.photos.entrypoints=websecure"
       - "traefik.http.routers.photos.tls.certresolver=le"
-      - "traefik.http.routers.photos.middlewares=immich-stream"
       - "traefik.http.middlewares.immich-stream.buffering.maxRequestBodyBytes=0"
-      - "traefik.http.middlewares.immich-stream.memRequestBodyBytes=0"
-      - "traefik.http.middlewares.immich-stream.maxResponseBodyBytes=0"
-      - "traefik.http.middlewares.immich-stream.memResponseBodyBytes=0"
+      - "traefik.http.routers.photos.middlewares=immich-stream"
     healthcheck:
       disable: false
     security_opt:
