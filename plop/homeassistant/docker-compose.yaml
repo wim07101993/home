@@ -1,7 +1,7 @@
 services:
   homeassistant:
     restart: unless-stopped
-    image: "ghcr.io/home-assistant/home-assistant:stable"
+    image: "home-assistant/home-assistant:v2026.6.4"
     environment:
       TZ: Europe/Brussels
     ports:
@@ -14,6 +14,27 @@ services:
       - /run/dbus:/run/dbus:ro
     devices:
       - "/dev/ttyUSB0:/dev/ttyUSB0"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          pids: 99
+          cpus: 6
+          memory: 8gb
+
+  matterjs-server:
+    container_name: matterjs-server
+    restart: unless-stopped
+    image: ghcr.io/matter-js/matterjs-server:v1.1.5
+    read_only: true
+    network_mode: host
+    networks:
+      - home-assistant-network
+    volumes:
+      - /docker-volumes/homeassistant/matterjs-server:/data"
     security_opt:
       - no-new-privileges:true
     cap_drop:
