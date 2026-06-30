@@ -1,7 +1,7 @@
 services:
   homeassistant:
     restart: unless-stopped
-    image: "home-assistant/home-assistant:v2026.6.4"
+    image: "homeassistant/home-assistant:v2026.6.4"
     environment:
       TZ: Europe/Brussels
     ports:
