@@ -31,8 +31,6 @@ services:
     image: ghcr.io/matter-js/matterjs-server:v1.1.5
     read_only: true
     network_mode: host
-    networks:
-      - home-assistant-network
     volumes:
       - /docker-volumes/homeassistant/matterjs-server:/data"
     security_opt:
