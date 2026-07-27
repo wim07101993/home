@@ -7,14 +7,6 @@ services:
       - "4005:4005"
     volumes:
       - /docker-volumes/backup-server/databasus/data:/databasus-data
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
-    cap_add:
-      - CHOWN
-      - SETGID
-      - SETUID
       
   syncthing:
     container_name: syncthing
