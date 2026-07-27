@@ -23,8 +23,6 @@ services:
     ports:
       - "8384:8384"
     environment:
-      - PUID=1000
-      - PGID=1000
       - STGUIADDRESS=
     volumes:
       - /docker-volumes/backup-server/syncthing:/var/syncthing
