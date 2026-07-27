@@ -16,7 +16,7 @@ services:
       - SETGID
       - SETUID
       
-syncthing:
+  syncthing:
     container_name: syncthing
     restart: unless-stopped
     image: syncthing/syncthing:2.1.2
