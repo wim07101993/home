@@ -20,9 +20,12 @@ services:
     container_name: syncthing
     restart: unless-stopped
     image: syncthing/syncthing:2.1.2
+    ports:
+      - "8384:8384"
     environment:
       - PUID=1000
       - PGID=1000
+      - STGUIADDRESS=
     volumes:
       - /docker-volumes/backup-server/syncthing:/var/syncthing
     healthcheck:
@@ -34,7 +37,3 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    cap_add:
-      - CHOWN
-      - SETGID
-      - SETUID
