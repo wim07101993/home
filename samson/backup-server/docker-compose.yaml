@@ -2,8 +2,39 @@ services:
   databasus:
     container_name: databasus
     restart: unless-stopped
-    image: databasus/databasus:latest
+    image: databasus/databasus:v3.51.0
     ports:
       - "4005:4005"
     volumes:
       - /docker-volumes/backup-server/databasus/data:/databasus-data
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+      
+syncthing:
+    container_name: syncthing
+    restart: unless-stopped
+    image: syncthing/syncthing:2.1.2
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - /docker-volumes/backup-server/syncthing:/var/syncthing
+    healthcheck:
+      test: curl -fkLsS -m 2 127.0.0.1:8384/rest/noauth/health | grep -o --color=never OK || exit 1
+      interval: 1m
+      timeout: 10s
+      retries: 3
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
