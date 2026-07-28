@@ -7,6 +7,8 @@ services:
       - /docker-volumes:/data:ro
       - /docker-volumes/kopia/kopia-config:/app/config
       - /docker-volumes/kopia/kopia-cache:/app/cache
+    ports:
+      - "51515:51515"
     command:
       - server
       - start
