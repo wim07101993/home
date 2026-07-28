@@ -9,6 +9,9 @@ services:
       - /docker-volumes/kopia/kopia-cache:/app/cache
     ports:
       - "51515:51515"
+    environment:
+      - KOPIA_SERVER_USERNAME=wim
+      # - KOPIA_SERVER_PASSWORD=YourStrongPassword123
     command:
       - server
       - start
