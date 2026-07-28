@@ -7,6 +7,9 @@ services:
       - /docker-volumes:/data:ro
       - /docker-volumes/kopia/kopia-config:/app/config
       - /docker-volumes/kopia/kopia-cache:/app/cache
+    environment:
+      - KOPIA_SERVER_USERNAME=wim
+      - KOPIA_SERVER_PASSWORD=YourStrongPassword123 # I know credentials in git is not done, but this server is ran only locally and environment variables from portainer don't work...
     ports:
       - "51515:51515"
     command:
@@ -14,4 +17,3 @@ services:
       - start
       - --insecure
       - --address=0.0.0.0:51515
-      - --without-password
