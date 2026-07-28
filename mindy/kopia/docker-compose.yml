@@ -1,0 +1,14 @@
+services:
+  kopia:
+    container_name: kopia
+    image: kopia/kopia:0.23.1
+    restart: unless-stopped
+    volumes:
+      - /docker-volumes:/data:ro
+      - /docker-volumes/kopia/kopia-config:/app/config
+      - /docker-volumes/kopia/kopia-cache:/app/cache
+    command:
+      - server
+      - start
+      - --insecure
+      - --address=0.0.0.0:51515
