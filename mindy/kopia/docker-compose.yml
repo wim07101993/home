@@ -17,3 +17,8 @@ services:
       - start
       - --insecure
       - --address=0.0.0.0:51515
+    deploy:
+      resources:
+        limits:
+          memory: 4g
+          cpus: 0.25
