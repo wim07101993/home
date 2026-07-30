@@ -3,6 +3,10 @@ services:
     container_name: kopia
     image: kopia/kopia:0.23.1
     restart: unless-stopped
+    environment:
+      KOPIA_SERVER_USERNAME: wim
+      KOPIA_SERVER_PASSWORD_FILE: /run/secrets/user_password
+      KOPIA_PASSWORD_FILE: /run/secrets/kopia_password
     volumes:
       - /docker-volumes/kopia/data:/data:ro
       - /docker-volumes/kopia/kopia-config:/app/config
@@ -16,8 +20,15 @@ services:
       - start
       - --insecure
       - --address=0.0.0.0:51515
+      - --auto-connect-to-repository=true
     deploy:
       resources:
         limits:
           memory: 4g
           cpus: 0.25
+
+secrets:
+  user_password:
+    file: /docker-volumes/kopia/user_password.txt
+  kopia_password:
+    file: /docker-volumes/kopia/kopia_password.txt
