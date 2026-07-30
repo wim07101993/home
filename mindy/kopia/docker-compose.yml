@@ -15,7 +15,8 @@ services:
     ports:
       - "51515:51515"
     entrypoint: ["/bin/sh", "-c"]
-    command: |
+    command: 
+      - |
         export KOPIA_SERVER_PASSWORD=$$(cat /run/secrets/user_password | tr -d '\r\n')
         export KOPIA_PASSWORD=$$(cat /run/secrets/repository_password | tr -d '\r\n')
         exec kopia server start --insecure --address=0.0.0.0:51515 --config-file=/app/config/repository.config
