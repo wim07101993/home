@@ -10,7 +10,7 @@ services:
     ports:
       - "51515:51515"
     env_file:
-      - stack.env
+      - ../stack.env
     command:
       - server
       - start
