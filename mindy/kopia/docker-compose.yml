@@ -7,8 +7,6 @@ services:
       - /docker-volumes/kopia/data:/data:ro
       - /docker-volumes/kopia/kopia-config:/app/config
       - /docker-volumes/kopia/kopia-cache:/app/cache
-    env_file:
-      - stack.env
     ports:
       - "51515:51515"
     command:
