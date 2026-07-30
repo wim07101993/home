@@ -3,20 +3,25 @@ services:
     container_name: kopia
     image: kopia/kopia:0.23.1
     restart: unless-stopped
-    env_file:
-      - /docker-volumes/kopia/kopia.env
     volumes:
+      # Data & configuration mounts
       - /docker-volumes/kopia/data:/data:ro
       - /docker-volumes/kopia/kopia-config:/app/config
       - /docker-volumes/kopia/kopia-cache:/app/cache
+      # Read password files directly from host
+      - /docker-volumes/kopia/user_password.txt:/run/secrets/user_password:ro
+      - /docker-volumes/kopia/repository_password.txt:/run/secrets/repository_password:ro
+    environment:
+      - KOPIA_SERVER_USERNAME=wim
     ports:
       - "51515:51515"
-    command:
-      - server
-      - start
-      - --insecure
-      - --address=0.0.0.0:51515
-      - --config-file=/app/config/repository.config
+    entrypoint:
+      - /bin/sh
+      - -c
+      - >
+        export KOPIA_SERVER_PASSWORD=$$(cat /run/secrets/user_password | tr -d '\r\n') &&
+        export KOPIA_PASSWORD=$$(cat /run/secrets/repository_password | tr -d '\r\n') &&
+        exec kopia server start --insecure --address=0.0.0.0:51515 --config-file=/app/config/repository.config
     deploy:
       resources:
         limits:
