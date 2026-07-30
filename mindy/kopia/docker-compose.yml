@@ -6,7 +6,7 @@ services:
     environment:
       KOPIA_SERVER_USERNAME: wim
       KOPIA_SERVER_PASSWORD_FILE: /run/secrets/user_password
-      KOPIA_PASSWORD_FILE: /run/secrets/kopia_password
+      KOPIA_PASSWORD_FILE: /run/secrets/repository_password
     volumes:
       - /docker-volumes/kopia/data:/data:ro
       - /docker-volumes/kopia/kopia-config:/app/config
@@ -30,5 +30,5 @@ services:
 secrets:
   user_password:
     file: /docker-volumes/kopia/user_password.txt
-  kopia_password:
-    file: /docker-volumes/kopia/kopia_password.txt
+  repository_password:
+    file: /docker-volumes/kopia/repository_password.txt
