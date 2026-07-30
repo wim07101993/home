@@ -4,12 +4,14 @@ services:
     image: kopia/kopia:0.23.1
     restart: unless-stopped
     volumes:
-      - /docker-volumes:/data:ro
+      - /docker-volumes/kopia/data:/data:ro
       - /docker-volumes/kopia/kopia-config:/app/config
       - /docker-volumes/kopia/kopia-cache:/app/cache
     environment:
       - KOPIA_SERVER_USERNAME=wim
       - KOPIA_SERVER_PASSWORD=YourStrongPassword123 # I know credentials in git is not done, but this server is ran only locally and environment variables from portainer don't work...
+    env_file:
+      - stack.env
     ports:
       - "51515:51515"
     command:
