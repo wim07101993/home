@@ -9,6 +9,8 @@ services:
       - /docker-volumes/kopia/kopia-cache:/app/cache
     ports:
       - "51515:51515"
+    env_file:
+      - stack.env
     command:
       - server
       - start
