@@ -1,10 +1,26 @@
+# Kopia REPOSITORY SERVER.
+#
+# This is the only machine that holds the Hetzner Storage Box credentials, and
+# the only one that talks to it -- which keeps the Storage Box reachable from
+# inside Hetzner only. Remote machines (see samson/kopia) connect here as
+# repository *clients*: they authenticate with a per-machine server user and
+# never learn the repository password.
+#
+# Migration runbook: samson/kopia/README.md
 services:
   kopia:
     container_name: kopia
     image: kopia/kopia:0.23.1
     restart: unless-stopped
+    # Without this the container ID becomes the hostname, and kopia keys sources
+    # as <user>@<hostname>:<path> -- so every `docker compose up` minted a fresh
+    # identity and every source restarted with zero history. The 2026-08 audit
+    # found 57 of 65 sources holding exactly one snapshot for this reason.
+    hostname: mindy
     volumes:
-      # Data & configuration mounts
+      # PHASE 4: remove this line once samson snapshots its own local disk.
+      # It is the only reason the nine /docker-volumes/kopia/data/* NFS mounts
+      # from samson exist (see mindy/fstab).
       - /docker-volumes/kopia/data:/data:ro
       - /docker-volumes/kopia/kopia-config:/app/config
       - /docker-volumes/kopia/kopia-cache:/app/cache
@@ -14,14 +30,21 @@ services:
     environment:
       - KOPIA_SERVER_USERNAME=wim
     ports:
-      - "51515:51515"
+      # Tailscale interface only. Previously "51515:51515", which bound mindy's
+      # PUBLIC interface -- combined with --insecure that served the repository
+      # API over cleartext HTTP to the internet.
+      - "100.127.106.121:51515:51515"
     entrypoint:
       - /bin/sh
       - -c
       - >
         export KOPIA_SERVER_PASSWORD="$$(cat /run/secrets/user_password | tr -d '\r\n')" &&
         export KOPIA_PASSWORD="$$(cat /run/secrets/repository_password | tr -d '\r\n')" &&
-        exec kopia server start --insecure --address=0.0.0.0:51515 --config-file=/app/config/repository.config
+        exec kopia server start
+        --address=0.0.0.0:51515
+        --tls-cert-file=/app/config/kopia.cert
+        --tls-key-file=/app/config/kopia.key
+        --config-file=/app/config/repository.config
     deploy:
       resources:
         limits:
