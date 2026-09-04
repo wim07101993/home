@@ -40,6 +40,9 @@ services:
       - "traefik.http.routers.score-web-app.rule=Host(`score.wvl.app`)"
       - "traefik.http.routers.score-web-app.entrypoints=websecure"
       - "traefik.http.routers.score-web-app.tls.certresolver=le"
+      - "traefik.http.routers.partituren-web-app.rule=Host(`partituren.wvl.app`)"
+      - "traefik.http.routers.partituren-web-app.entrypoints=websecure"
+      - "traefik.http.routers.partituren-web-app.tls.certresolver=le"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80/"]
       interval: 60s
