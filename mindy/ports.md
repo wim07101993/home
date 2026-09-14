@@ -9,6 +9,7 @@
 | 3001  | Homepage      |
 | 3002  | KitchenOwl    |
 | 3007  | memo          |
+| 3008  | Uptime Kuma   |
 | 5432  | Postgres DB   |
 | 5433  | Kitchenowl DB |
 | 5434  | Immich DB     |

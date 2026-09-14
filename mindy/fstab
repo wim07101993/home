@@ -1,0 +1,79 @@
+# mindy:/etc/fstab
+#
+# NFS shares exported by samson (100.71.248.106, reached over Tailscale).
+# This file is NOT deployed automatically -- copy the relevant blocks to
+# /etc/fstab on mindy, then:
+#
+#     systemctl daemon-reload
+#     systemctl restart remote-fs.target
+#
+# Options rationale (see mindy/file-browser/docker-compose.yaml):
+#
+#   x-systemd.automount + x-systemd.mount-timeout=15
+#       The share is mounted on first access instead of at boot. When samson
+#       is unreachable the mount attempt FAILS after 15s instead of blocking
+#       forever, so consumers get an error they can handle. Without this, a
+#       `hard` mount makes stat(2) hang indefinitely -- which is what took
+#       filebrowser down on 2026-08-09: it blocked in setupSources() before
+#       ever opening its HTTP listener.
+#
+#       REQUIRES bind-propagation=rslave on any docker bind mount covering
+#       these paths, otherwise mounts established after container start are
+#       invisible inside the container.
+#
+#   hard
+#       Kept deliberately. `soft` would return EIO on timeout, which risks
+#       silent data loss on writes -- wrong trade-off for a file server.
+#
+#   timeo=150,retrans=3  (was timeo=900,retrans=5)
+#       15s per RPC retry instead of 90s. Detects and recovers from a samson
+#       outage in ~45s rather than ~7.5min.
+#
+#   nfsvers=3
+#       Pinned to today's behaviour. Moving to 4.2 is worth evaluating -- it
+#       uses only port 2049 (no rpcbind/mountd on random ports) and recovers
+#       from a flapping WAN link better -- but needs samson's exports checked
+#       for a v4 pseudo-root first.
+
+######################################
+# MOUNT SAMSON SERVER FOR FILEBROWSER
+######################################
+
+# HOMES
+
+100.71.248.106:/export/wim  /docker-volumes/filebrowser/files/wim  nfs _netdev,x-systemd.automount,x-systemd.mount-timeout=15,hard,timeo=150,retrans=3,nfsvers=3 0 0
+100.71.248.106:/export/sara /docker-volumes/filebrowser/files/sara nfs _netdev,x-systemd.automount,x-systemd.mount-timeout=15,hard,timeo=150,retrans=3,nfsvers=3 0 0
+
+# SHARED FOLDERS
+
+100.71.248.106:/export/gezin-officieel         /docker-volumes/filebrowser/files/gezin-officieel         nfs _netdev,x-systemd.automount,x-systemd.mount-timeout=15,hard,timeo=150,retrans=3,nfsvers=3 0 0
+100.71.248.106:/export/gezin-officieel-archive /docker-volumes/filebrowser/files/gezin-officieel-archive nfs _netdev,x-systemd.automount,x-systemd.mount-timeout=15,hard,timeo=150,retrans=3,nfsvers=3 0 0
+
+100.71.248.106:/export/audio         /docker-volumes/filebrowser/files/audio         nfs _netdev,x-systemd.automount,x-systemd.mount-timeout=15,hard,timeo=150,retrans=3,nfsvers=3 0 0
+100.71.248.106:/export/audio-archive /docker-volumes/filebrowser/files/audio-archive nfs _netdev,x-systemd.automount,x-systemd.mount-timeout=15,hard,timeo=150,retrans=3,nfsvers=3 0 0
+
+######################################
+# MOUNT SAMSON SERVER FOR IMMICH
+######################################
+
+100.71.248.106:/export/photos /docker-volumes/immich/immich-data nfs _netdev,x-systemd.automount,x-systemd.mount-timeout=15,hard,timeo=150,retrans=3,nfsvers=3 0 0
+
+######################################
+# MOUNT SAMSON SERVER TO BACKUP
+######################################
+
+# NOTE: as of 2026-08-09, /docker-volumes/kopia/data/audio-archive was listed
+# here but was NOT mounted (absent from `findmnt` and from
+# `systemctl list-units --type=mount --all`), while the filebrowser copy of the
+# same export was mounted fine. Kopia was therefore most likely snapshotting an
+# empty local directory. Verify snapshot sizes for audio-archive after applying.
+
+100.71.248.106:/export/audio                   /docker-volumes/kopia/data/audio                   nfs _netdev,x-systemd.automount,x-systemd.mount-timeout=15,hard,timeo=150,retrans=3,nfsvers=3 0 0
+100.71.248.106:/export/audio-archive           /docker-volumes/kopia/data/audio-archive           nfs _netdev,x-systemd.automount,x-systemd.mount-timeout=15,hard,timeo=150,retrans=3,nfsvers=3 0 0
+100.71.248.106:/export/backups                 /docker-volumes/kopia/data/backups                 nfs _netdev,x-systemd.automount,x-systemd.mount-timeout=15,hard,timeo=150,retrans=3,nfsvers=3 0 0
+100.71.248.106:/export/gezin-officieel         /docker-volumes/kopia/data/gezin-officieel         nfs _netdev,x-systemd.automount,x-systemd.mount-timeout=15,hard,timeo=150,retrans=3,nfsvers=3 0 0
+100.71.248.106:/export/gezin-officieel-archive /docker-volumes/kopia/data/gezin-officieel-archive nfs _netdev,x-systemd.automount,x-systemd.mount-timeout=15,hard,timeo=150,retrans=3,nfsvers=3 0 0
+100.71.248.106:/export/media                   /docker-volumes/kopia/data/media                   nfs _netdev,x-systemd.automount,x-systemd.mount-timeout=15,hard,timeo=150,retrans=3,nfsvers=3 0 0
+100.71.248.106:/export/photos                  /docker-volumes/kopia/data/photos                  nfs _netdev,x-systemd.automount,x-systemd.mount-timeout=15,hard,timeo=150,retrans=3,nfsvers=3 0 0
+100.71.248.106:/export/sara                    /docker-volumes/kopia/data/sara                    nfs _netdev,x-systemd.automount,x-systemd.mount-timeout=15,hard,timeo=150,retrans=3,nfsvers=3 0 0
+100.71.248.106:/export/wim                     /docker-volumes/kopia/data/wim                     nfs _netdev,x-systemd.automount,x-systemd.mount-timeout=15,hard,timeo=150,retrans=3,nfsvers=3 0 0

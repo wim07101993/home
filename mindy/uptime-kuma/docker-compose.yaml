@@ -1,0 +1,40 @@
+# Service-level monitoring.
+#
+# Exists because of the 2026-08 array incident and the kopia outage found during
+# its recovery (see samson/incidents/2026-08-06-array-overheating.md). Two
+# independent failures ran for months because nothing in this stack reports its
+# own health:
+#
+#   - the drive bay fan never ran for 5 months; found by opening the case
+#   - kopia crash-looped for 5 weeks with no backups taken; found by reading
+#     `docker ps` during an unrelated recovery
+#
+# Neither needed clever detection. A 60-second HTTP check would have caught both
+# within minutes.
+#
+# NOTE: this is a new stack -- portainer only redeploys stacks that already
+# exist, so it must be created once in the portainer UI pointing at this file.
+services:
+  uptime-kuma:
+    container_name: uptime-kuma
+    image: louislam/uptime-kuma:1.23.13
+    restart: unless-stopped
+    networks:
+      - traefik_traefik-network
+      - uptime-kuma-network
+    volumes:
+      - /docker-volumes/uptime-kuma/data:/app/data
+    ports:
+      - "3008:3001"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_traefik-network"
+      - "traefik.http.routers.status.rule=Host(`status.wvl.app`)"
+      - "traefik.http.routers.status.entrypoints=websecure"
+      - "traefik.http.routers.status.tls.certresolver=le"
+      - "traefik.http.services.status.loadbalancer.server.port=3001"
+
+networks:
+  uptime-kuma-network:
+  traefik_traefik-network:
+    external: true

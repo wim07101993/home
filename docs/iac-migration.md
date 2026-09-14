@@ -1,0 +1,401 @@
+# IaC plan: OpenTofu + NixOS
+
+Design notes from 2026-09-12. Nothing here is implemented yet except the
+existing [`terraform` branch](https://github.com/wim07101993/home/tree/terraform).
+
+Prompted by the array incident ([
+`samson/incidents/2026-08-06-array-overheating.md`](../samson/incidents/2026-08-06-array-overheating.md)),
+whose root causes were all *invisible state*: a stock cron job nobody knew
+existed, a documented manual step that was never run, a mount that silently
+failed, SMART data nothing was reading.
+
+## The reframe that shapes everything
+
+**None of the 2026-08/09 failures were caused by a lack of IaC.**
+
+| failure                       | cause                                                                                                                        |
+|-------------------------------|------------------------------------------------------------------------------------------------------------------------------|
+| fan never ran for 5 months    | physical                                                                                                                     |
+| kopia dead 5 weeks            | **caused by** GitOps: a committed compose change auto-deployed while its manual prerequisite (cert generation) was never run |
+| scrub broke the shutdown      | stock OMV `cron.monthly` job, invisible to `/etc/cron.d` and `systemctl list-timers`                                         |
+| `audio-archive` never mounted | missing mountpoint directory, failed silently                                                                                |
+
+More automatic deployment, without encoding prerequisites, makes the second one *worse*. The goals are **change
+visibility** and **encoded manual steps** — not
+automation for its own sake.
+
+---
+
+## Layering
+
+Three layers, and the boundary between them is the important part.
+
+| layer              | what                                               | tool                                         |
+|--------------------|----------------------------------------------------|----------------------------------------------|
+| **infrastructure** | Hetzner servers, volumes, firewalls, DNS, SSH keys | **OpenTofu**                                 |
+| **machine**        | OS, packages, mounts, NFS, smartd, btrbk, users    | **NixOS** (local) / Ansible (cloud, for now) |
+| **workload**       | containers, OIDC clients, DB roles                 | **OpenTofu**                                 |
+
+OpenTofu owns what has an **API**. NixOS owns what has a **filesystem**.
+A btrfs array has no API; a Zitadel OIDC client has no filesystem.
+
+### Why OpenTofu rather than Terraform
+
+Terraform moved to BSL in 2023. OpenTofu is the drop-in open fork. The existing
+branch already uses a `tofu/` directory, so this is settled.
+
+---
+
+## Decisions
+
+| decision                                                  | rationale                                                                                                                                                                          |
+|-----------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **OpenTofu for the workload layer**, not just infra       | The Zitadel + PostgreSQL providers express things compose cannot (see below). Not a 1:1 compose translation.                                                                       |
+| **OpenTofu on samson too**, for plex + databasus          | Marginal on its own merits — two trouble-free containers. But "everything is OpenTofu except these two" is worse than a little redundancy. Consistency wins for a single operator. |
+| **NixOS on samson and plop**                              | Local machines; the layer that actually broke is the one NixOS owns.                                                                                                               |
+| **Hetzner servers stay Debian initially**                 | One migration at a time. Revisit after samson is stable.                                                                                                                           |
+| **Keep compose+portainer until a host is fully migrated** | Cut over per host, never half.                                                                                                                                                     |
+
+### Rejected
+
+- **Terraform for containers as a naive compose rewrite** — would lose dependabot,
+  fight portainer for ownership, and need the Docker API exposed. The actual
+  design avoids this (below).
+- **Stretching one Docker Swarm across sites.** mindy is at Hetzner; samson and
+  plop are at home behind a residential line. Overlay networks and swarm raft
+  over a WAN is the NFS-over-WAN mistake wearing a different hat. **One swarm per
+  host, or none.**
+- **Fighting OMV with Ansible.** OMV regenerates `/etc/exports`, parts of
+  `/etc/fstab`, Samba and SMART settings from its own config via Salt. Either
+  respect the boundary or remove OMV. NixOS removes it.
+
+---
+
+## The workload layer: why it earns its place
+
+From the `terraform` branch, `tofu/modules/file-browser/other_resources.tf`:
+
+```
+zitadel_application_oidc.filebrowser  ->  client_id
+postgresql_role.filebrowser           ->  password
+            | both injected via templatefile into
+docker_secret.filebrowser_config      ->  mounted into the service
+```
+
+The OIDC client, the database role, the config file and the container are **one
+dependency graph**. Compose cannot express any of it — the OIDC client gets
+clicked into Zitadel by hand and the client ID pasted into a config file.
+
+It also removes the secrets problem entirely: `random_password` ->
+`docker_secret` means **no secrets in git**, and no placeholder files to copy and
+fill in.
+
+### Issues to fix before first apply
+
+**Critical**
+
+1. **State contains every secret** — Zitadel masterkey, all DB passwords.
+   The repo is public and has no `.gitignore`. State must go to an encrypted
+   S3-compatible backend (Hetzner Object Storage / R2 / B2) and `*.tfstate*`
+   must be gitignored **before** the first apply.
+2. **Providers cannot depend on resources.** This fails on a clean apply:
+   ```hcl
+   provider "postgresql" {
+     password = random_password.db_password.result  # unknown at provider-config time
+     host     = "db"                                # overlay network name, unresolvable from the host
+   }
+   ```
+   Provider config is evaluated before the resource graph. The same wall applies
+   to the Zitadel provider needing a service-account key that does not exist
+   until Zitadel has booted once (already flagged in the branch's own comments).
+
+   Fix: **stages with separate state**, wired by `terraform_remote_state`:
+
+   | stage | contains | provider needs |
+      |---|---|---|
+   | `00-platform` | swarm networks, db service + secret | docker only |
+   | `10-data` | postgres roles, databases | db reachable on `localhost:5432` |
+   | `20-identity` | zitadel service, init steps | docker + postgres |
+   | `30-apps` | zitadel org/project/OIDC apps, all other services | zitadel API + machine key |
+
+   For stage 30: have Zitadel write a service-account key at first boot (`FirstInstance.MachineKeyPath` in the existing
+   `zitadel_init_steps`), then
+   point the provider at it with `jwt_profile_file`.
+
+**Decide before going further**
+
+3. **Swarm.** `docker_service`, `docker_secret` and `driver = "overlay"` all
+   require swarm mode; the hosts run plain docker + portainer today. Single-node
+   swarm is stable and is the only route to real `docker_secret`.
+   samson needs **no** secrets (plex is PUID/PGID/TZ, databasus is a bind mount),
+   so plain `docker_container` is fine there — no swarm on that box.
+4. **Multi-host.** The branch has one `unix:///var/run/docker.sock` provider, but
+   the modules mix hosts. Needs aliases:
+   ```hcl
+   provider "docker" { alias = "mindy", host = "ssh://root@100.127.106.121" }
+   module "immich" { providers = { docker = docker.mindy } }
+   ```
+5. **The portainer cut.** Once OpenTofu owns a service, portainer's daily git
+   redeploy of the same stack must stop or they reconcile against each other.
+   Migrate one host fully, delete its portainer stacks, then move on.
+6. **Dependabot goes blind.** It only parses `docker-compose.yaml`; image strings
+   in HCL are invisible to it. **Renovate** has a `terraform` manager and docker
+   image detection — switch before losing the upgrade flow on seven stacks.
+
+**Minor**
+
+- `zitadel_init_steps` contains a literal `Password: Password1234!` in a public
+  repo. Bootstrap-only with `PasswordChangeRequired: true`, so small blast
+  radius, but it should be a `random_password`.
+- Swarm secrets are immutable, so content changes need a new name. The `_v1`
+  suffixes anticipate this; consider
+  `name = "zitadel_config_${substr(sha256(data), 0, 8)}"` so it rotates
+  automatically instead of failing until someone remembers to bump it.
+
+---
+
+## NixOS
+
+### Why samson specifically
+
+Every OMV-related problem in the incident is one NixOS structurally does not have:
+
+| what happened                                  | on NixOS                                                            |
+|------------------------------------------------|---------------------------------------------------------------------|
+| stock monthly scrub cron nobody knew existed   | every timer is a line in the config                                 |
+| `/etc/exports` auto-generated, unversionable   | `services.nfs.server.exports` is a string in git                    |
+| SMART monitoring never configured              | `services.smartd`, declared                                         |
+| btrbk postinst silently enabled a daily timer  | modules do not enable timers behind your back                       |
+| system update -> broken shutdown               | `nixos-rebuild --rollback`, or pick the previous generation at boot |
+| `chmod -x` on a dpkg file that upgrades revert | config is the source of truth; nothing drifts back                  |
+
+### What makes it feasible
+
+**samson's OS is on a separate disk.** `sda` is a 119 GB SSD holding `/`; the
+array is four independent drives; the backup drive is USB. Migration means
+reinstalling `sda` and importing the array by UUID — the data is never touched,
+and the old SSD is a five-minute rollback.
+
+### Sketch
+
+```nix
+{ config, pkgs, ... }:
+let
+  arrayUuid  = "25d0f3ec-68a9-4ce0-891e-0966088e5300";
+  backupUuid = "fbc74530-17f6-4f65-9e40-f4b2537086ca";
+  mindy      = "100.127.106.121";
+in {
+  networking.hostName = "samson";
+
+  fileSystems."/srv/array" = {
+    device = "/dev/disk/by-uuid/${arrayUuid}";
+    fsType = "btrfs";
+    options = [ "noatime" ];
+  };
+
+  # off-site drive: present ~6% of the time, must never block boot
+  fileSystems."/mnt/backup-14t" = {
+    device = "/dev/disk/by-uuid/${backupUuid}";
+    fsType = "btrfs";
+    options = [ "noauto" "nofail" "noatime" ];
+  };
+
+  services.nfs.server = {
+    enable = true;
+    exports = ''
+      /export/photos ${mindy}(rw,sync,no_root_squash,insecure,subtree_check)
+      /export/media  ${mindy}(ro,sync,no_root_squash,insecure,subtree_check)
+      # ...
+    '';
+  };
+
+  # the prevention item outstanding since August
+  services.smartd = {
+    enable = true;
+    autodetect = true;
+    defaults.monitored = "-a -W 0,50,55 -m wim@zitadel.com";
+    notifications.mail = { enable = true; recipient = "wim@zitadel.com"; };
+  };
+
+  services.btrbk.instances.offsite = {
+    onCalendar = null;          # explicit: drive is off-site, runs are manual
+    settings = { /* see samson/backup/btrbk.conf */ };
+  };
+
+  services.btrfs.autoScrub = {
+    enable = true;
+    fileSystems = [ "/srv/array" ];
+    interval = "monthly";
+  };
+
+  virtualisation.docker.enable = true;   # OpenTofu owns the containers
+  services.tailscale.enable = true;
+}
+```
+
+Note what is in there: the 55 °C SMART threshold and email that has been
+outstanding since August, the scrub schedule as one visible line (flip it in a
+commit rather than `chmod -x` on a dpkg file), and `onCalendar = null` making
+"no timer" a decision rather than something you had to notice and undo.
+
+### Costs, honestly
+
+- **The OMV web UI is replaced with nothing.** Shared-folder management, disk
+  dashboard, ACL editor — gone.
+- **Real learning curve.** Bounded — most of the config is option-setting — but
+  the first week is frustrating.
+- **Docker stays slightly awkward**, though not under this plan: NixOS provides
+  the daemon, OpenTofu owns the containers.
+
+---
+
+## OpenTofu + NixOS together
+
+Standard integration is **`nixos-anywhere`** (nix-community), which ships
+OpenTofu modules — kexecs into an installer over SSH, partitions with **`disko`**,
+installs the flake. So `hcloud_server` -> NixOS installed -> deployed in one apply.
+
+The common alternative is **OpenTofu for cloud resources only**, emitting an
+inventory, then **colmena** or **deploy-rs** for the NixOS side. Two tools, but a
+cleaner mental model and rollbacks stay where they belong.
+
+### The friction point: who owns containers
+
+NixOS can declare containers via `virtualisation.oci-containers`. **Don't.** The
+value chain is:
+
+```
+zitadel_application_oidc -> client_id -> templatefile -> docker_secret -> service
+```
+
+If NixOS owns the service, that chain crosses a tool boundary and needs a
+handoff (SOPS file, `sops-nix`, a rebuild trigger). **NixOS provides the docker
+daemon; OpenTofu keeps the containers.** The graph stays one apply.
+
+### Gotchas
+
+- **OpenTofu triggering `nixos-rebuild` is slightly unnatural** — a
+  `terraform_data` resource keyed on the flake output hash. A `--rollback` at 2am
+  happens outside state, so the next plan shows drift. Main argument for colmena.
+- **Never let both tools own the same resource type.** Write the boundary down,
+  exactly as with OMV.
+- **samson has no cloud API** — no server, volume or firewall object to manage.
+  Its infra layer is empty; it is pure NixOS plus the docker provider.
+
+---
+
+## Adopting existing Hetzner servers — no rebuild required
+
+**Concern:** the current Hetzner server types may no longer be orderable, so
+recreating them is impossible.
+
+**Neither layer requires recreating a server.** The docker provider connects to a *running* dockerd over SSH and does
+not care how the host was built. And infra is
+adopted with `import`, not recreation:
+
+```hcl
+import {
+  to = hcloud_server.mindy
+  id = "12345678"        # hcloud server list -o columns=id,name
+}
+```
+
+Then `tofu plan -generate-config-out=generated.tf` writes the resource blocks
+from the live API, rather than hand-transcribing forty attributes.
+
+### The rule that matters
+
+**After import, `tofu plan` must report "No changes".** A plan showing
+`-/+ destroy and then create replacement` is the failure mode — and on a
+deprecated server type the destroy is permanent.
+
+```hcl
+resource "hcloud_server" "mindy" {
+  # ...
+  lifecycle {
+    prevent_destroy = true          # apply refuses to destroy, full stop
+    ignore_changes = [
+      image, # the creating image may no longer exist
+      ssh_keys, # forces replacement in the hcloud provider
+      user_data, # same
+    ]
+  }
+}
+```
+
+Put `prevent_destroy = true` on every imported server on day one; remove it only
+when deliberately replacing something. Attributes that force replacement are
+roughly `image`, `location`/`datacenter`, `ssh_keys` and `user_data`.
+`server_type` can usually be increased in place to an *available* type — what you
+cannot do is go back to a deprecated one.
+
+Check the actual state first:
+
+```bash
+hcloud server list -o columns=id,name,server_type,location,status
+hcloud server-type list      # deprecated types are flagged
+hcloud volume list
+hcloud firewall list
+```
+
+### Provider coverage caveats
+
+- `hetznercloud/hcloud` — official, solid for servers/volumes/firewalls/networks.
+- **Hetzner DNS** is community-maintained; verify which provider is current
+  before committing. 13 `wvl.app` records currently live in a web console:
+  `auth drive photos office keuken memo score score-api partituren baby it-tools
+  homepage traefik` (+ `status` once Uptime Kuma lands).
+- **Storage Box** coverage has historically been weak (Robot API, not Cloud API).
+  Verify before assuming it can be managed declaratively.
+
+---
+
+## Migration order
+
+1. **Wait for the full media copy to the 14 TB drive** (in progress)
+2. **Scrub the backup drive, verify a restore**
+3. **Array surgery: convert to raid1, remove `WSD320VH`**
+4. **plop -> NixOS**
+5. **samson -> NixOS**
+6. **Infra + workloads -> OpenTofu** (via `import`, no rebuilds)
+
+**Why step 3 precedes NixOS:** a NixOS migration means reinstalling `sda` and
+re-importing the array. Doing that while the array still holds a drive at 2,016
+pending sectors overlaps two risky operations, and a failure would be ambiguous.
+Three healthy drives in raid1 first makes the OS reinstall genuinely low-risk,
+because the data lives on entirely different disks.
+
+**Why plop precedes samson:** plop is the dev box — it mirrors the Hetzner stack (zitadel, score, postgres, it-tools,
+smtp4dev, webhook.site, tv-station). Learn
+NixOS, and re-declaring NFS/smartd/shares by hand, where the cost of error is a
+restarted Home Assistant rather than the family photo array. Four spare
+OptiPlexes are available to rehearse samson's config on before swapping the real
+`sda`.
+
+Capture before plop moves: Home Assistant's `configuration.yaml` and
+`/docker-volumes/homeassistant/config`. NixOS manages the container, not HA's
+internal state.
+
+---
+
+## Cheap win, independent of all of the above
+
+`etckeeper` on samson — ten minutes, git-tracks `/etc`, auto-commits on every
+apt run. It would have shown exactly when btrbk's timer appeared and what the
+2026-09-11 system update changed. Costs nothing if NixOS later makes it
+redundant.
+
+Also worth enabling: **GitHub push protection** (Settings -> Code security) plus a
+`gitleaks` pre-commit hook. The repo's secret files are all placeholders today,
+but that is a discipline currently held by memory rather than enforced.
+
+---
+
+## Open questions
+
+- [ ] Do the Hetzner servers eventually move to NixOS too, or stay Debian +
+  Ansible?
+- [ ] Swarm on mindy / home-eu-central-1: commit to it, or drop `docker_secret`
+  and find another secret mechanism?
+- [ ] State backend: Hetzner Object Storage, R2, or B2?
+- [ ] Does OMV's web UI need replacing on samson (Cockpit?), or is SSH enough?

@@ -1,0 +1,67 @@
+# Kopia repository CLIENT.
+#
+# Snapshots samson's LOCAL disk and proxies all repository access through the
+# kopia server on mindy (see mindy/kopia/docker-compose.yml). This machine
+# never holds the Hetzner Storage Box credentials or the repository password --
+# it authenticates with a per-machine server user only.
+#
+# Why this exists: kopia used to run on mindy and read this data back over
+# NFS-over-Tailscale, so every nightly run walked the whole tree across the
+# home uplink. That is what produced the recurring
+#   "nfs: server 100.71.248.106 not responding, still trying"
+# stalls at 00:05 / 02:05 / 03:05. Scanning locally keeps the walk on the LAN;
+# only deduplicated content crosses the link.
+#
+# Setup runbook: ./README.md
+services:
+  kopia-client:
+    container_name: kopia-client
+    image: kopia/kopia:0.23.1
+    restart: unless-stopped
+    # Kopia identifies sources as <user>@<hostname>:<path>. Without this the
+    # container ID becomes the hostname and every recreate looks like a brand
+    # new machine with its own snapshot history.
+    hostname: samson
+    volumes:
+      # OMV bind-mounts each NFS export under /export, so these are local paths.
+      # Read-only: a backup agent never needs write access to what it protects.
+      - /export:/data:ro
+      - /docker-volumes/kopia/config:/app/config
+      - /docker-volumes/kopia/cache:/app/cache
+      - /docker-volumes/kopia/logs:/app/logs
+      - /docker-volumes/kopia/server_user_password.txt:/run/secrets/server_user_password:ro
+    env_file:
+      - .env
+    # No ports published. Snapshots are driven by the loop below and everything
+    # is visible in the existing kopia UI on mindy -- it is the same repository.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -e
+        export KOPIA_PASSWORD="$$(cat /run/secrets/server_user_password | tr -d '\r\n')"
+        if [ ! -f /app/config/repository.config ]; then
+          kopia repository connect server \
+            --url="https://100.127.106.121:51515" \
+            --server-cert-fingerprint="$$KOPIA_SERVER_CERT_FINGERPRINT" \
+            --override-username=wim \
+            --override-hostname=samson \
+            --config-file=/app/config/repository.config \
+            --cache-directory=/app/cache
+        fi
+        while true; do
+          kopia snapshot create \
+            --config-file=/app/config/repository.config \
+            --log-dir=/app/logs \
+            /data/wim /data/sara /data/gezin-officieel /data/gezin-officieel-archive \
+            /data/audio /data/audio-archive /data/backups /data/media /data/photos \
+            || echo "snapshot run failed, retrying next cycle"
+          sleep "$$SNAPSHOT_INTERVAL_SECONDS"
+        done
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          # Hashing is CPU-bound. The i7-3770 has 8 threads; 2 keeps Plex
+          # responsive while a snapshot runs.
+          cpus: "2"
