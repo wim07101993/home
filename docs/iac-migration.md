@@ -95,9 +95,12 @@ fill in.
 **Critical**
 
 1. **State contains every secret** — Zitadel masterkey, all DB passwords.
-   The repo is public and has no `.gitignore`. State must go to an encrypted
-   S3-compatible backend (Hetzner Object Storage / R2 / B2) and `*.tfstate*`
-   must be gitignored **before** the first apply.
+   The repo is public and has no `.gitignore`.
+   **Resolved 2026-09-16 for the infra layer:** root `.gitignore` covers
+   `*.tfstate*` and `*.tfvars`, and `tofu/providers.tf` carries an
+   `encryption` block so state and plan files are ciphertext at rest wherever
+   they land. The workload layer must copy both before its first apply — it is
+   the layer that actually holds the masterkey.
 2. **Providers cannot depend on resources.** This fails on a clean apply:
    ```hcl
    provider "postgresql" {
@@ -397,5 +400,27 @@ but that is a discipline currently held by memory rather than enforced.
   Ansible?
 - [ ] Swarm on mindy / home-eu-central-1: commit to it, or drop `docker_secret`
   and find another secret mechanism?
-- [ ] State backend: Hetzner Object Storage, R2, or B2?
+- [x] **State backend — decided 2026-09-16: `backend "pg"` on bumba, over
+      Tailscale.** Reasoning and the rejected candidates are in
+      [`tofu/README.md`](../tofu/README.md), "State backend".
+
+      Short version: state goes where the things everything else depends on
+      already live. bumba is the designated auth-and-database box, its postgres
+      is reachable only over the tailnet, and the Hetzner Cloud Console means a
+      locked-out tailnet is still recoverable from anywhere — which samson and
+      plop cannot offer at all.
+
+      Three properties the object-store options could not match: it is not
+      internet-facing; it needs **no bootstrap**, because this postgres already
+      exists and is not a resource in the state it holds; and advisory locking
+      is real database locking rather than a conditional-write trick.
+
+      Two gaps closed by hand rather than by the backend: a trigger gives
+      per-apply state history (the backend overwrites one row), and the
+      `tofu_state` role is created manually and must never be managed by the
+      workload layer, or the credential for reading state ends up inside it.
+
+      Client-side encryption stays regardless. It is what covers the copies
+      nobody decides about — the Hetzner volume, the `pg_dump` to samson, the
+      14 TB drive at the family.
 - [ ] Does OMV's web UI need replacing on samson (Cockpit?), or is SSH enough?

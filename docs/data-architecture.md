@@ -40,6 +40,39 @@ The curated set is the reverse flow: Belgian pre-2000 films and series that
 cannot be re-acquired. It is served from home by plex, so it stays primary on
 samson — but it needs an off-site copy that is not four months stale.
 
+### The constraint nobody had measured: bumba is a `cpx11`
+
+Established 2026-09-16 from `hcloud server-type list`:
+
+| server | type | cores / RAM / disk | orderable in `fsn1`? |
+|---|---|---|---|
+| mindy | `cx43` | 8 / **16 GB** / 160 GB | yes |
+| bumba | `cpx11` | 2 / **2 GB** / 40 GB | **no** — `ash, hil` only |
+
+Two consequences, and the second is the one that bites this document.
+
+**bumba cannot be recreated.** The `cpx*1` line is US-only now and `cx11`–`cx51`
+are gone entirely. That is a tooling problem, handled by `prevent_destroy` in
+[`tofu/`](../tofu/README.md).
+
+**bumba cannot hold the consolidated database.** The plan of record — auth and
+all databases on one key box — puts Zitadel, postgres and immich's pgvector
+workload on **2 GB of RAM**. That is why immich already crashes it. The postgres
+row in the table above lists immich among the databases whose primary is
+"Hetzner"; on a `cpx11` that is not achievable.
+
+So the consolidation needs one of two things, and they are not equally good:
+
+| option | effect |
+|---|---|
+| **rescale bumba off `cpx11`** (`cpx22`: 2 / 4 GB / 80 GB, or `cpx32`: 4 / 8 GB / 160 GB) | solves the RAM ceiling **and** the deprecated type in one in-place change. Needs a reboot; a disk-growing rescale is irreversible. |
+| databases to mindy instead | mindy has 16 GB and the volume can move — both servers are in `fsn1` and volumes attach within a location. But it puts auth and data on separate boxes, which is the split the consolidation was meant to remove. |
+
+The rescale is the better move: it is the only one that fixes both problems, and
+the deprecated type has to be dealt with eventually regardless. Size it against
+immich's actual postgres footprint before picking `cpx22` over `cpx32` — 4 GB
+shared with Zitadel is not obviously enough.
+
 ### Audio: 52 GB analysed 2026-09-14
 
 `/export/audio` is not one thing. Breaking it down changed the volume sizing from

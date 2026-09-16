@@ -1,0 +1,28 @@
+# OpenTofu / Terraform
+#
+# State is the reason this file exists. It holds the Storage Box password,
+# every database password and the Zitadel masterkey in cleartext, and this
+# repository is public.
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+.terraform/
+crash.log
+crash.*.log
+
+# Variable files may carry tokens. Examples are fine.
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+
+# Local overrides
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Scratch output of `tofu plan -generate-config-out=` -- move the blocks into
+# a real file rather than committing this.
+generated.tf
