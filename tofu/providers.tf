@@ -55,19 +55,34 @@ terraform {
   # docs/iac-migration.md, open question 3. README.md has the reasoning, the
   # one-time SQL and the history trigger.
   #
-  # There is deliberately NO bootstrap step. This postgres already exists and
-  # is not a resource in this state, so there is no chicken-and-egg and no
-  # `-migrate-state` dance -- unlike an object-store backend, which tofu would
-  # have had to create before it could store the state describing it.
-  #
   # schema_name is `tofu_infra` for historical reasons: this module started as
   # an infra-only layer and was merged with the workload layer on 2026-09-16.
-  # Renaming the schema would mean an `init -reconfigure` against a moved
-  # state row, which is a real risk for zero functional gain. The name is
-  # internal; this comment is the fix.
+  # The name is internal; this comment is the fix.
   #
   # conn_str comes from PG_CONN_STR: it carries a password and this repo is
   # public. See README.md, "Connecting".
+  #
+  # ---------------------------------------------------------------------
+  # IF YOU EVER RECREATE THE POSTGRES CONTAINER, comment this block out
+  # first and `tofu init -migrate-state` to local. This state lives in that
+  # container; an apply that recreates it has to write state to the database
+  # it just recreated, and if the write lands in the gap you get an
+  # errored.tfstate that `tofu state push` cannot read, because it is
+  # encrypted.
+  #
+  # Done once on 2026-09-17, for the compose -> docker_container cutover.
+  # Two things learned:
+  #
+  #   - `tofu apply` refreshes EVERYTHING before creating anything, and both
+  #     the postgresql and zitadel providers need a live postgres. With the
+  #     container gone, refresh fails and the apply never reaches the
+  #     resource that would fix it. Use
+  #     `tofu apply -target=module.postgres_bumba`.
+  #
+  #   - Check `docker logs` for crash recovery ("redo lsn=...") rather than
+  #     initdb. A wrong data path does not error; postgres quietly builds an
+  #     empty cluster beside the real one.
+  # ---------------------------------------------------------------------
   backend "pg" {
     schema_name = "tofu_infra"
   }

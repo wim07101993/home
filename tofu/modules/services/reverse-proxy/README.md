@@ -77,31 +77,25 @@ been running for a while.
 - **Everything else is identical**, including the traefik version. `v3.7.10` is
   pinned to what bumba runs today so the cutover changes one thing. mindy is on
   `v3.7.13`; closing that drift is a separate change.
-- **Routing moved from container labels to traefik's file provider.** All six
-  routes are in `routes.tf` as data. See below.
+- **Routing moved from container labels to traefik's file provider.** Every
+  route is in `<host>/dynamic.yml`. See below.
 - **The docker socket is no longer mounted**, which follows from that.
 
 ## Routing is centralised
 
-`routes.tf` holds one map. Each entry becomes a router, a service and the rule
-that connects them, rendered to `/etc/traefik/dynamic.yml` by `yamlencode` and
-uploaded into the container.
+`<host>/dynamic.yml` holds every router, service and middleware for that host,
+uploaded verbatim into the container. Plain YAML rather than `yamlencode`
+output, so editors, the traefik JSON schema and anything copy-pasted from the
+docs all work on it directly.
 
-```hcl
-zitadel = {
-  rule    = "Host(`auth.wvl.app`) && !PathPrefix(`/ui/v2/login`)"
-  backend = "http://zitadel:8080"
-}
-```
-
-Backends use compose's per-network alias — `zitadel`, not
+Backends use the container name or compose's per-network alias — `zitadel`, not
 `zitadel-zitadel-1` — and the **container** port, not the host-published one.
 
-Two validations, both cheap and both catching real classes of mistake: a route
-must have exactly one of `backend` or `internal`, and the key must be a legal
-router name. The key *is* the router and the service name, so they cannot drift
-apart — which is the bug file-browser hit on 2026-09-14, where a middleware was
-attached to a router that did not exist and traefik silently invented one.
+Router and middleware names share a stem, so they cannot drift apart. That is
+the bug file-browser hit on 2026-09-14: the middleware was attached to a router
+that did not exist, traefik silently invented one with a rule of
+``Host(`filebrowser-filebrowser`)``, and looped forever on ACME for a hostname
+with no dot.
 
 ### The socket is gone
 
@@ -112,9 +106,9 @@ in this change and it came for free.
 
 ### What it costs
 
-**No auto-discovery.** A service missing from `routes.tf` is unreachable, full
-stop. Adding a service now means editing this module as well as the service —
-coupling in the opposite direction from labels.
+**No auto-discovery.** A service missing from `<host>/dynamic.yml` is
+unreachable, full stop. Adding a service now means editing this module as well
+as the service — coupling in the opposite direction from labels.
 
 **Labels elsewhere are now inert.** The `traefik.*` labels on the zitadel and
 score compose files do nothing, because nothing reads them. Harmless, and worth

@@ -104,12 +104,12 @@ import {
 # are. So a missing import here does not fail loudly: it creates a second
 # `reverse-proxy_reverse-proxy-network`, and the compose stacks resolving by
 # name get an ambiguity error instead.
-# Imported and applied 2026-09-17, alongside the container cutover. Spent; the
-# block stays only until the next tidy-up, like the Hetzner ones above.
-import {
-  to = module.reverse_proxy_bumba.docker_network.this
-  id = "8cbcf563cec4" # `docker network ls` on bumba. The ID, not the name.
-}
+#   module.reverse_proxy_bumba.docker_network.this  8cbcf563cec4
+#   module.reverse_proxy_mindy.docker_network.this  573ae05293d1...
+#
+# Both imported and applied 2026-09-17 alongside their container cutovers.
+# Spent, so removed -- an import block whose target is already in state is a
+# no-op, and the ids are recorded here instead.
 
 # --- docker on mindy ----------------------------------------------------
 #
@@ -119,9 +119,15 @@ import {
 # creates a duplicate rather than failing, and the compose stacks then hit an
 # ambiguity error.
 #
+# --- postgres on bumba --------------------------------------------------
+#
+# Container is a cutover, network is an import -- same as both traefiks.
+# zitadel-zitadel-1 and score-score-api-1 are attached, so compose's `down`
+# will fail to remove it, which is what keeps it alive for this import.
+
 import {
-  to = module.reverse_proxy_mindy.docker_network.this
-  id = "573ae05293d15b6970c61327afaaf8a25682dc072a8b7b1809d763bc3af66886"
+  to = module.postgres_bumba.docker_network.this
+  id = "b357a9f4ce4ce0d3701913f6f703855e74c0b2a39db698d59b253dd46577e320"
 }
 
 # --- zitadel ------------------------------------------------------------

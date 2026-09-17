@@ -1,3 +1,11 @@
+# NOTE: this is a COPY. The container mounts /docker-volumes/homepage/config on
+# mindy, not this directory -- see ../docker-compose.yaml. Editing here changes
+# nothing until the file is copied to the host. Kept in git so the intended
+# contents are reviewable and recoverable.
+#
+# Reviewed 2026-09-17: Memo was listed under Bumba but runs on mindy, and
+# keuken was missing entirely despite being routed since March.
+
 - Plop:
     - Portainer:
         href: 'https://100.117.36.52:9443/'
@@ -19,6 +27,9 @@
     - Plex:
         href: 'https://app.plex.tv/'
         icon: /icons/plex.svg
+    - OpenMediaVault:
+        href: 'http://100.71.248.106/'
+        icon: /icons/openmediavault.svg
 
 - Bumba:
     - Portainer:
@@ -27,14 +38,14 @@
     - Database:
         href: 'postgresql://100.104.241.49:5432/'
         icon: /icons/postgresql.svg
-    - Memo:
-        href: 'https://memo.wvl.app'
-        icon: /icons/memos.svg
-    - Score:
-        href: 'https://score.wvl.app'
     - Zitadel:
         href: 'https://auth.wvl.app'
         icon: /icons/zitadel-light.svg
+    - Score:
+        href: 'https://score.wvl.app'
+    - Traefik:
+        href: 'https://wvl.app'
+        icon: /icons/traefik.svg
 
 - Mindy:
     - Portainer:
@@ -46,12 +57,17 @@
     - Drive:
         href: 'https://drive.wvl.app'
         icon: /icons/filebrowser-quantum.svg
-    - ItTools:
-        href: 'https://it-tools.wvl.app'
-        icon: /icons/it-tools-light.svg
     - Photos:
         href: 'https://photos.wvl.app'
         icon: /icons/immich.svg
+    - Memo:
+        href: 'https://memo.wvl.app'
+        icon: /icons/memos.svg
+    - Keuken:
+        href: 'https://keuken.wvl.app'
+    - ItTools:
+        href: 'https://it-tools.wvl.app'
+        icon: /icons/it-tools-light.svg
     - Traefik:
         href: 'https://traefik.wvl.app'
         icon: /icons/traefik.svg

@@ -1,0 +1,36 @@
+# COPY. The container mounts /docker-volumes/zitadel/init-steps.yaml, not this
+# file -- see docker-compose.yaml. Kept in git so the intended contents are
+# reviewable; edits here do nothing until copied to the host.
+#
+# Renamed from zitadel-initial-steps.yaml on 2026-09-17 to match the host path.
+# There were three names for one file: this one, init-steps.yaml on the host,
+# and /zitadel-init-steps.yaml inside the container.
+#
+# Bootstrap only. These steps run on `start-from-init` and are no-ops once the
+# instance exists, which it has since 2025.
+#
+# The admin password was a literal -- `Password1234!` -- committed to a public
+# repository. Small blast radius, because PasswordChangeRequired forces a
+# change at first login and that login happened long ago. Replaced with a
+# placeholder anyway, to match every other secret in this repo and so nobody
+# re-initialises an instance with it.
+FirstInstance:
+  LoginClientPatPath: /login-client/login-client.pat
+  Org:
+    Name: Zitadel
+    Human:
+      UserName: wim
+      FirstName: Wim
+      LastName: Van Laer
+      Email:
+        Address: van.laer.wim@wvl.app
+        Verified: true
+      PreferredLanguage: en
+      Password: ${ZITADEL_ADMIN_BOOTSTRAP_PASSWORD}
+      PasswordChangeRequired: true
+    LoginClient:
+      Machine:
+        UserName: login-client
+        Name: Automatically Initilalized IAM Login Client
+      Pat:
+        ExpirationDate: '2029-01-01T00:00:00Z'

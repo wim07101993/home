@@ -374,25 +374,75 @@ hcloud firewall list
 
 ## Migration order
 
-1. **Wait for the full media copy to the 14 TB drive** (in progress)
-2. **Scrub the backup drive, verify a restore**
-3. **Array surgery: convert to raid1, remove `WSD320VH`**
-4. **plop -> NixOS**
-5. **samson -> NixOS**
-6. **Infra + workloads -> OpenTofu** (via `import`, no rebuilds)
+Rewritten 2026-09-17 to match what happened, which was not the order below.
 
-**Why step 3 precedes NixOS:** a NixOS migration means reinstalling `sda` and
-re-importing the array. Doing that while the array still holds a drive at 2,016
-pending sectors overlaps two risky operations, and a failure would be ambiguous.
-Three healthy drives in raid1 first makes the OS reinstall genuinely low-risk,
-because the data lives on entirely different disks.
+### Done
 
-**Why plop precedes samson:** plop is the dev box — it mirrors the Hetzner stack (zitadel, score, postgres, it-tools,
-smtp4dev, webhook.site, tv-station). Learn
-NixOS, and re-declaring NFS/smartd/shares by hand, where the cost of error is a
-restarted Home Assistant rather than the family photo array. Four spare
-OptiPlexes are available to rehearse samson's config on before swapping the real
-`sda`.
+1. **Full media copy to the 14 TB drive.**
+2. **Array surgery.** raid10 -> raid1 balance finished 2026-09-15; `WSD320VH`
+   removed 2026-09-16 after 163,188 write errors during the balance; scrub
+   completed 2026-09-17 reporting **no errors found** across 16.86 TiB, so every
+   RAID1 chunk had two good copies and those failed writes were never
+   acknowledged.
+3. **Infra -> OpenTofu.** Five Hetzner resources adopted by `import`, planning
+   clean. State in postgres on bumba, encrypted client-side.
+4. **Databases -> OpenTofu.** `zitadel` and `score` adopted. Roles not yet.
+5. **traefik -> OpenTofu**, both hosts. Cutover rather than adoption -- a
+   compose-created container cannot be reproduced attribute-for-attribute.
+   Routing moved from labels to the file provider, and the **docker socket is no
+   longer mounted into either proxy**. `mindy/traefik/` and
+   `home-eu-central-1/reverse-proxy/` deleted 2026-09-17; `git show` on the old
+   paths is the rollback.
+6. **Zitadel projects and applications -> OpenTofu.** A **rebuild**, not an
+   adoption. Orgs and users are untouched, which is what keeps every OIDC `sub`
+   stable.
+7. **bumba's postgres -> OpenTofu.** The container holding zitadel's database,
+   score's, and this layer's own state. Cutover ran with the backend
+   temporarily disabled and state local, because an apply that recreates that
+   container would otherwise have to write state to the database it just
+   recreated.
+
+   Two things worth carrying forward. `tofu apply` refreshes **everything**
+   before creating anything, so with postgres down the refresh of the
+   postgresql and zitadel providers fails and the apply never reaches the
+   container that would fix it -- `-target` is the way through, and this is
+   exactly the "exceptional situation" the targeting warning describes. And a
+   wrong data path does not error: postgres builds an empty cluster beside the
+   real one and reports itself healthy, so the check is `docker logs` for crash
+   recovery rather than initdb.
+
+### Still outstanding
+
+8. **Cut the applications over** to the new zitadel client ids, then recreate
+   ~25 user grants, then delete the old projects and the `dev` org.
+9. **plop -> NixOS.**
+10. **samson -> NixOS.**
+
+### What the original order got wrong
+
+It put OpenTofu last, after both NixOS migrations, and described it as
+"via `import`, no rebuilds". Two corrections:
+
+**OpenTofu came first, and that was right.** It needed no downtime for the
+adoption work and no machine rebuilt. Sequencing it behind two OS migrations
+would have delayed every benefit for no gain.
+
+**Not everything could be imported.** Containers and Zitadel applications both
+turned out to be rebuild-or-nothing -- the first because compose's creation
+shape is not reproducible, the second because zitadel's import ids are composite
+and `client_secret` cannot be read back. Adoption works for resources whose
+every attribute is readable; it does not for resources holding a
+write-only secret. That distinction is worth carrying into the NixOS work.
+
+**Why the array still had to come first:** a NixOS migration means reinstalling
+`sda` and re-importing the array. Doing that while the array still held a drive
+at 2,016 pending sectors would have overlapped two risky operations, and a
+failure would have been ambiguous.
+
+**Why plop still precedes samson:** plop is the dev box. Learn NixOS, and
+re-declaring NFS/smartd/shares by hand, where the cost of error is a restarted
+Home Assistant rather than the family photo array. Four spare OptiPlexes are
+available to rehearse samson's config on before swapping the real `sda`.
 
 Capture before plop moves: Home Assistant's `configuration.yaml` and
 `/docker-volumes/homeassistant/config`. NixOS manages the container, not HA's

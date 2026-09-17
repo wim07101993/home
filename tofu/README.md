@@ -11,6 +11,10 @@ server, a volume or a Storage Box, ever. It does create databases and roles.
 >   anywhere.
 > - zitadel: 6 projects, 6 roles, 8 applications built fresh. Nothing cut over
 >   yet -- see modules/zitadel/README.md.
+> - bumba's postgres: cut over from compose 2026-09-17. It holds this state, so
+>   the cutover ran with the backend disabled and state on the operator's
+>   laptop -- the procedure is documented above the backend block in
+>   providers.tf and must be repeated for any future recreation.
 > - State in postgres on bumba, encrypted client-side, with per-apply history.
 
 ## Layout
