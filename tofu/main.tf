@@ -101,3 +101,15 @@ module "postgres_bumba" {
     "com.docker.compose.version"     = ""
   }
 }
+
+# it-tools.wvl.app. No database, no OIDC, no secrets -- the cheapest container
+# to move, and therefore the one to prove the pattern on.
+module "it_tools" {
+  source = "./modules/services/it-tools"
+
+  providers = {
+    docker = docker.mindy
+  }
+
+  network_name = module.reverse_proxy_mindy.network_name
+}

@@ -99,3 +99,10 @@ resource "docker_container" "this" {
     content = file("${path.module}/${var.host}/dynamic.yml")
   }
 }
+
+# So service modules can depend on the network rather than naming it as a
+# string -- which makes "created before traefik's network exists" impossible
+# rather than merely unlikely.
+output "network_name" {
+  value = docker_network.this.name
+}
