@@ -87,6 +87,28 @@ import {
 #                importing a mistake and then having to remove it from state
 #                again.
 #
+# --- docker on bumba ----------------------------------------------------
+#
+# The traefik CONTAINER is not imported. A compose-created container carries
+# com.docker.compose.* labels and a creation shape docker_container cannot
+# reproduce, so an import would plan a recreate regardless. It is a cutover:
+# delete the portainer stack, then apply. See
+# modules/services/reverse-proxy/README.md.
+#
+# The NETWORK is different and must be imported rather than created. It already
+# exists, and the zitadel and score stacks -- still on compose -- attach to it
+# by name as `external: true`. Letting tofu create a second one, or destroying
+# this one, silently detaches every service behind the proxy.
+#
+# Docker permits two networks with the SAME NAME -- names are not unique, ids
+# are. So a missing import here does not fail loudly: it creates a second
+# `reverse-proxy_reverse-proxy-network`, and the compose stacks resolving by
+# name get an ambiguity error instead.
+import {
+  to = module.reverse_proxy_bumba.docker_network.this
+  id = "8cbcf563cec4" # `docker network ls` on bumba, 2026-09-16. The ID, not the name.
+}
+
 # --- Second pass: ROLES -------------------------------------------------
 #
 # Blocked on two questions, not on effort.

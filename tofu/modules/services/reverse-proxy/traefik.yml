@@ -1,0 +1,48 @@
+# Traefik STATIC configuration for bumba. Uploaded to /etc/traefik/traefik.yml.
+#
+# A real YAML file, not yamlencode output, so editors, the traefik JSON schema
+# and anything copy-pasted from the docs all work on it directly.
+#
+# Static only. Routers, services and middlewares cannot go here -- they are
+# dynamic config and live in dynamic.yml. That split is traefik's, not ours:
+# static needs a restart, dynamic is hot-reloaded.
+
+log:
+  level: DEBUG
+
+api:
+  dashboard: true
+
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+
+  websecure:
+    address: ":443"
+    asDefault: true
+    http:
+      tls:
+        certResolver: le
+    # mindy's traefik sets respondingTimeouts of 600s for large uploads.
+    # bumba has never needed it; add `transport.respondingTimeouts` here if
+    # that changes.
+
+# File only. No docker provider, which is what lets the docker socket stay
+# unmounted -- see main.tf.
+providers:
+  file:
+    filename: /etc/traefik/dynamic.yml
+    watch: true
+
+certificatesResolvers:
+  le:
+    acme:
+      email: wvl@wvl.app
+      storage: /letsencrypt/acme.json
+      httpChallenge:
+        entryPoint: web

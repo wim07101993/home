@@ -1,0 +1,75 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "timezone": "Europe/Brussels",
+
+  "//": [
+    "Replaces .github/dependabot.yml, which listed six directories by hand and",
+    "so covered six of roughly fifteen stacks -- nothing under",
+    "home-eu-central-1/, plop/ or samson/, which is why bumba's traefik sat on",
+    "v3.7.10 while mindy's reached v3.7.13. Renovate scans the repo instead of",
+    "a list, and additionally reads OpenTofu HCL, which dependabot cannot.",
+    "Delete dependabot.yml once the first Renovate PRs look right; running both",
+    "produces duplicate PRs.",
+    "",
+    "Run by .github/workflows/renovate.yml -- self-hosted, because Renovate is",
+    "open source and free to run yourself whatever Mend charges for the hosted",
+    "app, and because a hosted app would need write access to a repo that",
+    "auto-deploys to the servers. This file works for either."
+  ],
+
+  "automerge": false,
+  "//automerge": [
+    "NEVER turn this on for this repo. Portainer redeploys its git stacks daily,",
+    "so merging here IS deploying -- and a merge whose manual prerequisite was",
+    "never run is what killed kopia for five weeks in 2026-08. Every update gets",
+    "a human deciding when it lands."
+  ],
+
+  "schedule": ["before 9am on monday"],
+  "prConcurrentLimit": 5,
+
+  "packageRules": [
+    {
+      "matchManagers": ["docker-compose", "dockerfile", "terraform"],
+      "matchUpdateTypes": ["patch"],
+      "groupName": "patch updates"
+    },
+    {
+      "description": "Traefik terminates TLS for everything. Keep it visible and on its own.",
+      "matchPackageNames": ["traefik"],
+      "groupName": null,
+      "labels": ["front-door"]
+    },
+    {
+      "description": "Zitadel is auth for every service. Never batch it with anything.",
+      "matchPackageNames": ["ghcr.io/zitadel/zitadel", "ghcr.io/zitadel/zitadel-login"],
+      "groupName": null,
+      "labels": ["auth"]
+    },
+    {
+      "description": "Postgres majors need a dump/restore, not a tag bump.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["postgres"],
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Own images, built elsewhere -- the PR here is only the deploy.",
+      "matchPackageNames": ["wim07101993/score", "wim07101993/score-frontend"],
+      "groupName": "score"
+    }
+  ],
+
+  "customManagers": [
+    {
+      "description": "Image tags held in OpenTofu variables. The built-in terraform manager tracks provider versions in required_providers; it does not reliably see an image string in a variable default, so it is annotated explicitly.",
+      "customType": "regex",
+      "managerFilePatterns": ["/^tofu/.+\\.tf$/"],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>[a-z-]+?)\\s+depName=(?<depName>[^\\s]+?)(\\s+versioning=(?<versioning>[^\\s]+?))?\\s*\\n[\\s\\S]*?default\\s*=\\s*\"(?<currentValue>[^\"]+)\""
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}docker{{/if}}"
+    }
+  ]
+}

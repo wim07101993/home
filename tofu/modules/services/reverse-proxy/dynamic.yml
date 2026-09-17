@@ -1,0 +1,76 @@
+# Traefik DYNAMIC configuration for bumba. Uploaded to /etc/traefik/dynamic.yml.
+#
+# Every route on this host, in one place. Backends are reached by compose's
+# per-network alias -- `zitadel`, not `zitadel-zitadel-1` -- and use the
+# CONTAINER port, not the host-published one.
+#
+# A service missing from here is unreachable. That is the trade for centralised
+# routing: no auto-discovery, so adding a service means editing this file.
+
+http:
+  routers:
+    dashboard:
+      rule: "Host(`wvl.app`)"
+      entryPoints: [websecure]
+      service: api@internal
+      tls:
+        certResolver: le
+
+    # The two halves of auth.wvl.app. The !PathPrefix on the first is the only
+    # thing keeping both from matching the same request.
+    zitadel:
+      rule: "Host(`auth.wvl.app`) && !PathPrefix(`/ui/v2/login`)"
+      entryPoints: [websecure]
+      service: zitadel
+      tls:
+        certResolver: le
+
+    zitadel-login:
+      rule: "Host(`auth.wvl.app`) && PathPrefix(`/ui/v2/login`)"
+      entryPoints: [websecure]
+      service: zitadel-login
+      tls:
+        certResolver: le
+
+    score-api:
+      rule: "Host(`score-api.wvl.app`)"
+      entryPoints: [websecure]
+      service: score-api
+      tls:
+        certResolver: le
+
+    # Two hostnames, one backend.
+    score:
+      rule: "Host(`score.wvl.app`)"
+      entryPoints: [websecure]
+      service: score-web-app
+      tls:
+        certResolver: le
+
+    partituren:
+      rule: "Host(`partituren.wvl.app`)"
+      entryPoints: [websecure]
+      service: score-web-app
+      tls:
+        certResolver: le
+
+  services:
+    zitadel:
+      loadBalancer:
+        servers:
+          - url: "http://zitadel:8080"
+
+    zitadel-login:
+      loadBalancer:
+        servers:
+          - url: "http://zitadel-login:3000"
+
+    score-api:
+      loadBalancer:
+        servers:
+          - url: "http://score-api:7001"
+
+    score-web-app:
+      loadBalancer:
+        servers:
+          - url: "http://score-web-app:80"

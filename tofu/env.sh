@@ -65,7 +65,7 @@ if [ -z "${BUMBA_ADDR:-}" ]; then
   }
 fi
 export BUMBA_ADDR
-export TF_VAR_pg_host="$BUMBA_ADDR"
+export TF_VAR_bumba_addr="$BUMBA_ADDR"
 
 # A read-only token cannot create a database, so this module can no longer run
 # read-only indefinitely -- see the note in providers.tf. Use one anyway for

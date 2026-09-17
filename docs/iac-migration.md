@@ -145,6 +145,25 @@ fill in.
    in HCL are invisible to it. **Renovate** has a `terraform` manager and docker
    image detection — switch before losing the upgrade flow on seven stacks.
 
+   **Done 2026-09-16:** [`renovate.json`](../renovate.json) at the repo root.
+   Reading the old config sharpened the case: `.github/dependabot.yml` listed
+   **six** directories by hand, all under `mindy/`, so `kitchen-owl`, `memo`,
+   `uptime-kuma` and **everything** under `home-eu-central-1/`, `plop/` and
+   `samson/` were never covered. That is the actual reason bumba's traefik sat
+   on `v3.7.10` while mindy's reached `v3.7.13` — not drift, absence.
+
+   Renovate scans the repo rather than a list, so the gap closes as a side
+   effect, and it reads OpenTofu HCL as well. Image strings held in a variable
+   are found via a `# renovate: datasource=docker depName=...` annotation;
+   provider constraints in `required_providers` are picked up by the built-in
+   manager without help.
+
+   **`automerge` is `false` and must stay that way.** Portainer redeploys its
+   git stacks daily, so merging here *is* deploying — and a merge whose manual
+   prerequisite was never run is what killed kopia for five weeks in 2026-08.
+   Delete `dependabot.yml` once the first Renovate PRs look right; running both
+   produces duplicates.
+
 **Minor**
 
 - `zitadel_init_steps` contains a literal `Password: Password1234!` in a public

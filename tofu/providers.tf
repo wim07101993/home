@@ -10,6 +10,10 @@ terraform {
       source  = "cyrilgdn/postgresql"
       version = "~> 1.25"
     }
+    docker = {
+      source  = "kreuzwerker/docker"
+      version = "~> 3.0"
+    }
   }
 
   # State holds the Storage Box password in cleartext, plus every database
@@ -87,7 +91,7 @@ provider "hcloud" {
 # its own database. Keeping them apart is what stops an apply that goes wrong
 # from also destroying the record of what it did.
 provider "postgresql" {
-  host     = var.pg_host
+  host     = var.bumba_addr
   port     = 5432
   database = "postgres"
   username = "postgres"
@@ -100,4 +104,19 @@ provider "postgresql" {
   # bumba is a cpx11 with 2 GB of RAM and postgres's 100-connection budget is
   # shared with every application container on the box.
   max_connections = 4
+}
+
+# Reaches dockerd over SSH on the tailnet.
+#
+# This connects on EVERY plan. If the Tailscale ACL is in `check` mode it
+# demands a browser re-auth periodically, which makes plans fail at random --
+# own-devices set to `accept` is a prerequisite, not a nicety.
+#
+# Aliased, with no default provider, on purpose: `docker.bumba` and (later)
+# `docker.mindy` point at different daemons, and an apply against the wrong one
+# recreates the wrong front door. An alias makes that a config error instead of
+# an outage.
+provider "docker" {
+  alias = "bumba"
+  host  = "ssh://root@${var.bumba_addr}"
 }

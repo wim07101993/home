@@ -18,8 +18,8 @@ tofu/
   imports.tf     adoption record and outstanding imports
   moved.tf       one-time state renames from the merge -- deletable after apply
   modules/
-    hetzner/     servers, volume, firewall, storage box -- adoption only
-    postgres/    databases, and later roles
+    hetzner/        servers, volume, firewall, storage box -- adoption only
+    postgres/       databases, and later roles
 ```
 
 One root module, two child modules: **one state, one `init`, one `apply`**.
@@ -639,6 +639,83 @@ state again.
 
 Only `plpgsql` is installed anywhere, so no extension resources are needed
 yet. That changes with immich, which needs pgvector.
+
+## Adopting Zitadel
+
+Not wired in yet, deliberately. A configured provider authenticates on **every**
+`tofu plan`, so adding the block before the credential exists would break a
+config that currently plans clean. Credential first, wiring second.
+
+What is running: Zitadel v4.17.3 at `auth.wvl.app`, first-instance org
+`Zitadel`, database `zitadel` owned by `zitadel_root`, application user
+`zitadel_user`. Config in
+[`../home-eu-central-1/zitadel/`](../home-eu-central-1/zitadel/).
+
+### Step 1 — a machine user for terraform, by hand
+
+This is the one part that cannot be automated: the provider needs credentials
+issued by the instance it is about to manage.
+
+In the Zitadel console:
+
+1. **Users → Service Users → New.** Username `terraform`, access token type
+   **Bearer**.
+2. Grant it **IAM_OWNER** at the instance level (Instance → Administrators),
+   or **ORG_OWNER** if it should only ever touch one org. IAM_OWNER is what
+   lets `discover-zitadel.sh` enumerate every org.
+3. **Personal Access Tokens → New.** Copy it once — it is not shown again.
+
+**Do not reuse `/docker-volumes/zitadel/login-client/login-client.pat`.** That
+belongs to the login UI, is scoped `IAM_LOGIN_CLIENT`, and coupling terraform
+to it means rotating either one breaks the other.
+
+Keep the token out of this repo — it is public. `~/.config/zitadel/terraform.pat`
+with mode `600` is fine.
+
+### Step 2 — discovery
+
+```bash
+ZITADEL_PAT="$(cat ~/.config/zitadel/terraform.pat)" ./discover-zitadel.sh
+```
+
+Plain HTTP against the Zitadel APIs: no provider, no state, no tofu. It prints
+the token's identity, then every org, project, application and action with its
+id.
+
+Note that zitadel import ids are frequently **composite** — an application is
+`<org_id>_<project_id>_<app_id>` rather than a bare id — and the shape differs
+per resource type. Check the provider docs per resource instead of assuming.
+
+### Step 3 — wiring
+
+Once discovery returns something, `modules/zitadel/` gets a provider block, the
+root gets a `zitadel` entry in `required_providers` and a module call, and the
+import blocks go in `imports.tf` like everything else. The auth attribute to
+use (`token` vs `jwt_profile_file`) is worth confirming against
+`tofu providers schema -json` after the first `init` rather than taking on
+trust.
+
+### Why this is the piece worth having
+
+Thirteen `wvl.app` hostnames are served by applications whose OIDC clients were
+clicked into a web console by hand, with the client id then pasted into a
+config file. That is the chain
+[`../docs/iac-migration.md`](../docs/iac-migration.md) is built around:
+
+```
+zitadel_application_oidc -> client_id ─┐
+postgresql_role          -> password ──┴─> templatefile -> docker_secret -> service
+```
+
+Compose cannot express any of it. This is where the workload layer stops being
+bookkeeping and starts doing something compose could not.
+
+### One thing to fix while here
+
+[`../home-eu-central-1/zitadel/zitadel-initial-steps.yaml`](../home-eu-central-1/zitadel/zitadel-initial-steps.yaml)
+contains `Password: Password1234!` in a public repo. Blast radius is small —
+bootstrap-only, and `PasswordChangeRequired: true` — but confirm that account's
+password was actually changed rather than assuming the flag did it.
 
 ## Deliberately not here yet
 

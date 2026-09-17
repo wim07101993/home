@@ -8,9 +8,10 @@ variable "state_passphrase" {
   description = "State encryption passphrase, 16+ chars. TF_VAR_state_passphrase."
 }
 
-variable "pg_host" {
+# One address, used by both the postgresql provider and the docker provider.
+variable "bumba_addr" {
   type        = string
-  description = "bumba's TAILNET address. Never the public IP -- sslmode is disable."
+  description = "bumba's TAILNET address. Never the public IP: postgres runs sslmode=disable and relies on WireGuard for transport security."
 }
 
 variable "pg_superuser_password" {

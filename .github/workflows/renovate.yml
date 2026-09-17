@@ -1,0 +1,59 @@
+# Self-hosted Renovate.
+#
+# Renovate is open source, so running it yourself is free and stays free
+# whatever Mend does with the hosted app's tiers. GitHub Actions minutes are
+# free on public repos, so this costs nothing.
+#
+# The other reason to self-host: a hosted app needs write access to this repo,
+# and this repo auto-deploys. Portainer redeploys its git stacks daily, so
+# anything with write access here has a path to the servers. Fewer parties with
+# that path is better.
+#
+# Config lives in ../../renovate.json, shared with the hosted app if you ever
+# switch.
+
+name: renovate
+
+on:
+  schedule:
+    # Monday 06:00 UTC. This decides when Renovate RUNS; the `schedule` in
+    # renovate.json decides when it is allowed to open PRs.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+    inputs:
+      dryRun:
+        description: "Dry run: log what would happen, open nothing"
+        type: boolean
+        default: true
+      logLevel:
+        description: "Log level"
+        type: choice
+        options: [info, debug]
+        default: info
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: renovate
+  cancel-in-progress: false
+
+jobs:
+  renovate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Renovate manages the github-actions ecosystem too, so once this runs it
+      # keeps its own action version current.
+      - uses: renovatebot/github-action@v41
+        env:
+          RENOVATE_REPOSITORIES: ${{ github.repository }}
+          RENOVATE_PLATFORM: github
+          # GITHUB_TOKEN is enough for a single repo. Its one limitation: PRs it
+          # opens do not trigger other workflows, so Renovate PRs get no CI.
+          # There is no CI here to miss; revisit if that changes.
+          RENOVATE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RENOVATE_DRY_RUN: ${{ inputs.dryRun && 'full' || '' }}
+          LOG_LEVEL: ${{ inputs.logLevel || 'info' }}
