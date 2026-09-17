@@ -171,3 +171,14 @@ module "file_browser" {
 
   depends_on = [module.postgres_mindy]
 }
+
+# homepage.wvl.app -- the dashboard.
+module "homepage" {
+  source = "./modules/services/homepage"
+
+  providers = {
+    docker = docker.mindy
+  }
+
+  traefik_network = module.reverse_proxy_mindy.network_name
+}

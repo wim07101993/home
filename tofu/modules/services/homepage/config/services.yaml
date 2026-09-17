@@ -1,10 +1,9 @@
-# NOTE: this is a COPY. The container mounts /docker-volumes/homepage/config on
-# mindy, not this directory -- see ../docker-compose.yaml. Editing here changes
-# nothing until the file is copied to the host. Kept in git so the intended
-# contents are reviewable and recoverable.
+# THE source of truth, as of 2026-09-17. Uploaded into the container by
+# ../main.tf -- edit here and `tofu apply`.
 #
-# Reviewed 2026-09-17: Memo was listed under Bumba but runs on mindy, and
-# keuken was missing entirely despite being routed since March.
+# Until then this was a copy of /docker-volumes/homepage/config on mindy that
+# nobody had to sync, and it had drifted: Memo listed under Bumba though it
+# runs on mindy, and Keuken missing entirely despite being routed since March.
 
 - Plop:
     - Portainer:
