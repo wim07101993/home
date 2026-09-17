@@ -111,6 +111,19 @@ import {
   id = "8cbcf563cec4" # `docker network ls` on bumba. The ID, not the name.
 }
 
+# --- docker on mindy ----------------------------------------------------
+#
+# Same shape as bumba: the container is a cutover, the network is an import.
+# Every mindy stack attaches to `traefik_traefik-network` as `external: true`,
+# and docker permits two networks with the same NAME -- so a missing import
+# creates a duplicate rather than failing, and the compose stacks then hit an
+# ambiguity error.
+#
+import {
+  to = module.reverse_proxy_mindy.docker_network.this
+  id = "573ae05293d15b6970c61327afaaf8a25682dc072a8b7b1809d763bc3af66886"
+}
+
 # --- zitadel ------------------------------------------------------------
 #
 # Nothing to import. Zitadel is a REBUILD, not an adoption: projects, roles,

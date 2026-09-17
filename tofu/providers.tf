@@ -125,6 +125,13 @@ provider "docker" {
   host  = "ssh://root@${var.bumba_addr}"
 }
 
+# mindy has no Tailscale SSH tag, so this reaches its own sshd with key auth --
+# no ACL check to lapse halfway through a plan.
+provider "docker" {
+  alias = "mindy"
+  host  = "ssh://root@${var.mindy_addr}"
+}
+
 # Zitadel's management API at auth.wvl.app.
 #
 # Authenticates as the `terraform` service user with a PAT and IAM_OWNER. That

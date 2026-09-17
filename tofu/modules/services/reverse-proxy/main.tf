@@ -1,10 +1,9 @@
-# bumba's reverse proxy. Cut over from the compose stack `reverse-proxy` on
-# 2026-09-17.
+# A traefik reverse proxy, one instance per host.
 #
-# Config lives here, beside the service it configures -- traefik.yml (static)
-# and dynamic.yml (routes). When mindy follows, decide then whether it gets its
-# own module or this one grows variables; building for a second caller that did
-# not exist yet is what produced a config/ directory nobody wanted.
+# Config lives HERE, beside the service it configures -- ./bumba/ and ./mindy/,
+# each holding traefik.yml (static) and dynamic.yml (routes). `var.host` picks
+# the directory. That keeps routing next to the thing it routes without
+# duplicating sixty lines of container definition per host.
 #
 # This is a CUTOVER, not an adoption: a compose-created container carries
 # com.docker.compose.* labels and a creation shape that docker_container cannot
@@ -22,31 +21,21 @@ resource "docker_network" "this" {
   ingress    = false
   ipv6       = false
 
-  # Vestigial, and kept on purpose. Compose created this network and stamped
-  # these on it; dropping them FORCES REPLACEMENT, and replacing the network
-  # every service on bumba is attached to is not something to do as a side
-  # effect of an import. prevent_destroy caught exactly that on 2026-09-16.
+  # Whatever compose stamped on this network when it created it. Vestigial,
+  # and reproduced on purpose: dropping a label FORCES REPLACEMENT, and
+  # replacing the network every service on the host is attached to is not
+  # something to do as a side effect of an import. prevent_destroy caught
+  # exactly that on bumba, 2026-09-16.
   #
-  # The config-hash in particular is a lie the moment compose stops managing
-  # this -- it is compose's hash of a definition that no longer governs. It
-  # stays anyway, because "matches reality" beats "reads nicely" for an
-  # adopted resource. Removing them later is a deliberate, scheduled
-  # replacement, not a tidy-up.
-  labels {
-    label = "com.docker.compose.config-hash"
-    value = "269096a0575268b819c342ef4a1d6d6c8240ce7cd8ddfb507530a7587d85e957"
-  }
-  labels {
-    label = "com.docker.compose.network"
-    value = "reverse-proxy-network"
-  }
-  labels {
-    label = "com.docker.compose.project"
-    value = "reverse-proxy"
-  }
-  labels {
-    label = "com.docker.compose.version"
-    value = ""
+  # Per host, because they differ -- the project name and config-hash belong to
+  # that host's compose stack. They were briefly hardcoded to bumba's values,
+  # which would have stamped mindy's network with the wrong project.
+  dynamic "labels" {
+    for_each = var.network_labels
+    content {
+      label = labels.key
+      value = labels.value
+    }
   }
 
   lifecycle {
@@ -62,7 +51,7 @@ resource "docker_image" "traefik" {
 }
 
 resource "docker_container" "this" {
-  name    = "reverse-proxy"
+  name    = var.container_name
   image   = docker_image.traefik.image_id
   restart = "unless-stopped"
 
@@ -95,7 +84,7 @@ resource "docker_container" "this" {
   # Static: entrypoints, providers, ACME. A real YAML file, read verbatim.
   upload {
     file    = "/etc/traefik/traefik.yml"
-    content = file("${path.module}/traefik.yml")
+    content = file("${path.module}/${var.host}/traefik.yml")
   }
 
   # Dynamic: the routing table.
@@ -107,6 +96,6 @@ resource "docker_container" "this" {
   # templatefile(...) instead of file(...).
   upload {
     file    = "/etc/traefik/dynamic.yml"
-    content = file("${path.module}/dynamic.yml")
+    content = file("${path.module}/${var.host}/dynamic.yml")
   }
 }

@@ -1,3 +1,18 @@
+variable "host" {
+  type        = string
+  description = "Which host's config directory to upload: `bumba` or `mindy`. The YAML lives in this module, beside the container it configures, one directory per host."
+
+  validation {
+    condition     = contains(["bumba", "mindy"], var.host)
+    error_message = "host must be bumba or mindy -- there must be a matching directory in this module."
+  }
+}
+
+variable "container_name" {
+  type        = string
+  description = "bumba calls it reverse-proxy, mindy calls it traefik. Kept per host so a cutover does not also rename things."
+}
+
 # renovate: datasource=docker depName=traefik
 variable "image_tag" {
   type        = string
@@ -31,3 +46,13 @@ variable "letsencrypt_path" {
 
 
 
+
+variable "network_labels" {
+  type        = map(string)
+  default     = {}
+  description = <<-EOT
+    Labels already on the existing network, from `docker network inspect`.
+    Reproduced exactly so the import plans clean -- a missing label forces
+    replacement of a network every service is attached to.
+  EOT
+}

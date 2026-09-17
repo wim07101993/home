@@ -68,6 +68,18 @@ fi
 export BUMBA_ADDR
 export TF_VAR_bumba_addr="$BUMBA_ADDR"
 
+if [ -z "${MINDY_ADDR:-}" ]; then
+  : "${MINDY_TS_HOST:=mindy}"
+  MINDY_ADDR="$(tailscale ip -4 "$MINDY_TS_HOST" 2>/dev/null)" || MINDY_ADDR=""
+  [ -n "$MINDY_ADDR" ] || {
+    echo "env.sh: cannot resolve '$MINDY_TS_HOST' on the tailnet." >&2
+    echo "        Check 'tailscale status', or set MINDY_TS_HOST / MINDY_ADDR." >&2
+    return 1
+  }
+fi
+export MINDY_ADDR
+export TF_VAR_mindy_addr="$MINDY_ADDR"
+
 
 # A read-only token cannot create a database, so this module can no longer run
 # read-only indefinitely -- see the note in providers.tf. Use one anyway for
@@ -101,4 +113,4 @@ if [ -z "${PG_CONN_STR:-}" ]; then
 fi
 
 unset -f _tofu_need
-echo "env.sh: environment set (bumba ${BUMBA_ADDR})"
+echo "env.sh: environment set (bumba ${BUMBA_ADDR}, mindy ${MINDY_ADDR})"

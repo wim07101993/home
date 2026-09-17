@@ -1,0 +1,55 @@
+# Traefik STATIC configuration for mindy. Uploaded to /etc/traefik/traefik.yml.
+#
+# Static only -- entrypoints, providers, certificate resolvers. Routers and
+# services are dynamic config and live in dynamic.yml beside this.
+
+log:
+  level: DEBUG
+
+api:
+  dashboard: true
+
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+
+  websecure:
+    address: ":443"
+    asDefault: true
+    http:
+      tls:
+        certResolver: le
+    transport:
+      # For file-browser uploads. bumba has no equivalent and has never needed
+      # one -- this is the only real difference between the two hosts' static
+      # config.
+      respondingTimeouts:
+        readTimeout: 600s
+        idleTimeout: 600s
+
+# File only. No docker provider, which is what lets the docker socket stay
+# unmounted -- see ../main.tf.
+#
+# The compose version passed
+# --providers.docker.network=reverse-proxy_reverse-proxy-network here,
+# copy-pasted from bumba. No such network exists on mindy. It was inert only
+# because every service overrode it with its own traefik.docker.network label;
+# the first one to forget would have failed to route, confusingly. Gone along
+# with the docker provider.
+providers:
+  file:
+    filename: /etc/traefik/dynamic.yml
+    watch: true
+
+certificatesResolvers:
+  le:
+    acme:
+      email: wvl@wvl.app
+      storage: /letsencrypt/acme.json
+      httpChallenge:
+        entryPoint: web

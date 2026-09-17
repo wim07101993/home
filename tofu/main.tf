@@ -28,6 +28,43 @@ module "reverse_proxy_bumba" {
   providers = {
     docker = docker.bumba
   }
+
+  host           = "bumba"
+  container_name = "reverse-proxy"
+  network_name   = "reverse-proxy_reverse-proxy-network"
+  image_tag      = "v3.7.10"
+
+  network_labels = {
+    "com.docker.compose.config-hash" = "269096a0575268b819c342ef4a1d6d6c8240ce7cd8ddfb507530a7587d85e957"
+    "com.docker.compose.network"     = "reverse-proxy-network"
+    "com.docker.compose.project"     = "reverse-proxy"
+    "com.docker.compose.version"     = ""
+  }
+}
+
+# mindy's traefik. Same shape, different host. Cutover, not adoption.
+module "reverse_proxy_mindy" {
+  source = "./modules/services/reverse-proxy"
+
+  providers = {
+    docker = docker.mindy
+  }
+
+  host           = "mindy"
+  container_name = "traefik"
+  network_name   = "traefik_traefik-network"
+  image_tag      = "v3.7.13"
+
+  # From `docker network inspect traefik_traefik-network` on mindy,
+  # 2026-09-17. Note the project is `traefik` and the hash is mindy's own --
+  # these were briefly hardcoded to bumba's values, which would have stamped
+  # this network with the wrong stack's identity.
+  network_labels = {
+    "com.docker.compose.config-hash" = "a28de9114d611e880f6424720a2fbf6580fde482deabb368bd099ee6e96b8c6c"
+    "com.docker.compose.network"     = "traefik-network"
+    "com.docker.compose.project"     = "traefik"
+    "com.docker.compose.version"     = ""
+  }
 }
 
 

@@ -6,8 +6,11 @@ server, a volume or a Storage Box, ever. It does create databases and roles.
 > **Status.**
 > - Hetzner: five resources adopted 2026-09-16.
 > - postgres: two databases adopted. Roles not yet — see the blockers below.
-> - bumba's traefik: cut over from compose 2026-09-17. Routing centralised in
->   `dynamic.yml`, docker socket no longer mounted.
+> - traefik on **both** hosts: cut over from compose 2026-09-17. Routing
+>   centralised per host in `dynamic.yml`, docker socket no longer mounted
+>   anywhere.
+> - zitadel: 6 projects, 6 roles, 8 applications built fresh. Nothing cut over
+>   yet -- see modules/zitadel/README.md.
 > - State in postgres on bumba, encrypted client-side, with per-apply history.
 
 ## Layout

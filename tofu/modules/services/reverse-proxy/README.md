@@ -1,6 +1,14 @@
-# `modules/services/reverse-proxy` — bumba's traefik
+# `modules/services/reverse-proxy`
 
-Everything on bumba is reached through this: `auth.wvl.app` (zitadel and
+> **Status.** bumba cut over 2026-09-17, mindy the same day. Both plan clean.
+
+One module, two callers. Config lives here, one directory per host —
+`bumba/` and `mindy/`, each with `traefik.yml` (static) and `dynamic.yml`
+(routes). `var.host` picks the directory.
+
+## bumba's traefik
+
+Everything on bumba is reached through it: `auth.wvl.app` (zitadel and
 zitadel-login), `score.wvl.app`, `score-api.wvl.app`, `partituren.wvl.app`, and
 traefik's own dashboard on `wvl.app`.
 
