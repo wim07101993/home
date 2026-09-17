@@ -62,6 +62,13 @@ http:
       tls:
         certResolver: le
 
+    status:
+      rule: "Host(`status.wvl.app`)"
+      entryPoints: [websecure]
+      service: gatus
+      tls:
+        certResolver: le
+
   services:
     zitadel:
       loadBalancer:
@@ -91,3 +98,8 @@ http:
       loadBalancer:
         servers:
           - url: "http://score-web-app:80"
+
+    gatus:
+      loadBalancer:
+        servers:
+          - url: "http://gatus:8080"

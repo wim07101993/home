@@ -60,3 +60,16 @@ variable "immich_db_password" {
         | jq -r '.[0].Config.Env[]|select(startswith("POSTGRES_PASSWORD"))|split("=")[1]'
   EOT
 }
+
+# --- mailgun --------------------------------------------------------------
+#
+# Replaces the hand-typed gatus SMTP password: tofu now CREATES that credential
+# (modules/mailgun) and hands it straight to gatus, so the only mail secret
+# left is this key. One key mints as many credentials as services need, and
+# rotating one is `tofu taint` plus an apply.
+#
+# Scope it in the Mailgun console -- it can manage the whole account.
+variable "mailgun_api_key" {
+  type      = string
+  sensitive = true
+}

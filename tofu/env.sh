@@ -2,10 +2,18 @@
 #
 # Source this, do not execute it:   . ./env.sh
 #
-# Sets everything tofu needs. Each value is taken from the environment if it is
-# already set, and prompted for otherwise. Nothing here depends on a particular
-# secret manager, and no secret is stored in this file -- which is why it is
-# safe in a public repo.
+# Sets everything tofu needs. Each value is taken, in order, from the
+# environment, from a tofu-loaded tfvars file, or -- failing both -- by
+# prompting. Nothing here depends on a particular secret manager, and no secret
+# is stored in this file, which is why it is safe in a public repo.
+#
+# TO STOP BEING PROMPTED: copy secrets.auto.tfvars.example to
+# secrets.auto.tfvars and fill it in. That file is gitignored (`*.tfvars`), tofu
+# loads it with no flag, and this script then skips those prompts. Two values
+# cannot live there and must stay environment variables: TF_VAR_state_passphrase
+# (read by the `encryption` block, evaluated before variables are loaded) and
+# TOFU_STATE_DB_PASSWORD / PG_CONN_STR (backend config, not a tofu variable at
+# all). HCLOUD_TOKEN is read by the provider from the environment.
 #
 # Non-interactive (CI, a wrapper, a systemd unit) -- export them beforehand:
 #
@@ -15,6 +23,7 @@
 #   TF_VAR_pg_superuser_password        postgres superuser password on bumba
 #   TF_VAR_pg_superuser_password_mindy  ... and on mindy (a different value)
 #   TF_VAR_zitadel_pat            PAT for the `terraform` service user
+#   TF_VAR_mailgun_api_key        Mailgun API key (mints SMTP credentials)
 #   TOFU_STATE_DB_PASSWORD        the tofu_state role, for the BACKEND
 #   PG_CONN_STR                   overrides the last one entirely
 #   BUMBA_ADDR                    skips the `tailscale ip` lookup
@@ -32,9 +41,37 @@
 #
 #   export TF_VAR_state_passphrase="$(rbw get 'OpenTofu state')"   # or bw, pass, ...
 
+# Where this script lives, so the *.auto.tfvars lookup below does not depend on
+# the caller's working directory.
+_tofu_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# True if a tfvars file tofu loads automatically already defines this variable.
+#
+# `*.auto.tfvars` and `terraform.tfvars` are read by tofu with no flag, so a
+# value there makes prompting for it pointless -- and worse than pointless,
+# because tfvars takes precedence over TF_VAR_ and the typed answer would be
+# silently discarded.
+#
+# Deliberately NOT applied to TF_VAR_state_passphrase: it feeds the `encryption`
+# block, which is evaluated earlier than ordinary variable loading. Treating it
+# as satisfiable from a file risks an init that cannot decrypt, so it stays an
+# environment variable regardless of what is in tfvars.
+_tofu_has_tfvar() {   # _tofu_has_tfvar TF_VAR_foo
+  local _n=${1#TF_VAR_}
+  [ "$_n" = "$1" ] && return 1                  # not a TF_VAR_, not from tfvars
+  [ "$1" = "TF_VAR_state_passphrase" ] && return 1
+  # The value must be non-empty. Matching the NAME alone would treat a
+  # half-filled `secrets.auto.tfvars` -- copied from the .example and not yet
+  # completed -- as answered, and hand tofu an empty password with no prompt
+  # and no error. Accepts "something" or a bare token; rejects "".
+  grep -qsE "^[[:space:]]*${_n}[[:space:]]*=[[:space:]]*(\"[^\"]+\"|[^\"[:space:]]+)" \
+    "$_tofu_dir"/*.auto.tfvars "$_tofu_dir"/terraform.tfvars 2>/dev/null
+}
+
 _tofu_need() {   # _tofu_need VARNAME "human description"
   local _var="$1" _desc="$2" _val=""
   [ -n "${!_var:-}" ] && return 0
+  _tofu_has_tfvar "$_var" && return 0
   # -r /dev/tty is not enough: the file can exist and still fail to open when
   # there is no controlling terminal. Try it for real.
   if ! { exec 3<>/dev/tty; } 2>/dev/null; then
@@ -102,6 +139,11 @@ _tofu_need TF_VAR_zitadel_pat "Zitadel PAT for the terraform service user" || re
 _tofu_need TF_VAR_pg_superuser_password_mindy "postgres SUPERUSER password on MINDY" || return 1
 _tofu_need TF_VAR_immich_db_password "immich's existing postgres password" || return 1
 
+# Mailgun. One key, not one password per service: tofu creates gatus's SMTP
+# credential itself (modules/mailgun), so there is no longer an SMTP password
+# to type. Scope the key in the Mailgun console -- it can manage the account.
+_tofu_need TF_VAR_mailgun_api_key "Mailgun API key" || return 1
+
 if [ -z "${PG_CONN_STR:-}" ]; then
   _tofu_need TOFU_STATE_DB_PASSWORD "postgres password for role tofu_state (backend)" || return 1
 
@@ -115,5 +157,6 @@ if [ -z "${PG_CONN_STR:-}" ]; then
   unset _pw
 fi
 
-unset -f _tofu_need
+unset -f _tofu_need _tofu_has_tfvar
+unset _tofu_dir
 echo "env.sh: environment set (bumba ${BUMBA_ADDR}, mindy ${MINDY_ADDR})"

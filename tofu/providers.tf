@@ -22,6 +22,12 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.6"
     }
+    # Community provider (wgebis), pre-1.0. Used for ONE thing -- SMTP
+    # credentials -- so the exposure to it breaking is a single resource type.
+    mailgun = {
+      source  = "wgebis/mailgun"
+      version = "~> 0.10"
+    }
   }
 
   # State holds the Storage Box password in cleartext, plus every database
@@ -184,4 +190,10 @@ provider "zitadel" {
   # file; a PAT passed to it is read as a filename and fails with
   # "file name too long".
   access_token = var.zitadel_pat
+}
+
+# Mailgun, for the SMTP credential gatus sends alerts with. Credentials only --
+# modules/mailgun/main.tf says why the sending domain is not managed here.
+provider "mailgun" {
+  api_key = var.mailgun_api_key
 }

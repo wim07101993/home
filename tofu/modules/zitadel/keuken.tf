@@ -22,18 +22,17 @@ resource "zitadel_project_role" "keuken_family" {
   group        = "family"
 }
 
-resource "zitadel_application_oidc" "transaction_importer" {
-  org_id     = local.org_home
-  project_id = zitadel_project.keuken.id
-  name       = "transaction-importer"
-
-  # Device code flow: no redirect URIs, by design.
-  redirect_uris    = []
-  response_types   = ["OIDC_RESPONSE_TYPE_CODE"]
-  grant_types      = ["OIDC_GRANT_TYPE_DEVICE_CODE"]
-  app_type         = "OIDC_APP_TYPE_NATIVE"
-  auth_method_type = "OIDC_AUTH_METHOD_TYPE_NONE"
-}
+# There is no `transaction-importer` app here on purpose.
+#
+# It was rebuilt with the rest of the project on 2026-09-17 and deleted again by
+# hand the same day. Carried over from the old kitchen-owl project, it used the
+# device code flow, had no redirect URIs, and nothing in this repo referenced
+# its client id -- so it was rebuilt out of completeness rather than need.
+#
+# Left out rather than re-added because tofu would mint a NEW client id for it,
+# which is worse than absent: anything still holding the old one would fail in a
+# way that looks like a permissions problem. Add it back deliberately, with
+# whatever needs it, if that day comes.
 
 resource "zitadel_application_oidc" "kitchen_owl_web_app" {
   org_id     = local.org_home

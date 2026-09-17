@@ -16,8 +16,21 @@ module "hetzner" {
   storage_box_password = var.storage_box_password
 }
 
+# Databases INSIDE the container that module.postgres_bumba manages. The
+# postgresql provider connects straight to port 5432 over tailscale, so nothing
+# in the graph says these must wait for the container -- and an apply that
+# replaces it would otherwise race the connection. Same failure as the zitadel
+# one below, different port.
 module "postgres" {
   source = "./modules/postgres"
+
+  depends_on = [module.postgres_bumba]
+}
+
+# SMTP credentials for outbound alerts. Credentials only -- the sending domain
+# is deliberately unmanaged, see the module.
+module "mailgun" {
+  source = "./modules/mailgun"
 }
 
 # bumba's traefik. A cutover, not an adoption -- see the module README.
@@ -70,8 +83,29 @@ module "reverse_proxy_mindy" {
 
 # Projects, roles and OIDC applications. A REBUILD, not an adoption -- orgs
 # and users are deliberately untouched. modules/zitadel/orgs.tf says why.
+#
+# depends_on because the zitadel PROVIDER talks to auth.wvl.app, which is served
+# by bumba's traefik. Nothing else in the graph expresses that, so tofu is free
+# to replace traefik and call the zitadel API at the same moment.
+#
+# It did, on 2026-09-17:
+#
+#   module.reverse_proxy_bumba.docker_container.this: Destroying...
+#   module.zitadel.zitadel_project.status: Creating...
+#   Error: dial tcp 5.75.247.152:443: connect: connection refused
+#
+# Traefik was down for ONE SECOND and the apply failed half-finished. Changing
+# dynamic.yml replaces the container, so this is a hazard on any routing change,
+# not a one-off.
 module "zitadel" {
   source = "./modules/zitadel"
+
+  # Zitadel's own outbound mail credential. Created by tofu, so there is no
+  # SMTP password to type and rotating it is an apply.
+  smtp_user     = module.mailgun.auth_smtp_username
+  smtp_password = module.mailgun.auth_smtp_password
+
+  depends_on = [module.reverse_proxy_bumba]
 }
 
 output "zitadel_apps" {
@@ -236,4 +270,66 @@ module "kitchen_owl" {
   oidc_client_secret = module.zitadel.apps["keuken/kitchen owl web-app"].client_secret
 
   depends_on = [module.postgres_mindy]
+}
+
+# status.wvl.app -- service monitoring, on bumba. The first service here that
+# is created rather than migrated.
+#
+# Was uptime-kuma. Swapped for gatus because uptime-kuma's monitors live in a
+# SQLite database behind a UI: they cannot be expressed here, reviewed in a
+# diff, or restored from this repo. It ran for a week with zero monitors
+# configured and nothing said so -- which is the same class of silent failure
+# this service exists to catch.
+module "gatus" {
+  source = "./modules/services/gatus"
+
+  providers = {
+    docker = docker.bumba
+  }
+
+  traefik_network = module.reverse_proxy_bumba.network_name
+  tailscale_ip    = var.bumba_addr
+
+  oidc_client_id     = module.zitadel.apps["status/gatus"].client_id
+  oidc_client_secret = module.zitadel.apps["status/gatus"].client_secret
+
+  # Created by tofu rather than typed in: modules/mailgun mints this credential
+  # and the value never leaves the graph.
+  smtp_username = module.mailgun.gatus_smtp_username
+  smtp_password = module.mailgun.gatus_smtp_password
+}
+
+# For wiring kopia's post-snapshot push. The token is the only credential that
+# can report a backup as successful, so it is sensitive:
+#
+#   tofu output -raw gatus_kopia_push_token
+output "gatus_kopia_push_token" {
+  description = "Bearer token for kopia's heartbeat push to gatus."
+  sensitive   = true
+  value       = module.gatus.kopia_push_token
+}
+
+output "gatus_kopia_push_url" {
+  value = module.gatus.kopia_push_url
+}
+
+# Zitadel's SMTP password, for pasting into the console.
+#
+#   tofu output -raw zitadel_smtp_password
+#
+# Needed by hand because zitadel v4.17.3 cannot UPDATE an SMTP config: the
+# `instance.smtp.config.changed` event it writes carries the password both as
+# `password` and as `plainAuth.password`, and its own projection then builds an
+# UPDATE that assigns the column twice --
+#
+#   ERROR: multiple assignments to same column "password" (SQLSTATE 42601)
+#
+# The event lands in the eventstore, the projection rejects it 5 times, and
+# zitadel gives up and skips it. Mail keeps using the OLD password while the
+# apply reports success. `added` events are unaffected (they carry only
+# plainAuth), so the config is created and rotated via the console instead.
+output "zitadel_smtp_password" {
+  description = "SMTP password for zitadel's auth@mail.wvl.app credential."
+  sensitive   = true
+  value       = module.mailgun.auth_smtp_password
 }

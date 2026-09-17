@@ -13,13 +13,13 @@ output "apps" {
 
   value = merge(
     { for k, a in {
-      "Score/score-web-app"         = zitadel_application_oidc.score_web_app
-      "home/home assistant"         = zitadel_application_oidc.home_assistant
-      "photos/immich"               = zitadel_application_oidc.immich
-      "drive/drive"                 = zitadel_application_oidc.drive
-      "memo/memo"                   = zitadel_application_oidc.memo
-      "keuken/transaction-importer" = zitadel_application_oidc.transaction_importer
-      "keuken/kitchen owl web-app"  = zitadel_application_oidc.kitchen_owl_web_app
+      "Score/score-web-app"        = zitadel_application_oidc.score_web_app
+      "home/home assistant"        = zitadel_application_oidc.home_assistant
+      "photos/immich"              = zitadel_application_oidc.immich
+      "drive/drive"                = zitadel_application_oidc.drive
+      "memo/memo"                  = zitadel_application_oidc.memo
+      "keuken/kitchen owl web-app" = zitadel_application_oidc.kitchen_owl_web_app
+      "status/gatus"               = zitadel_application_oidc.gatus
       } : k => { kind = "oidc", client_id = a.client_id, client_secret = a.client_secret }
     },
     { for k, a in {
@@ -38,5 +38,6 @@ output "project_ids" {
     "drive"  = zitadel_project.drive.id
     "keuken" = zitadel_project.keuken.id
     "memo"   = zitadel_project.memo.id
+    "status" = zitadel_project.status.id
   }
 }

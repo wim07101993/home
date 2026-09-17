@@ -1,0 +1,255 @@
+# Gatus configuration for status.wvl.app. Uploaded to /config/config.yaml.
+#
+# THIS FILE IS PUBLIC. The repo is public, so nothing secret is written here.
+# Gatus substitutes ${VAR} from the container environment before parsing, so
+# every credential arrives as an env var set by main.tf from a tofu value.
+# A `$` that is meant literally must be escaped as `$$`.
+#
+# This replaces uptime-kuma, which kept its monitors in a SQLite database
+# reachable only by clicking through a UI -- so the monitors could not be
+# reviewed, code-reviewed or restored from this repo, and after a week of
+# running it had exactly zero of them configured.
+
+concurrency: 5
+
+# Refuse to load a broken config rather than silently keeping the old one.
+skip-invalid-config-update: false
+
+web:
+  port: 8080
+
+storage:
+  # SQLite, NOT the shared postgres on this same host -- deliberately.
+  #
+  # Gatus monitors that postgres. Storing its history there means the one
+  # outage you most need a record of is the one that also takes out the
+  # recorder. Same reasoning that put this on bumba rather than mindy.
+  type: sqlite
+  path: /data/data.db
+  caching: true
+  maximum-number-of-results: 200
+  maximum-number-of-events: 50
+
+ui:
+  title: "status ǀ wvl.app"
+  header: "wvl.app"
+  dashboard-heading: "Health"
+  default-sort-by: health
+  login-subtitle: "Sign in with wvl.app"
+
+security:
+  oidc:
+    issuer-url: "https://auth.wvl.app"
+    # Gatus requires this exact suffix.
+    redirect-url: "https://status.wvl.app/authorization-code/callback"
+    client-id: "${GATUS_OIDC_CLIENT_ID}"
+    client-secret: "${GATUS_OIDC_CLIENT_SECRET}"
+    scopes: ["openid"]
+    session-ttl: 8h
+    # Empty = anyone who authenticates. Access control lives in zitadel: the
+    # `status` project sets has_project_check, so only users with a grant get
+    # a token at all.
+    allowed-subjects: []
+
+alerting:
+  email:
+    # Mailgun, the same relay OMV on samson uses. Reused rather than replaced:
+    # a second notification channel is a second thing that can rot unnoticed.
+    #
+    # Port 587 is STARTTLS. Getting this wrong is not theoretical -- postfix on
+    # samson was set to implicit TLS on 587 and silently queued 23 alerts for
+    # two days, which is why the array incident went unreported.
+    host: "smtp.eu.mailgun.org"
+    port: 587
+    # Sender and recipient are configuration, not secrets, so they live here
+    # rather than in a tfvars file -- otherwise a fresh clone could not
+    # reproduce this deployment and a change to who gets alerted would not show
+    # up in a diff.
+    #
+    # `from` need not equal `username`: Mailgun authenticates the credential and
+    # only requires the From address to be on the verified sending domain.
+    from: "status@mail.wvl.app"
+    to: "status@wvl.app"
+    # These two are NOT literals: tofu creates the credential (modules/mailgun)
+    # and injects both, so this file cannot drift out of step with it.
+    username: "${GATUS_SMTP_USERNAME}"
+    password: "${GATUS_SMTP_PASSWORD}"
+    default-alert:
+      description: "healthcheck failed"
+      send-on-resolved: true
+      # 3 consecutive failures at a 60s interval = ~3 minutes before mail.
+      # Long enough to ride out a container restart, short enough to matter.
+      failure-threshold: 3
+      success-threshold: 2
+
+endpoints:
+  # ---------------------------------------------------------------- auth ----
+  # Everything else depends on this one. /debug/ready is zitadel's readiness
+  # probe: it checks the database, so it fails when postgres does.
+  - name: zitadel
+    group: auth
+    url: "https://auth.wvl.app/debug/ready"
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
+    alerts:
+      - type: email
+
+  # ---------------------------------------------------------------- apps ----
+  - name: keuken
+    group: apps
+    url: "https://keuken.wvl.app/"
+    interval: 60s
+    # KitchenOwl has no health endpoint -- /api/health and /api/healthcheck
+    # both 404. The SPA root is the best signal available.
+    conditions:
+      - "[STATUS] == 200"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
+    alerts:
+      - type: email
+
+  - name: memo
+    group: apps
+    url: "https://memo.wvl.app/healthz"
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
+    alerts:
+      - type: email
+
+  - name: drive
+    group: apps
+    url: "https://drive.wvl.app/health"
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].message == ok"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
+    alerts:
+      - type: email
+
+  - name: photos
+    group: apps
+    url: "https://photos.wvl.app/api/server/ping"
+    interval: 60s
+    # Immich answers {"res":"pong"} only once its own database is up, so this
+    # covers more than the web tier.
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].res == pong"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
+    alerts:
+      - type: email
+
+  - name: score
+    group: apps
+    url: "https://score.wvl.app/"
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
+    alerts:
+      - type: email
+
+  - name: score-api
+    group: apps
+    url: "https://score-api.wvl.app/health"
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
+    alerts:
+      - type: email
+
+  - name: partituren
+    group: apps
+    url: "https://partituren.wvl.app/"
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
+    alerts:
+      - type: email
+
+  - name: homepage
+    group: apps
+    url: "https://homepage.wvl.app/"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
+    alerts:
+      - type: email
+
+  - name: it-tools
+    group: apps
+    url: "https://it-tools.wvl.app/"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
+    alerts:
+      - type: email
+
+  # --------------------------------------------------------------- hosts ----
+  # Over tailscale, which is how bumba reaches the home network at all.
+  # Verified 2026-09-17 that a container on bumba's traefik network can ping
+  # these; the host's tailscale0 route is what makes it work, so if tailscale
+  # itself dies these go red -- which is the correct answer, since that is also
+  # how backups reach samson.
+  - name: mindy
+    group: hosts
+    url: "icmp://100.127.106.121"
+    interval: 2m
+    conditions:
+      - "[CONNECTED] == true"
+    alerts:
+      - type: email
+
+  - name: samson
+    group: hosts
+    url: "icmp://100.71.248.106"
+    interval: 2m
+    conditions:
+      - "[CONNECTED] == true"
+    alerts:
+      - type: email
+
+  - name: plop
+    group: hosts
+    url: "icmp://100.117.36.52"
+    interval: 2m
+    conditions:
+      - "[CONNECTED] == true"
+    alerts:
+      - type: email
+
+# ------------------------------------------------------------- backups ------
+# The whole reason this service exists.
+#
+# kopia crash-looped for 5 weeks with nobody noticing, and as of today it has
+# been stopped on mindy for days. Neither is detectable by polling: there is no
+# port to open and no page to fetch, and "the container is running" is not the
+# same claim as "a backup completed".
+#
+# So kopia pushes instead. If nothing arrives within the heartbeat interval,
+# gatus raises a failure on its own -- which catches a stopped container, a
+# crash loop, and a job that runs but errors, all with one check.
+#
+#   curl -sS -X POST -H "Authorization: Bearer $TOKEN" \
+#     "https://status.wvl.app/api/v1/endpoints/backups_kopia-mindy/external?success=true"
+#
+# The key is <group>_<name>. Wire that into kopia's post-snapshot action; until
+# it is wired up this endpoint reads as down, which is honest -- backups are in
+# fact unverified.
+external-endpoints:
+  - name: kopia-mindy
+    group: backups
+    token: "${GATUS_KOPIA_TOKEN}"
+    heartbeat:
+      # Daily snapshot plus room for a slow run over the home uplink.
+      interval: 26h
+    alerts:
+      - type: email
