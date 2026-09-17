@@ -26,3 +26,8 @@ terraform.rc
 # Scratch output of `tofu plan -generate-config-out=` -- move the blocks into
 # a real file rather than committing this.
 generated.tf
+
+# Full dump of the live Zitadel configuration, from tofu/dump-zitadel.sh.
+# App definitions are not secret, but client secrets can appear in API
+# responses and this repository is public.
+zitadel-dump/

@@ -28,3 +28,6 @@ variable "letsencrypt_path" {
   default     = "/docker-volumes/traefik/letsencrypt"
   description = "Bind mount holding acme.json. Certificates survive container recreation because of this -- which is what makes the cutover cheap."
 }
+
+
+

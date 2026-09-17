@@ -25,7 +25,10 @@ under a different name, or destroy this one, and every service behind the proxy
 detaches silently. Hence `prevent_destroy` on it and the name pinned in a
 variable with a comment saying why.
 
-## Cutover
+## Cutover — done 2026-09-17
+
+Kept for the record, and because mindy will need the same sequence.
+
 
 Order matters. Leave the portainer stack in place and its daily git redeploy
 will fight tofu for the same container name and the same ports.

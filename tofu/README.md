@@ -3,10 +3,12 @@
 One OpenTofu root module. **Adoption only** — nothing here is meant to create a
 server, a volume or a Storage Box, ever. It does create databases and roles.
 
-> **Status.** Hetzner adopted 2026-09-16: five resources, `tofu plan` reports
-> "No changes". postgres first pass in progress: two databases, no roles yet.
-> State lives in postgres on bumba, encrypted client-side, with per-apply
-> history.
+> **Status.**
+> - Hetzner: five resources adopted 2026-09-16.
+> - postgres: two databases adopted. Roles not yet — see the blockers below.
+> - bumba's traefik: cut over from compose 2026-09-17. Routing centralised in
+>   `dynamic.yml`, docker socket no longer mounted.
+> - State in postgres on bumba, encrypted client-side, with per-apply history.
 
 ## Layout
 

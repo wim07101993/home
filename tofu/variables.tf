@@ -29,3 +29,10 @@ variable "storage_box_password" {
   sensitive   = true
   description = "Storage Box password. TF_VAR_storage_box_password."
 }
+
+
+variable "zitadel_pat" {
+  type        = string
+  sensitive   = true
+  description = "PAT for the `terraform` service user (IAM_OWNER). TF_VAR_zitadel_pat."
+}

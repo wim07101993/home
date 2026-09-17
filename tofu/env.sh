@@ -13,6 +13,7 @@
 #   TF_VAR_state_passphrase       state encryption passphrase, 16+ chars
 #   TF_VAR_storage_box_password   Storage Box (snow-white) password
 #   TF_VAR_pg_superuser_password  postgres superuser password on bumba
+#   TF_VAR_zitadel_pat            PAT for the `terraform` service user
 #   TOFU_STATE_DB_PASSWORD        the tofu_state role, for the BACKEND
 #   PG_CONN_STR                   overrides the last one entirely
 #   BUMBA_ADDR                    skips the `tailscale ip` lookup
@@ -67,6 +68,7 @@ fi
 export BUMBA_ADDR
 export TF_VAR_bumba_addr="$BUMBA_ADDR"
 
+
 # A read-only token cannot create a database, so this module can no longer run
 # read-only indefinitely -- see the note in providers.tf. Use one anyway for
 # anything that is pure adoption or a plan.
@@ -80,6 +82,10 @@ _tofu_need TF_VAR_state_passphrase "OpenTofu state encryption passphrase" || ret
 _tofu_need TF_VAR_storage_box_password "Storage Box (snow-white) password" || return 1
 
 _tofu_need TF_VAR_pg_superuser_password "postgres SUPERUSER password on bumba" || return 1
+
+# PAT for the `terraform` service user in Zitadel (IAM_OWNER). Created by hand
+# in the console -- modules/zitadel/README.md.
+_tofu_need TF_VAR_zitadel_pat "Zitadel PAT for the terraform service user" || return 1
 
 if [ -z "${PG_CONN_STR:-}" ]; then
   _tofu_need TOFU_STATE_DB_PASSWORD "postgres password for role tofu_state (backend)" || return 1

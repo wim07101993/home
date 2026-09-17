@@ -29,3 +29,20 @@ module "reverse_proxy_bumba" {
     docker = docker.bumba
   }
 }
+
+
+# Projects, roles and OIDC applications. A REBUILD, not an adoption -- orgs
+# and users are deliberately untouched. modules/zitadel/orgs.tf says why.
+module "zitadel" {
+  source = "./modules/zitadel"
+}
+
+output "zitadel_apps" {
+  description = "New client ids and secrets for the cutover. `tofu output -json zitadel_apps`."
+  sensitive   = true
+  value       = module.zitadel.apps
+}
+
+output "zitadel_project_ids" {
+  value = module.zitadel.project_ids
+}

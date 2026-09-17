@@ -1,5 +1,10 @@
 # bumba's reverse proxy. Cut over from the compose stack `reverse-proxy` on
-# 2026-09-16.
+# 2026-09-17.
+#
+# Config lives here, beside the service it configures -- traefik.yml (static)
+# and dynamic.yml (routes). When mindy follows, decide then whether it gets its
+# own module or this one grows variables; building for a second caller that did
+# not exist yet is what produced a config/ directory nobody wanted.
 #
 # This is a CUTOVER, not an adoption: a compose-created container carries
 # com.docker.compose.* labels and a creation shape that docker_container cannot
@@ -93,13 +98,13 @@ resource "docker_container" "this" {
     content = file("${path.module}/traefik.yml")
   }
 
-  # Dynamic: the routing table. Also a real YAML file.
+  # Dynamic: the routing table.
   #
   # Changing either file replaces the container -- a few seconds, and traefik
   # comes back with its certificates intact because acme.json lives in the bind
   # mount, not the container. If a route ever needs a tofu-managed value (an
-  # OIDC client id, a generated password), switch this to
-  # templatefile("${path.module}/dynamic.yml.tftpl", { ... }).
+  # OIDC client id, a generated password), the caller passes
+  # templatefile(...) instead of file(...).
   upload {
     file    = "/etc/traefik/dynamic.yml"
     content = file("${path.module}/dynamic.yml")

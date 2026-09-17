@@ -14,6 +14,10 @@ terraform {
       source  = "kreuzwerker/docker"
       version = "~> 3.0"
     }
+    zitadel = {
+      source  = "zitadel/zitadel"
+      version = "~> 2.0"
+    }
   }
 
   # State holds the Storage Box password in cleartext, plus every database
@@ -119,4 +123,25 @@ provider "postgresql" {
 provider "docker" {
   alias = "bumba"
   host  = "ssh://root@${var.bumba_addr}"
+}
+
+# Zitadel's management API at auth.wvl.app.
+#
+# Authenticates as the `terraform` service user with a PAT and IAM_OWNER. That
+# credential is created BY HAND in the console -- the provider needs
+# credentials issued by the instance it is about to manage, which is a
+# chicken-and-egg no amount of config solves. See modules/zitadel/README.md.
+#
+# Deliberately NOT the login-client PAT at
+# /docker-volumes/zitadel/login-client/login-client.pat: that one belongs to
+# the login UI and is scoped IAM_LOGIN_CLIENT, so rotating either would break
+# the other.
+provider "zitadel" {
+  domain = "auth.wvl.app"
+  port   = "443"
+
+  # `access_token`, not `token`. The deprecated `token` expects a PATH to a
+  # file; a PAT passed to it is read as a filename and fails with
+  # "file name too long".
+  access_token = var.zitadel_pat
 }
