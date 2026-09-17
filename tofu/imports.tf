@@ -130,6 +130,13 @@ import {
   id = "b357a9f4ce4ce0d3701913f6f703855e74c0b2a39db698d59b253dd46577e320"
 }
 
+# mindy's. Held open by memos and filebrowser, so compose's `down` will fail to
+# remove it -- which is what keeps it alive for this import.
+import {
+  to = module.postgres_mindy.docker_network.this
+  id = "4e1b70229fada34fa35db1496bf268ce3b99b55dd56fc1a5b26ff79a6f89bcfb"
+}
+
 # --- zitadel ------------------------------------------------------------
 #
 # Nothing to import. Zitadel is a REBUILD, not an adoption: projects, roles,

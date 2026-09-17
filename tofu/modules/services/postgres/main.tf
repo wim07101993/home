@@ -1,12 +1,11 @@
-# bumba's postgres.
+# A postgres container. One instance per host.
 #
-# This container holds, among other things, THIS STATE. An apply that recreates
-# it has to write state to the database it just recreated, so the cutover runs
-# with the backend temporarily disabled and state on the operator's laptop --
-# see the comment above the commented-out backend block in ../../../providers.tf.
+# bumba: zitadel's database, score's, and THIS LAYER'S OWN STATE. Recreating it
+# needs the state round-trip documented above the backend block in
+# ../../../providers.tf -- read that first.
 #
-# Everything on bumba depends on this: zitadel cannot authenticate anyone
-# without it, and score cannot serve a request.
+# mindy: memos and filebrowser. No state, no round-trip, and the postgresql
+# provider does not point here, so a plain apply works.
 
 resource "docker_network" "this" {
   name       = var.network_name
@@ -45,14 +44,13 @@ resource "docker_container" "this" {
     "PGDATA=/data/postgres",
   ]
 
-  # Like-for-like with compose, which binds 0.0.0.0. The only thing keeping
-  # this off the internet is firewall-1, which allows 80, 443 and icmp and
-  # nothing else.
+  # Like-for-like with compose, which binds 0.0.0.0.
   #
-  # Narrowing this to 127.0.0.1 plus the tailnet address would make it two
-  # independent layers instead of one, and it is a one-line change here. It is
-  # deliberately NOT bundled into this cutover: mixing a behaviour change into
-  # a migration makes a failure ambiguous. Do it afterwards, on purpose.
+  # On bumba the only thing keeping this off the internet is firewall-1, which
+  # allows 80, 443 and icmp and nothing else. Narrowing to 127.0.0.1 plus the
+  # tailnet address would make that two independent layers, and it is a
+  # one-line change here -- but deliberately not bundled into a migration,
+  # where a failure would be ambiguous.
   ports {
     internal = 5432
     external = 5432
@@ -86,4 +84,10 @@ resource "docker_container" "this" {
     retries      = 5
     start_period = "20s"
   }
+}
+
+# So dependent service modules can reference the network rather than naming it
+# as a string.
+output "network_name" {
+  value = docker_network.this.name
 }

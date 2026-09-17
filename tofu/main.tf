@@ -93,6 +93,9 @@ module "postgres_bumba" {
     docker = docker.bumba
   }
 
+  container_name = "database-db-1"
+  network_name   = "database_db-network"
+
   # From `docker network inspect database_db-network` on bumba, 2026-09-17.
   network_labels = {
     "com.docker.compose.config-hash" = "6723d56766a425ef676f8dc75eeff5a7178b8f4fb7298a50613bcf948efd9d78"
@@ -112,4 +115,51 @@ module "it_tools" {
   }
 
   network_name = module.reverse_proxy_mindy.network_name
+}
+
+# mindy's postgres. memos and filebrowser depend on it. Unlike bumba's, it
+# holds no tofu state, so no round-trip is needed.
+module "postgres_mindy" {
+  source = "./modules/services/postgres"
+
+  providers = {
+    docker = docker.mindy
+  }
+
+  container_name = "db"
+  network_name   = "db_db-network"
+
+  # From `docker network inspect db_db-network` on mindy, 2026-09-17. The
+  # project is `db` here and `database` on bumba -- reproducing bumba's would
+  # stamp this network with the wrong stack's identity.
+  network_labels = {
+    "com.docker.compose.config-hash" = "c84a1ab54cb8990da8545ea8c010f473d33fe3a55851f06124cd5831ae855a9b"
+    "com.docker.compose.network"     = "db-network"
+    "com.docker.compose.project"     = "db"
+    "com.docker.compose.version"     = ""
+  }
+}
+
+# memo.wvl.app. First container with a database dependency and a secret.
+module "memo" {
+  source = "./modules/services/memo"
+
+  providers = {
+    docker = docker.mindy
+  }
+
+  traefik_network = module.reverse_proxy_mindy.network_name
+  db_network      = module.postgres_mindy.network_name
+}
+
+# drive.wvl.app. The one with rslave-propagated NFS mounts under it.
+module "file_browser" {
+  source = "./modules/services/file-browser"
+
+  providers = {
+    docker = docker.mindy
+  }
+
+  traefik_network = module.reverse_proxy_mindy.network_name
+  db_network      = module.postgres_mindy.network_name
 }
