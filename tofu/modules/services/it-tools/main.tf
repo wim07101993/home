@@ -16,9 +16,15 @@ resource "docker_container" "this" {
 
   # Reproduced from the compose stack. The image runs nginx, which wants these
   # three to drop privileges after binding; everything else is dropped.
+  #
+  # `CAP_` PREFIXES ARE REQUIRED. Compose accepts bare `CHOWN`; docker stores
+  # `CAP_CHOWN`, and the provider reads that back and diffs against whatever
+  # the config says. Because capabilities force replacement, writing the bare
+  # form recreates the container on EVERY apply, forever -- a loop that looks
+  # like drift and is really a normalisation mismatch.
   capabilities {
     drop = ["ALL"]
-    add  = ["CHOWN", "SETGID", "SETUID"]
+    add  = ["CAP_CHOWN", "CAP_SETGID", "CAP_SETUID"]
   }
   security_opts = ["no-new-privileges:true"]
 
@@ -55,8 +61,12 @@ resource "docker_container" "this" {
   }
 
   healthcheck {
-    test         = ["CMD", "curl", "-f", "http://localhost:80"]
-    interval     = "60s"
+    test = ["CMD", "curl", "-f", "http://localhost:80"]
+
+    # "1m0s", not "60s". Same normalisation problem as the capabilities above:
+    # docker canonicalises durations and the provider compares strings. This
+    # one only produces a diff rather than a replacement, but it never settles.
+    interval     = "1m0s"
     timeout      = "30s"
     retries      = 5
     start_period = "20s"
