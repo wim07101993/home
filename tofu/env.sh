@@ -100,6 +100,7 @@ _tofu_need TF_VAR_pg_superuser_password "postgres SUPERUSER password on bumba" |
 # in the console -- modules/zitadel/README.md.
 _tofu_need TF_VAR_zitadel_pat "Zitadel PAT for the terraform service user" || return 1
 _tofu_need TF_VAR_pg_superuser_password_mindy "postgres SUPERUSER password on MINDY" || return 1
+_tofu_need TF_VAR_immich_db_password "immich's existing postgres password" || return 1
 
 if [ -z "${PG_CONN_STR:-}" ]; then
   _tofu_need TOFU_STATE_DB_PASSWORD "postgres password for role tofu_state (backend)" || return 1

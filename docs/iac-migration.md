@@ -176,6 +176,70 @@ fill in.
 
 ---
 
+## What compose does that the docker provider does not
+
+Learned the hard way on 2026-09-17, migrating eight services. Neither of these
+is in any guide, and both cost more time than the migrations themselves.
+
+### 1. The provider compares strings; docker normalises them
+
+`docker_container` reads attributes back from the daemon and diffs them against
+the config as written. Docker does not store what you wrote — it stores its own
+canonical form. Anything left unset that docker *computes* will differ forever.
+
+| written | docker reports | consequence |
+|---|---|---|
+| `add = ["CHOWN"]` | `CAP_CHOWN` | **forces replacement** |
+| `interval = "60s"` | `1m0s` | perpetual diff |
+| `healthcheck { test = ... }` alone | its defaults, 30s/30s/3 | perpetual diff |
+| `memory = 4096` alone | `memory_swap = 8192` (2x) | perpetual diff |
+
+The replacement-forcing ones are the dangerous half: a container quietly
+recreating itself on **every apply, forever**. Nothing errors. You would notice
+via uptime, weeks later.
+
+The rule: write docker's canonical form, not compose's. `CAP_`-prefixed
+capabilities, `1m0s` not `60s`, every healthcheck field explicit, and
+`memory_swap` alongside `memory`.
+
+### 2. Some things simply cannot be expressed
+
+| compose | provider |
+|---|---|
+| `deploy.resources.limits.pids` | **no equivalent.** There is no `pids_limit` in kreuzwerker/docker v3.9.0 |
+| `create_host_path: true` on a long-form bind | no equivalent; the directory must exist |
+| service-name network aliases | must be written out by hand, per network |
+
+The pids limit is a real capability regression — it-tools, homepage, memo,
+zitadel, zitadel-login and both score services all set `pids: 99`. Do **not**
+substitute `ulimit { name = "nproc" }`: that is an rlimit enforced per UID
+across the host rather than per container, so with containers sharing a UID it
+either does nothing or throttles an unrelated one. It looks equivalent and is
+worse than nothing.
+
+The alias one is the most dangerous omission, because nothing warns you.
+Compose gives every service a network alias for free; `docker_container` does
+not. `zitadel-config.yaml` says `Database.postgres.Host: 'db'` — that is an
+alias, not a container name. Recreate postgres without
+`aliases = ["db"]` and every dependent service loses its database.
+
+### And a third thing, which is about repos rather than providers
+
+Three directories held copies of files that were really mounted from
+`/docker-volumes/` — homepage's config, zitadel's four files, and immich's
+compose. **All three had drifted**, because nothing obliged anyone to sync them.
+
+One was actively dangerous: `mindy/immich/docker-compose.yml` had
+`UPLOAD_LOCATION=/docker-volumes/immich/library-samson`, a path that does not
+exist on mindy, together with `create_host_path: true`. The running container
+predated that edit. A merged dependabot PR would have had portainer recreate
+immich, docker would have created the empty directory, and immich would have
+started against a library with no photos and no error.
+
+The fix is not discipline, it is removing the copy: homepage's config now lives
+in its module and is uploaded into the container, so the repo *is* the source
+of truth. The same should happen to zitadel's files when that container moves.
+
 ## NixOS
 
 ### Why samson specifically

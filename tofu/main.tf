@@ -206,3 +206,34 @@ module "score" {
 
   depends_on = [module.postgres_mindy]
 }
+
+# photos.wvl.app -- four containers, an NFS library from samson, and immich's
+# own pgvector postgres.
+module "immich" {
+  source = "./modules/services/immich"
+
+  providers = {
+    docker = docker.mindy
+  }
+
+  traefik_network = module.reverse_proxy_mindy.network_name
+  db_password     = var.immich_db_password
+}
+
+# keuken.wvl.app. Moved onto the shared postgres, off its own postgres:15.
+module "kitchen_owl" {
+  source = "./modules/services/kitchen-owl"
+
+  providers = {
+    docker     = docker.mindy
+    postgresql = postgresql.mindy
+  }
+
+  traefik_network = module.reverse_proxy_mindy.network_name
+  db_network      = module.postgres_mindy.network_name
+
+  oidc_client_id     = module.zitadel.apps["keuken/kitchen owl web-app"].client_id
+  oidc_client_secret = module.zitadel.apps["keuken/kitchen owl web-app"].client_secret
+
+  depends_on = [module.postgres_mindy]
+}

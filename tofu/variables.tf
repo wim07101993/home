@@ -47,3 +47,16 @@ variable "pg_superuser_password_mindy" {
   sensitive   = true
   description = "postgres superuser password on MINDY, from /docker-volumes/db/db_password.txt there. Different file and different value from bumba's."
 }
+
+variable "immich_db_password" {
+  type        = string
+  sensitive   = true
+  description = <<-EOT
+    immich's EXISTING postgres password -- not generated. Its cluster is
+    already initialised, and changing POSTGRES_PASSWORD on an initialised
+    cluster changes nothing except immich's ability to connect.
+
+      ssh root@<mindy> docker inspect immich_postgres \
+        | jq -r '.[0].Config.Env[]|select(startswith("POSTGRES_PASSWORD"))|split("=")[1]'
+  EOT
+}

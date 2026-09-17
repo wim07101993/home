@@ -137,6 +137,22 @@ import {
   id = "4e1b70229fada34fa35db1496bf268ce3b99b55dd56fc1a5b26ff79a6f89bcfb"
 }
 
+# --- immich on mindy ----------------------------------------------------
+#
+# Four containers are a cutover; the network and the model cache are imports.
+# The model cache holds several GB of downloaded ML models -- recreating it
+# means immich re-downloads them on first use.
+
+import {
+  to = module.immich.docker_network.internal
+  id = "025188a907e4b7f3f793da39b9fb6f2196447aacc55971af207c01e575f5ef1c"
+}
+
+import {
+  to = module.immich.docker_volume.model_cache
+  id = "immich_model-cache"
+}
+
 # --- zitadel ------------------------------------------------------------
 #
 # Nothing to import. Zitadel is a REBUILD, not an adoption: projects, roles,
