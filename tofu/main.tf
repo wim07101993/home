@@ -150,6 +150,12 @@ module "memo" {
 
   traefik_network = module.reverse_proxy_mindy.network_name
   db_network      = module.postgres_mindy.network_name
+
+  # The db_network reference orders this after the NETWORK, not after the
+  # database container -- so tofu created both in parallel on 2026-09-17 and
+  # memos' first connection attempt raced postgres' startup. `unless-stopped`
+  # covered it, but relying on a restart policy for ordering is luck.
+  depends_on = [module.postgres_mindy]
 }
 
 # drive.wvl.app. The one with rslave-propagated NFS mounts under it.
@@ -162,4 +168,6 @@ module "file_browser" {
 
   traefik_network = module.reverse_proxy_mindy.network_name
   db_network      = module.postgres_mindy.network_name
+
+  depends_on = [module.postgres_mindy]
 }
