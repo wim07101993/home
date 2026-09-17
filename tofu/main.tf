@@ -182,3 +182,27 @@ module "homepage" {
 
   traefik_network = module.reverse_proxy_mindy.network_name
 }
+
+# score.wvl.app / partituren.wvl.app / score-api.wvl.app
+#
+# Moved from bumba to mindy AND cut over to the rebuilt zitadel apps in one
+# change, because the config files had to be rewritten either way -- the
+# connection string changes with the host. Doing it in two passes would have
+# meant hand-editing them once and regenerating them later.
+module "score" {
+  source = "./modules/services/score"
+
+  providers = {
+    docker     = docker.mindy
+    postgresql = postgresql.mindy
+  }
+
+  traefik_network = module.reverse_proxy_mindy.network_name
+  db_network      = module.postgres_mindy.network_name
+
+  api_client_id     = module.zitadel.apps["Score/score-api"].client_id
+  api_client_secret = module.zitadel.apps["Score/score-api"].client_secret
+  web_client_id     = module.zitadel.apps["Score/score-web-app"].client_id
+
+  depends_on = [module.postgres_mindy]
+}

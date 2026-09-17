@@ -7,9 +7,9 @@
 # service means editing this file.
 #
 # No `status` route: uptime-kuma is not deployed yet, and when it is it goes on
-# bumba rather than here. mindy/docker-compose.yaml carries labels for it, but
-# the container has never existed -- `docker network inspect` on 2026-09-17
-# listed seven containers and it was not among them.
+# bumba rather than here.
+#
+# score, score-api and partituren arrived from bumba on 2026-09-17.
 
 http:
   routers:
@@ -69,6 +69,28 @@ http:
       tls:
         certResolver: le
 
+    score-api:
+      rule: "Host(`score-api.wvl.app`)"
+      entryPoints: [websecure]
+      service: score-api
+      tls:
+        certResolver: le
+
+    # Two hostnames, one backend.
+    score:
+      rule: "Host(`score.wvl.app`)"
+      entryPoints: [websecure]
+      service: score-web-app
+      tls:
+        certResolver: le
+
+    partituren:
+      rule: "Host(`partituren.wvl.app`)"
+      entryPoints: [websecure]
+      service: score-web-app
+      tls:
+        certResolver: le
+
   middlewares:
     drive-size-limit:
       buffering:
@@ -105,3 +127,12 @@ http:
         servers:
           - url: "http://memos:5230"
 
+    score-api:
+      loadBalancer:
+        servers:
+          - url: "http://score-api:7001"
+
+    score-web-app:
+      loadBalancer:
+        servers:
+          - url: "http://score-web-app:80"

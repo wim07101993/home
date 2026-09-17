@@ -41,3 +41,9 @@ variable "mindy_addr" {
   type        = string
   description = "mindy's TAILNET address."
 }
+
+variable "pg_superuser_password_mindy" {
+  type        = string
+  sensitive   = true
+  description = "postgres superuser password on MINDY, from /docker-volumes/db/db_password.txt there. Different file and different value from bumba's."
+}

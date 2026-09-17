@@ -12,7 +12,8 @@
 #   HCLOUD_TOKEN                  Hetzner Cloud API token
 #   TF_VAR_state_passphrase       state encryption passphrase, 16+ chars
 #   TF_VAR_storage_box_password   Storage Box (snow-white) password
-#   TF_VAR_pg_superuser_password  postgres superuser password on bumba
+#   TF_VAR_pg_superuser_password        postgres superuser password on bumba
+#   TF_VAR_pg_superuser_password_mindy  ... and on mindy (a different value)
 #   TF_VAR_zitadel_pat            PAT for the `terraform` service user
 #   TOFU_STATE_DB_PASSWORD        the tofu_state role, for the BACKEND
 #   PG_CONN_STR                   overrides the last one entirely
@@ -98,6 +99,7 @@ _tofu_need TF_VAR_pg_superuser_password "postgres SUPERUSER password on bumba" |
 # PAT for the `terraform` service user in Zitadel (IAM_OWNER). Created by hand
 # in the console -- modules/zitadel/README.md.
 _tofu_need TF_VAR_zitadel_pat "Zitadel PAT for the terraform service user" || return 1
+_tofu_need TF_VAR_pg_superuser_password_mindy "postgres SUPERUSER password on MINDY" || return 1
 
 if [ -z "${PG_CONN_STR:-}" ]; then
   _tofu_need TOFU_STATE_DB_PASSWORD "postgres password for role tofu_state (backend)" || return 1

@@ -18,6 +18,10 @@ terraform {
       source  = "zitadel/zitadel"
       version = "~> 2.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.6"
+    }
   }
 
   # State holds the Storage Box password in cleartext, plus every database
@@ -122,6 +126,20 @@ provider "postgresql" {
 
   # bumba is a cpx11 with 2 GB of RAM and postgres's 100-connection budget is
   # shared with every application container on the box.
+  max_connections = 4
+}
+
+# mindy's postgres. Aliased; bumba's is the default provider above. score's
+# database and role live here after the 2026-09-17 move.
+provider "postgresql" {
+  alias    = "mindy"
+  host     = var.mindy_addr
+  port     = 5432
+  database = "postgres"
+  username = "postgres"
+  password = var.pg_superuser_password_mindy
+  sslmode  = "disable"
+
   max_connections = 4
 }
 
