@@ -312,24 +312,3 @@ output "gatus_kopia_push_token" {
 output "gatus_kopia_push_url" {
   value = module.gatus.kopia_push_url
 }
-
-# Zitadel's SMTP password, for pasting into the console.
-#
-#   tofu output -raw zitadel_smtp_password
-#
-# Needed by hand because zitadel v4.17.3 cannot UPDATE an SMTP config: the
-# `instance.smtp.config.changed` event it writes carries the password both as
-# `password` and as `plainAuth.password`, and its own projection then builds an
-# UPDATE that assigns the column twice --
-#
-#   ERROR: multiple assignments to same column "password" (SQLSTATE 42601)
-#
-# The event lands in the eventstore, the projection rejects it 5 times, and
-# zitadel gives up and skips it. Mail keeps using the OLD password while the
-# apply reports success. `added` events are unaffected (they carry only
-# plainAuth), so the config is created and rotated via the console instead.
-output "zitadel_smtp_password" {
-  description = "SMTP password for zitadel's auth@mail.wvl.app credential."
-  sensitive   = true
-  value       = module.mailgun.auth_smtp_password
-}

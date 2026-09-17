@@ -430,9 +430,63 @@ hcloud firewall list
 - **Hetzner DNS** is community-maintained; verify which provider is current
   before committing. 13 `wvl.app` records currently live in a web console:
   `auth drive photos office keuken memo score score-api partituren baby it-tools
-  homepage traefik` (+ `status` once Uptime Kuma lands).
+  homepage traefik status`. `score` and `partituren` still point at bumba
+  although the containers moved to mindy — see "Still outstanding".
 - **Storage Box** coverage has historically been weak (Robot API, not Cloud API).
   Verify before assuming it can be managed declaratively.
+- `wgebis/mailgun` — community, pre-1.0, and the registry holds no GPG key for
+  it, so the first install is unverified. `.terraform.lock.hcl` pins the hashes
+  afterwards. Used for SMTP credentials only; the sending domain is left
+  unmanaged so an apply can never touch DKIM or deliverability.
+
+### Zitadel SMTP updates break a projection — cosmetically (v4.17.3)
+
+Found 2026-09-17. `zitadel_email_provider_smtp` works, but an update writes an
+`instance.smtp.config.changed` event carrying the password twice — at the top
+level and again under `plainAuth` — and zitadel's own projection then builds an
+`UPDATE` assigning the same column twice:
+
+```
+projections.smtp_configs6   failed_sequence 122/123   failure_count 5
+ERROR: multiple assignments to same column "password" (SQLSTATE 42601)
+```
+
+It retries five times, gives up and skips the event, so
+`projections.smtp_configs6_smtp` keeps the old ciphertext and description.
+
+**Mail still sends.** Verified by test mail after a rotation, while the
+projection still held the previous password — so zitadel does not read the
+sending credential from that projection. Do not read a stale
+`smtp_configs6_smtp` row as evidence that mail is down; send a test mail, which
+is the only check that means anything.
+
+**But the resource is effectively read-only to tofu.** The write never reaches
+the read model, so the API keeps returning the old value, tofu sees the same
+drift next plan, and proposes the same update again — an apply that reports
+success, changes nothing, and never converges. Changing `description` from
+`mailgun` to `Mailgun EU` produced exactly that: a permanent 1-to-change plan.
+
+So every attribute in `smtp.tf` mirrors what zitadel currently returns, down to
+a `sender_name` that repeats the address and looks wrong. Changing any of them
+means editing in the console first, then matching the config to it.
+
+`instance.smtp.config.added` carries only `plainAuth` and projects cleanly, so
+creates are unaffected. Worth fixing upstream: the reducer for
+`instance.smtp.config.changed` should set `password` once.
+
+Separately, `set_active = true` is usable only at creation — on update the
+provider calls Activate unconditionally and zitadel returns
+`Errors.SMTPConfig.AlreadyActive`, failing *before* applying the update and
+discarding it. Leave it unset on an adopted config.
+
+### One credential per sender
+
+Four SMTP logins exist on `mail.wvl.app` and are deliberately not shared:
+`auth@` (zitadel), `gatus@` (gatus), one for OMV on samson, one for databasus.
+Sharing one would mean a rotation silently stopping someone else's mail —
+queued in postfix, no error anywhere, which is how the array incident stayed
+unreported for two days. `auth@` and `gatus@` are in tofu; databasus joins when
+it migrates.
 
 ---
 
