@@ -140,6 +140,11 @@ _tofu_need TF_VAR_zitadel_pat "Zitadel PAT for the terraform service user" || re
 _tofu_need TF_VAR_pg_superuser_password_mindy "postgres SUPERUSER password on MINDY" || return 1
 _tofu_need TF_VAR_immich_db_password "immich's existing postgres password" || return 1
 
+# Kopia. Two credentials: the repository password (encrypts the backups) and
+# the Storage Box SUB-account password. Neither is TF_VAR_storage_box_password.
+_tofu_need TF_VAR_kopia_repository_password "kopia repository password" || return 1
+_tofu_need TF_VAR_kopia_sftp_password "kopia Storage Box sub-account password" || return 1
+
 # Zitadel's masterkey -- 32 bytes, and the one value in this estate that cannot
 # be regenerated. Prefer secrets.auto.tfvars over typing it; see
 # modules/services/zitadel/variables.tf.

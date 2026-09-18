@@ -1,0 +1,1051 @@
+{
+  "(global)": {
+    "actions": {},
+    "compression": {
+      "compressorName": "none"
+    },
+    "errorHandling": {
+      "ignoreDirectoryErrors": false,
+      "ignoreFileErrors": false,
+      "ignoreUnknownTypes": true
+    },
+    "files": {
+      "ignoreDotFiles": [
+        ".kopiaignore"
+      ]
+    },
+    "logging": {
+      "directories": {
+        "ignored": 5,
+        "snapshotted": 5
+      },
+      "entries": {
+        "cacheHit": 0,
+        "cacheMiss": 0,
+        "ignored": 5,
+        "snapshotted": 0
+      }
+    },
+    "metadataCompression": {
+      "compressorName": "zstd-fastest"
+    },
+    "osSnapshots": {
+      "volumeShadowCopy": {
+        "enable": 0
+      }
+    },
+    "retention": {
+      "ignoreIdenticalSnapshots": true,
+      "keepAnnual": 1,
+      "keepDaily": 1,
+      "keepHourly": 1,
+      "keepLatest": 5,
+      "keepMonthly": 1,
+      "keepWeekly": 1
+    },
+    "scheduling": {
+      "runMissed": true,
+      "timeOfDay": [
+        {
+          "hour": 5,
+          "min": 0
+        }
+      ]
+    },
+    "splitter": {},
+    "upload": {
+      "maxParallelSnapshots": 2,
+      "parallelUploadAboveSize": 2147483648
+    }
+  },
+  "root@1da0a4624124:/data/audio": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/backups": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/gezin-officieel": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/gezin-officieel-archive": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/live": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/movies/animated/1990-1999/The Lion King (1994)": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/movies/animated/1990-1999/The Lion King II Simbas Pride (1998)": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/movies/animated/2000-2009/Bob De Bouwer - Hoe Bob Een Bouwer Werd (2008)": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/movies/animated/2000-2009/Bob de Bouwer - Molly geeft eerste hulp (2004)": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/movies/animated/2000-2009/Bob de Bouwer - Race naar de finish (2008)": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/movies/animated/2000-2009/Bob de Bouwer Werk in Uitvoering - Bob's Grote Plan (2005)": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/movies/animated/2000-2009/Bob de Bouwer werk in uitvoering- Ridder Muck (2007)": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/movies/animated/2000-2009/Bob de bouwer - Leve het wilde westen (2007)": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/movies/animated/2000-2009/Bob de bouwer - Wendy's drukke dag (2004)": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/movies/animated/2000-2009/Bob de bouwer Werk in uitvoering - Crossen met Scrambler (2006)": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/movies/animated/2000-2009/Bob de bouwer en de ridders van Makelot (2004)": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/movies/animated/2000-2009/Bob de bouwer werk in uitvoering - De oogst van Spud (2006)": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/movies/animated/2000-2009/Bob de bouwer werk in uitvoering \u2010 Packers eerste dag (2008)": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/movies/animated/2000-2009/The Lion King 1\u00bd (2004)": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/animated/Alfred J. Kwak": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/animated/Avatar - The Last Airbender (2005)/Season 01 - Water (2005)": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/animated/Buurman & Buurman (1976)": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/animated/Danny Phantom (2004)": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/animated/David de kabouter": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/animated/De fabeltjeskrant": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/animated/De smufen": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/animated/Dragonball (1986)": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/animated/Er Was Eens ... De aarde": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/animated/Er Was Eens ... De mens": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/animated/Er Was Eens ... De ruimte": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/animated/Er was eens ... Het Leven": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/animated/Lucky Luke": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/animated/Maya De Bij": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/animated/Nick Bruna's Nijntje (1984)": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/animated/Nijntje En Vriendjes (2003)": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/animated/Noahs Island (1997)": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/animated/Plonsters (1987)": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/animated/Plonsters (1987)/Season 01": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/animated/The Animals of Farthing Wood (1993)": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/animated/Tiktak": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/animated/Tiktak (2019-2020)": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/live-action/'Allo 'Allo! (1982)": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/live-action/Bumba": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/live-action/Dag Sinterklaas": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/live-action/Doctor Who (1963)": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/live-action/Drake & Josh (2004)": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/live-action/Kabouter Plop": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/live-action/Kulderzipken": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/live-action/Mythbusters (2003)": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/live-action/Spring": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/live-action/Teletubbies nl (1997)": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/media/series/live-action/W817": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/photos": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/sara": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
+  "root@1da0a4624124:/data/wim": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  }
+}

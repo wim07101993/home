@@ -330,6 +330,25 @@ module "score" {
   depends_on = [module.postgres_mindy]
 }
 
+# The estate's only off-site backup. A cutover from the compose stack in
+# mindy/kopia/ -- delete that stack before applying, or it redeploys and fights
+# tofu for the same container.
+#
+# No depends_on: it reaches samson over NFS mounts in mindy's fstab and the
+# Storage Box over SFTP, neither of which tofu owns.
+module "kopia" {
+  source = "./modules/services/kopia"
+
+  providers = {
+    docker = docker.mindy
+  }
+
+  tailscale_ip = var.mindy_addr
+
+  repository_password = var.kopia_repository_password
+  sftp_password       = var.kopia_sftp_password
+}
+
 # photos.wvl.app -- four containers, an NFS library from samson, and immich's
 # own pgvector postgres.
 module "immich" {

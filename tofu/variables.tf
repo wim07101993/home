@@ -61,6 +61,35 @@ variable "immich_db_password" {
   EOT
 }
 
+# --- kopia ----------------------------------------------------------------
+#
+# TWO different credentials, and neither is var.storage_box_password above --
+# that one is the Storage Box MAIN account; kopia connects as a sub-account.
+#
+#   kopia_repository_password  encrypts the repository. Lose it and every
+#                              backup is unreadable. There is no reset.
+#   kopia_sftp_password        the Storage Box sub-account, how kopia reaches
+#                              the bytes at all.
+#
+# Extract them from mindy without displaying them:
+#
+#   printf 'kopia_repository_password = "%s"\n' \
+#     "$(ssh root@<mindy> cat /docker-volumes/kopia/repository_password.txt)" \
+#     >> secrets.auto.tfvars
+#
+# The SFTP one is inside repository.config:
+#
+#   ssh root@<mindy> 'python3 -c "import json;print(json.load(open(\"/docker-volumes/kopia/kopia-config/repository.config\"))[\"storage\"][\"config\"][\"password\"])"'
+variable "kopia_repository_password" {
+  type      = string
+  sensitive = true
+}
+
+variable "kopia_sftp_password" {
+  type      = string
+  sensitive = true
+}
+
 # --- zitadel --------------------------------------------------------------
 #
 # The masterkey. Zitadel encrypts every secret in its database with it, and a
