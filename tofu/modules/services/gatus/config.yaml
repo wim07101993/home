@@ -155,7 +155,10 @@ endpoints:
 
   - name: score-api
     group: apps
-    url: "https://score-api.wvl.app/health"
+    # /healthz, not /health -- /health returns a 404 problem+json document.
+    # Guessed as /health when it was written, which could not be checked then
+    # because the host had no valid certificate and every request failed at TLS.
+    url: "https://score-api.wvl.app/healthz"
     interval: 60s
     conditions:
       - "[STATUS] == 200"

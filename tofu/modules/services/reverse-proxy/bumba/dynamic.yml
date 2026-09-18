@@ -6,14 +6,6 @@
 #
 # A service missing from here is unreachable. That is the trade for centralised
 # routing: no auto-discovery, so adding a service means editing this file.
-#
-# score, score-api and partituren are DUPLICATED here and in ../mindy/dynamic.yml
-# while the move runs. DNS decides which host actually serves them, and those
-# records live in a web console rather than in tofu -- so the routes stay on
-# both sides until score.wvl.app, score-api.wvl.app and partituren.wvl.app have
-# been repointed at mindy (91.99.120.54) and verified.
-#
-# Remove this block, and the matching services below, once that is done.
 
 http:
   routers:
@@ -37,28 +29,6 @@ http:
       rule: "Host(`auth.wvl.app`) && PathPrefix(`/ui/v2/login`)"
       entryPoints: [websecure]
       service: zitadel-login
-      tls:
-        certResolver: le
-
-    # --- moving to mindy, remove once DNS has switched ---
-    score-api:
-      rule: "Host(`score-api.wvl.app`)"
-      entryPoints: [websecure]
-      service: score-api
-      tls:
-        certResolver: le
-
-    score:
-      rule: "Host(`score.wvl.app`)"
-      entryPoints: [websecure]
-      service: score-web-app
-      tls:
-        certResolver: le
-
-    partituren:
-      rule: "Host(`partituren.wvl.app`)"
-      entryPoints: [websecure]
-      service: score-web-app
       tls:
         certResolver: le
 
@@ -87,17 +57,6 @@ http:
       loadBalancer:
         servers:
           - url: "http://zitadel-login:3000"
-
-    # --- moving to mindy, remove once DNS has switched ---
-    score-api:
-      loadBalancer:
-        servers:
-          - url: "http://score-api:7001"
-
-    score-web-app:
-      loadBalancer:
-        servers:
-          - url: "http://score-web-app:80"
 
     gatus:
       loadBalancer:

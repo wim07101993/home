@@ -430,8 +430,8 @@ hcloud firewall list
 - **Hetzner DNS** is community-maintained; verify which provider is current
   before committing. 13 `wvl.app` records currently live in a web console:
   `auth drive photos office keuken memo score score-api partituren baby it-tools
-  homepage traefik status`. `score` and `partituren` still point at bumba
-  although the containers moved to mindy — see "Still outstanding".
+  homepage traefik status`. All application records point at mindy
+  (91.99.120.54) except `auth` and `status`, which are bumba (5.75.247.152).
 - **Storage Box** coverage has historically been weak (Robot API, not Cloud API).
   Verify before assuming it can be managed declaratively.
 - `wgebis/mailgun` — community, pre-1.0, and the registry holds no GPG key for
