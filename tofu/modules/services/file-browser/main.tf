@@ -46,6 +46,19 @@ resource "docker_container" "this" {
     }
   }
 
+  # The document shares, from the local volume rather than from samson.
+  # See var.documents_path. `audio`, `audio-archive`, `media` and `backups`
+  # still arrive over NFS through the parent bind above -- audio is 55.4 GB and
+  # does not fit on rafiki yet.
+  dynamic "mounts" {
+    for_each = var.document_shares
+    content {
+      type   = "bind"
+      source = "${var.documents_path}/${mounts.value}"
+      target = "/files/${mounts.value}"
+    }
+  }
+
   networks_advanced {
     name = var.traefik_network
   }

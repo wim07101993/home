@@ -134,3 +134,14 @@ variable "repository_username" {
   type    = string
   default = "root"
 }
+
+# The document shares, local since 2026-09-18 -- same reasoning as
+# var.photos_path. Mounted at /data/<name>, unchanged from when they arrived
+# over NFS, so each source keeps its identity and snapshot history.
+variable "documents_path" {
+  type = string
+}
+
+variable "document_shares" {
+  type = list(string)
+}

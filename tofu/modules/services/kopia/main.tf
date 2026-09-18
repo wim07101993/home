@@ -187,6 +187,18 @@ resource "docker_container" "this" {
     read_only = true
   }
 
+  # The document shares, from the local volume. Same nesting and same
+  # identity-preserving path as photos above.
+  dynamic "mounts" {
+    for_each = var.document_shares
+    content {
+      type      = "bind"
+      source    = "${var.documents_path}/${mounts.value}"
+      target    = "/data/${mounts.value}"
+      read_only = true
+    }
+  }
+
   mounts {
     type   = "bind"
     source = "${var.config_path}/kopia-config"

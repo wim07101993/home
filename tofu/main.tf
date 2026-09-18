@@ -16,6 +16,23 @@
 # one, both looking healthy.
 locals {
   photos_path = "/mnt/rafiki/photos"
+
+  # The document shares, moved off samson's NFS on 2026-09-18. ~639 MB in total
+  # -- `sara` and `gezin-officieel-archive` are empty and moved anyway, so the
+  # set is complete and nothing is left half-migrated.
+  #
+  # `audio` (55.4 GB) and `audio-archive` are NOT here: rafiki has ~27 GB free
+  # after photos. docs/data-architecture.md has a plan for that -- FLAC the
+  # WAVs and archive the 29 GB session first -- and it needs doing before audio
+  # can follow.
+  documents_path = "/mnt/rafiki/documents"
+
+  document_shares = [
+    "gezin-officieel",
+    "gezin-officieel-archive",
+    "sara",
+    "wim",
+  ]
 }
 
 module "hetzner" {
@@ -294,6 +311,9 @@ module "file_browser" {
     docker = docker.mindy
   }
 
+  documents_path  = local.documents_path
+  document_shares = local.document_shares
+
   traefik_network = module.reverse_proxy_mindy.network_name
   db_network      = module.postgres_mindy.network_name
 
@@ -353,6 +373,9 @@ module "kopia" {
 
   tailscale_ip = var.mindy_addr
   photos_path  = local.photos_path
+
+  documents_path  = local.documents_path
+  document_shares = local.document_shares
 
   repository_password = var.kopia_repository_password
   sftp_password       = var.kopia_sftp_password
