@@ -177,6 +177,16 @@ resource "docker_container" "this" {
     }
   }
 
+  # The photo library, from mindy's local volume rather than from samson.
+  # Nested inside the /data bind above -- see var.photos_path for why the
+  # container path must stay /data/photos.
+  mounts {
+    type      = "bind"
+    source    = var.photos_path
+    target    = "/data/photos"
+    read_only = true
+  }
+
   mounts {
     type   = "bind"
     source = "${var.config_path}/kopia-config"

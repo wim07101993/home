@@ -10,6 +10,14 @@
 # `docker.bumba` and `docker.mindy` point at different daemons, and an apply
 # against the wrong one recreates the wrong front door.
 
+# The photo library's location, used by the service that SERVES it and the one
+# that BACKS IT UP. One value, because the failure mode when they disagree is
+# silent: immich reading the new copy while kopia faithfully snapshots the old
+# one, both looking healthy.
+locals {
+  photos_path = "/mnt/rafiki/photos"
+}
+
 module "hetzner" {
   source = "./modules/hetzner"
 
@@ -344,6 +352,7 @@ module "kopia" {
   }
 
   tailscale_ip = var.mindy_addr
+  photos_path  = local.photos_path
 
   repository_password = var.kopia_repository_password
   sftp_password       = var.kopia_sftp_password
@@ -358,6 +367,7 @@ module "immich" {
     docker = docker.mindy
   }
 
+  library_path    = local.photos_path
   traefik_network = module.reverse_proxy_mindy.network_name
   db_password     = var.immich_db_password
 }

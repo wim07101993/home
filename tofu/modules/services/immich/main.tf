@@ -216,7 +216,8 @@ resource "docker_container" "server" {
     external = 2283
   }
 
-  # The NFS library. rslave is not strictly required here -- unlike
+  # The library. Local since 2026-09-18; see var.library_path. rslave is kept
+  # but no longer load-bearing -- it mattered when this was NFS. Unlike
   # file-browser's nine automounts, this one is mounted at boot, before docker
   # starts -- but it costs nothing and removes the dependency on that ordering.
   mounts {

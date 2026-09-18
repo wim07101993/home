@@ -15,6 +15,30 @@ variable "tailscale_ip" {
   EOT
 }
 
+variable "photos_path" {
+  type        = string
+  description = <<-EOT
+    The photo library, on mindy's local `rafiki` volume since 2026-09-18.
+
+    Mounted at /data/photos INSIDE the container -- the same path it had when
+    it arrived over NFS. That is deliberate and load-bearing: kopia keys every
+    source as <user>@<hostname>:<path>, so keeping /data/photos keeps the
+    source identity `root@1da0a4624124:/data/photos` and its entire snapshot
+    history. Point it anywhere else and the history is orphaned.
+
+    It nests INSIDE the /data bind below. Docker applies mounts in path-depth
+    order, so this one shadows /data/photos from the parent while the other
+    eight sources still come from samson over NFS.
+
+    WHY THIS EXISTS: immich moved to the local volume, so samson's
+    /export/photos became a stale copy. Without this, kopia would keep
+    faithfully backing up the OLD primary -- the same shape as the memos
+    incident in docs/data-architecture.md, where everything looked healthy
+    because nothing distinguishes "backing up the right data" from "backing up
+    data nobody writes to any more".
+  EOT
+}
+
 variable "config_path" {
   type        = string
   default     = "/docker-volumes/kopia"
