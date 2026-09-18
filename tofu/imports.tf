@@ -19,9 +19,24 @@
 #   hcloud_server.bumba         100750341    cpx11, fsn1  <- NOT re-orderable
 #   hcloud_server.mindy         124902827    cx43,  fsn1
 #   hcloud_volume.bumba_db      103225027    100 GB, fsn1
+#                                            -> renamed hcloud_volume.data and
+#                                               MOVED to mindy on 2026-09-18
 #   hcloud_storage_box.backups  625908       bx21,  fsn1
 #   hcloud_firewall.default     10051212     3 rules, both servers
 #
+# The volume's ATTACHMENT, adopted 2026-09-18 so the bumba -> mindy move is a
+# plan rather than a pair of console clicks. It is imported at its CURRENT state
+# (attached to bumba); the config names mindy, so the plan replaces it -- which
+# is a detach followed by an attach.
+#
+# Import id for hcloud_volume_attachment is the VOLUME id, not an attachment id.
+#
+# Unmount on bumba before applying: see modules/hetzner/volumes.tf.
+import {
+  to = module.hetzner.hcloud_volume_attachment.data
+  id = "103225027"
+}
+
 # --- Second pass --------------------------------------------------------
 #
 # Commented rather than left as "TODO" because a bad id fails the WHOLE plan,
