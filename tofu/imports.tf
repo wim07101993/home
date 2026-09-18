@@ -5,7 +5,7 @@
 # for reading. See README.md, "Why this is one module".
 #
 # Import blocks live in the root and address resources inside modules by their
-# full path: `module.postgres.postgresql_database.zitadel`.
+# full path: `module.databases.postgresql_database.zitadel`.
 #
 # The rule, unchanged:
 #
@@ -63,13 +63,42 @@
 # to be a resource.
 
 import {
-  to = module.postgres.postgresql_database.zitadel
+  to = module.databases.postgresql_database.zitadel
   id = "zitadel"
 }
 
+# `score` was imported here too, on 2026-09-16, and DROPPED on 2026-09-18 once
+# the service and its data had moved to mindy. Its import block is gone with it:
+# an import block whose target is no longer in configuration fails the whole
+# plan, not just itself.
+
+# --- postgres on mindy --------------------------------------------------
+#
+# score's and kitchen-owl's roles and databases were CREATED by tofu, so there
+# is nothing to import for them -- they moved into modules/databases by `moved`
+# block, not by import. See main.tf.
+#
+# memos is the exception: it predates tofu entirely and is adopted here.
+#
+# NOT with ignore_changes = [password]. The usual rule for an adopted role is
+# to ignore the password, because postgres returns only a SCRAM hash and an
+# imported role otherwise lands in state with password = "" -- and the next
+# plan proposes setting the LIVE password to empty. Here the module generates
+# the password instead and writes the matching DSN into the container, so the
+# role is adopted and then immediately rotated on purpose. That replaces the
+# memos container; the notes are in postgres, not in the docker volume.
+#
+# No `provider` argument on an import block: it is only accepted when the block
+# generates configuration. The module's `providers` mapping in main.tf is what
+# decides where these land.
 import {
-  to = module.postgres.postgresql_database.score
-  id = "score"
+  to = module.databases.postgresql_role.memos
+  id = "memos"
+}
+
+import {
+  to = module.databases.postgresql_database.memos
+  id = "memos"
 }
 
 # --- NOT adopted, and why -----------------------------------------------
@@ -81,11 +110,14 @@ import {
 #                connects, it is created by initdb, and nothing should manage
 #                it.
 #
-#   memos        112 MB, and an ORPHAN. The data was migrated to mindy on
-#                2026-09-15; this is what was left behind. Drop it once the
-#                notes are confirmed visible in the UI. Adopting it would mean
-#                importing a mistake and then having to remove it from state
-#                again.
+#   memos        WAS 112 MB and an orphan; the data had been migrated to mindy
+#                on 2026-09-15 and this was what was left behind. Dropped, so
+#                there is nothing here to adopt. Its ROLE outlived it and is
+#                dropped separately -- see the roles section below.
+#
+#   score        dropped 2026-09-18 for the same reason: the service moved to
+#                mindy and this was a complete, idle copy. Recoverable from
+#                /root/bumba-pg-dumpall-20260918-075323.sql.gz on bumba.
 #
 # --- docker on bumba ----------------------------------------------------
 #
@@ -186,8 +218,10 @@ import {
 #     ignore_changes = [password]   # postgres returns only a SCRAM hash
 #   }
 #
-# import { to = module.postgres.postgresql_role.zitadel_root, id = "zitadel_root" }
-# import { to = module.postgres.postgresql_role.zitadel_user, id = "zitadel_user" }
-# import { to = module.postgres.postgresql_role.score_api,    id = "score_api"    }
+# import { to = module.databases.postgresql_role.zitadel_root, id = "zitadel_root" }
+# import { to = module.databases.postgresql_role.zitadel_user, id = "zitadel_user" }
 #
-#   memos  -- drop alongside the memos database, not adopt
+# NOT adopted -- dropped instead, 2026-09-18:
+#
+#   memos      its database was already gone and it owned nothing
+#   score_api  owned objects only inside the `score` database, which went with it

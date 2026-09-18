@@ -6,35 +6,13 @@
 # This is the module the whole workload layer was argued for. Everything below
 # is one dependency graph, and compose could express none of it:
 #
-#   random_password ─> postgresql_role ─┐
-#   zitadel client id + secret ─────────┴─> generated config ─> container
+#   ../../databases: random_password ─> postgresql_role ─┐
+#   zitadel client id + secret ──────────────────────────┴─> config ─> container
 #
 # No secret is typed by a human, and no client id is pasted into a file.
-
-resource "random_password" "db" {
-  length = 32
-
-  # No special characters: this value goes into a libpq keyword/value DSN,
-  # where an unescaped quote or backslash silently changes what connects
-  # where. The same class of bug as the `p@ss` that broke PG_CONN_STR on
-  # 2026-09-16.
-  special = false
-}
-
-resource "postgresql_role" "api" {
-  name     = "score_api"
-  login    = true
-  password = random_password.db.result
-}
-
-resource "postgresql_database" "this" {
-  name  = "score"
-  owner = postgresql_role.api.name
-
-  lifecycle {
-    prevent_destroy = true
-  }
-}
+#
+# The role and database live in ../../databases, which holds every database in
+# the estate, and arrive here as var.db_*.
 
 # --- the API ------------------------------------------------------------
 
@@ -43,11 +21,11 @@ locals {
   # bumba -- which is why the host move needs no change here.
   api_secrets = jsonencode({
     dbConnectionString = join(" ", [
-      "user=${postgresql_role.api.name}",
-      "password=${random_password.db.result}",
+      "user=${var.db_user}",
+      "password=${var.db_password}",
       "host=db",
       "port=5432",
-      "dbname=${postgresql_database.this.name}",
+      "dbname=${var.db_name}",
       "sslmode=disable",
     ])
 
@@ -116,7 +94,8 @@ resource "docker_container" "api" {
     aliases = ["score-api"]
   }
 
-  depends_on = [postgresql_database.this]
+  # No depends_on: the var.db_* values in api_secrets already order this
+  # module after ../../databases.
 }
 
 # --- the frontend -------------------------------------------------------

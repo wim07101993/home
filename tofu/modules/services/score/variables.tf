@@ -18,6 +18,21 @@ variable "db_network" {
   type = string
 }
 
+# From module.databases, which declares every database in the estate. This
+# module only consumes them to build the API's connection string.
+variable "db_user" {
+  type = string
+}
+
+variable "db_password" {
+  type      = string
+  sensitive = true
+}
+
+variable "db_name" {
+  type = string
+}
+
 variable "api_client_id" {
   type        = string
   sensitive   = true

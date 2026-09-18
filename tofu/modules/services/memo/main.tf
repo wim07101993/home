@@ -5,6 +5,18 @@
 # were never recreated. Its OIDC cutover to the new client id is separate from
 # this container migration and can happen independently.
 
+# The role and database live in ../../databases, adopted there on 2026-09-18 --
+# the last database in the estate tofu did not know about. They arrive here as
+# var.db_*.
+#
+# Until then this module bind-mounted var.dsn_file from mindy's disk, so the
+# credential existed only on that host: unversioned, unreproducible, and a
+# rebuilt postgres would have left memos pointing at a database nothing
+# declared. The same shape as the incident in
+# ../../../../docs/data-architecture.md, where memos ran for months against an
+# EMPTY database, because "app up, database present" is not the same claim as
+# "app connected to the right database".
+
 resource "docker_image" "this" {
   name         = "neosmemo/memos:${var.image_tag}"
   keep_locally = true
@@ -37,6 +49,20 @@ resource "docker_container" "this" {
     "MEMOS_DSN_FILE=/run/secrets/db_connection_string",
   ]
 
+  # Generated, not bind-mounted. `host=db` is the network alias of mindy's
+  # postgres on db_db-network.
+  upload {
+    file = "/run/secrets/db_connection_string"
+    content = join(" ", [
+      "user=${var.db_user}",
+      "password=${var.db_password}",
+      "host=db",
+      "port=5432",
+      "dbname=${var.db_name}",
+      "sslmode=disable",
+    ])
+  }
+
   # CAP_ prefixes are required -- docker stores the canonical form and the
   # provider diffs against it. Bare `SETGID` recreates the container on every
   # apply, forever.
@@ -60,14 +86,6 @@ resource "docker_container" "this" {
     container_path = "/var/opt/memos"
   }
 
-  # Compose called this a `secret`; without swarm that is a read-only bind
-  # either way.
-  volumes {
-    host_path      = var.dsn_file
-    container_path = "/run/secrets/db_connection_string"
-    read_only      = true
-  }
-
   # traefik reaches it here.
   networks_advanced {
     name    = var.traefik_network
@@ -83,4 +101,7 @@ resource "docker_container" "this" {
   # Compose also made `memos_memo-network` -- a private bridge with one
   # container and no peers. An artifact of compose's per-project model, not a
   # feature; left orphaned by the cutover and removable afterwards.
+
+  # The var.db_* values in the DSN above already order this after
+  # ../../databases.
 }

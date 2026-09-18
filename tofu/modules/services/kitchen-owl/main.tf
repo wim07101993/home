@@ -6,11 +6,9 @@
 # The move was nearly free because KitchenOwl reaches its database as `db`,
 # which is a network alias -- and the shared postgres answers to the same name.
 # Attaching to db_db-network instead of its own network is most of the work.
-
-resource "random_password" "db" {
-  length  = 32
-  special = false
-}
+#
+# The role and database live in ../../databases and arrive as var.db_*.
+# random_password.jwt stays here: it is not a database credential.
 
 # WAS `PLEASE_CHANGE_ME`.
 #
@@ -25,21 +23,6 @@ resource "random_password" "db" {
 resource "random_password" "jwt" {
   length  = 64
   special = false
-}
-
-resource "postgresql_role" "this" {
-  name     = "kitchenowl"
-  login    = true
-  password = random_password.db.result
-}
-
-resource "postgresql_database" "this" {
-  name  = "kitchenowl"
-  owner = postgresql_role.this.name
-
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 resource "docker_image" "this" {
@@ -73,9 +56,9 @@ resource "docker_container" "this" {
     "DB_DRIVER=postgresql",
     "DB_HOST=db",
     "DB_PORT=5432",
-    "DB_NAME=${postgresql_database.this.name}",
-    "DB_USER=${postgresql_role.this.name}",
-    "DB_PASSWORD=${random_password.db.result}",
+    "DB_NAME=${var.db_name}",
+    "DB_USER=${var.db_user}",
+    "DB_PASSWORD=${var.db_password}",
   ]
 
   capabilities {
@@ -107,5 +90,6 @@ resource "docker_container" "this" {
     aliases = ["kitchen-owl"]
   }
 
-  depends_on = [postgresql_database.this]
+  # No depends_on: the var.db_* values in env already order this module after
+  # ../../databases.
 }

@@ -16,16 +16,77 @@ module "hetzner" {
   storage_box_password = var.storage_box_password
 }
 
-# Databases INSIDE the container that module.postgres_bumba manages. The
-# postgresql provider connects straight to port 5432 over tailscale, so nothing
-# in the graph says these must wait for the container -- and an apply that
-# replaces it would otherwise race the connection. Same failure as the zitadel
-# one below, different port.
-module "postgres" {
-  source = "./modules/postgres"
+# Every database in the estate, on both hosts. One module, one file, grouped by
+# host -- so "what databases exist?" has a single answer.
+#
+# Not the same layer as `modules/services/postgres`, which is the postgres
+# CONTAINER (docker provider, one instance per host). This is the logical
+# objects inside them.
+#
+# depends_on because the postgresql provider dials port 5432 directly over the
+# tailnet, so nothing in the graph would otherwise order this after the
+# containers. An apply that replaced one would race the connection -- the same
+# failure as the zitadel provider one below, different port.
+module "databases" {
+  source = "./modules/databases"
 
-  depends_on = [module.postgres_bumba]
+  # Both hosts. The default is bumba's; mindy's is passed explicitly, which the
+  # module accepts via configuration_aliases.
+  providers = {
+    postgresql       = postgresql
+    postgresql.mindy = postgresql.mindy
+  }
+
+  depends_on = [module.postgres_bumba, module.postgres_mindy]
 }
+
+# State moves. Every one is a RENAME -- nothing live changes.
+#
+# Without them tofu sees the old addresses gone and the new ones absent, and
+# plans to DROP three databases and recreate them empty. prevent_destroy would
+# catch it -- by failing the apply, after the plan had already offered to
+# destroy the data.
+#
+# 2026-09-18: modules/postgres -> modules/databases.
+moved {
+  from = module.postgres.postgresql_database.zitadel
+  to   = module.databases.postgresql_database.zitadel
+}
+
+# 2026-09-18: score's and kitchen-owl's roles and databases centralised out of
+# their service modules. The random_passwords move with them -- same generated
+# values, so nothing rotates and neither container restarts.
+moved {
+  from = module.score.random_password.db
+  to   = module.databases.random_password.score_api
+}
+
+moved {
+  from = module.score.postgresql_role.api
+  to   = module.databases.postgresql_role.score_api
+}
+
+moved {
+  from = module.score.postgresql_database.this
+  to   = module.databases.postgresql_database.score
+}
+
+moved {
+  from = module.kitchen_owl.random_password.db
+  to   = module.databases.random_password.kitchenowl
+}
+
+moved {
+  from = module.kitchen_owl.postgresql_role.this
+  to   = module.databases.postgresql_role.kitchenowl
+}
+
+moved {
+  from = module.kitchen_owl.postgresql_database.this
+  to   = module.databases.postgresql_database.kitchenowl
+}
+
+# memos is NOT moved -- it was never in tofu. It is imported; see imports.tf.
 
 # SMTP credentials for outbound alerts. Credentials only -- the sending domain
 # is deliberately unmanaged, see the module.
@@ -185,6 +246,10 @@ module "memo" {
   traefik_network = module.reverse_proxy_mindy.network_name
   db_network      = module.postgres_mindy.network_name
 
+  db_user     = module.databases.memos.user
+  db_password = module.databases.memos.password
+  db_name     = module.databases.memos.name
+
   # The db_network reference orders this after the NETWORK, not after the
   # database container -- so tofu created both in parallel on 2026-09-17 and
   # memos' first connection attempt raced postgres' startup. `unless-stopped`
@@ -227,12 +292,15 @@ module "score" {
   source = "./modules/services/score"
 
   providers = {
-    docker     = docker.mindy
-    postgresql = postgresql.mindy
+    docker = docker.mindy
   }
 
   traefik_network = module.reverse_proxy_mindy.network_name
   db_network      = module.postgres_mindy.network_name
+
+  db_user     = module.databases.score.user
+  db_password = module.databases.score.password
+  db_name     = module.databases.score.name
 
   api_client_id     = module.zitadel.apps["Score/score-api"].client_id
   api_client_secret = module.zitadel.apps["Score/score-api"].client_secret
@@ -259,12 +327,15 @@ module "kitchen_owl" {
   source = "./modules/services/kitchen-owl"
 
   providers = {
-    docker     = docker.mindy
-    postgresql = postgresql.mindy
+    docker = docker.mindy
   }
 
   traefik_network = module.reverse_proxy_mindy.network_name
   db_network      = module.postgres_mindy.network_name
+
+  db_user     = module.databases.kitchenowl.user
+  db_password = module.databases.kitchenowl.password
+  db_name     = module.databases.kitchenowl.name
 
   oidc_client_id     = module.zitadel.apps["keuken/kitchen owl web-app"].client_id
   oidc_client_secret = module.zitadel.apps["keuken/kitchen owl web-app"].client_secret

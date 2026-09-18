@@ -19,10 +19,23 @@ variable "db_network" {
   EOT
 }
 
-variable "dsn_file" {
-  type        = string
-  default     = "/docker-volumes/memos/db_connection_string.txt"
-  description = "Host path holding the postgres DSN. Note `memos`, not `memo` -- the directory does not match the repo's."
+# `dsn_file` is gone. The DSN was a bind mount from
+# /docker-volumes/memos/db_connection_string.txt on mindy -- a credential that
+# existed only on that disk. It is generated in main.tf now from the values
+# below. The old file can be deleted once this has applied.
+
+# From module.databases -- see ../score/variables.tf.
+variable "db_user" {
+  type = string
+}
+
+variable "db_password" {
+  type      = string
+  sensitive = true
+}
+
+variable "db_name" {
+  type = string
 }
 
 variable "host_port" {

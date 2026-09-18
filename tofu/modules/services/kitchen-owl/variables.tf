@@ -12,6 +12,20 @@ variable "db_network" {
   type = string
 }
 
+# From module.databases -- see ../score/variables.tf.
+variable "db_user" {
+  type = string
+}
+
+variable "db_password" {
+  type      = string
+  sensitive = true
+}
+
+variable "db_name" {
+  type = string
+}
+
 variable "oidc_client_id" {
   type      = string
   sensitive = true
