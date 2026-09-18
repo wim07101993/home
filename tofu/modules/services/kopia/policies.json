@@ -76,6 +76,24 @@
     "splitter": {},
     "upload": {}
   },
+  "root@1da0a4624124:/data/audio-archive": {
+    "actions": {},
+    "compression": {},
+    "errorHandling": {},
+    "files": {},
+    "logging": {
+      "directories": {},
+      "entries": {}
+    },
+    "metadataCompression": {},
+    "osSnapshots": {
+      "volumeShadowCopy": {}
+    },
+    "retention": {},
+    "scheduling": {},
+    "splitter": {},
+    "upload": {}
+  },
   "root@1da0a4624124:/data/backups": {
     "actions": {},
     "compression": {},
