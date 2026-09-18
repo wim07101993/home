@@ -314,6 +314,25 @@ module "file_browser" {
   documents_path  = local.documents_path
   document_shares = local.document_shares
 
+  # Display names are a human choice, so they are listed rather than derived.
+  # The module has a precondition asserting every entry in local.document_shares
+  # appears here -- add a share to that list without adding it here and the plan
+  # fails, instead of the directory quietly not existing in the UI.
+  #
+  # default_enabled = true means a newly created user is granted the source.
+  # The two personal shares stay false: they are granted by hand, per person.
+  sources = [
+    { path = "/files/gezin-officieel", name = "Gezin officieel", default_enabled = true },
+    { path = "/files/gezin-officieel-archive", name = "Gezin officieel archive", default_enabled = true },
+    { path = "/files/audio", name = "Audio", default_enabled = true },
+    { path = "/files/audio-archive", name = "Audio archive", default_enabled = true },
+    { path = "/files/wim", name = "Wim privé", default_enabled = false },
+    { path = "/files/sara", name = "Sara prive", default_enabled = false },
+  ]
+
+  # Still the home-old project's app. See the variable's comment.
+  oidc_client_id = "367153386023354372"
+
   traefik_network = module.reverse_proxy_mindy.network_name
   db_network      = module.postgres_mindy.network_name
 
@@ -447,6 +466,15 @@ module "gatus" {
 # can report a backup as successful, so it is sensitive:
 #
 #   tofu output -raw gatus_kopia_push_token
+# drive.wvl.app's admin login. Generated, and written back into filebrowser on
+# every container start -- see modules/services/file-browser/README.md.
+#
+#   tofu output -raw filebrowser_admin_password
+output "filebrowser_admin_password" {
+  value     = module.file_browser.admin_password
+  sensitive = true
+}
+
 output "gatus_kopia_push_token" {
   description = "Bearer token for kopia's heartbeat push to gatus."
   sensitive   = true
