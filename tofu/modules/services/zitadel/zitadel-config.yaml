@@ -1,0 +1,32 @@
+# Zitadel's non-secret configuration. Uploaded to /zitadel-config.yaml.
+#
+# TAKEN FROM THE HOST on 2026-09-18, not from the old copy in
+# home-eu-central-1/zitadel/. Those two had drifted: the repo copy said
+# Log.Level 'info' and carried Database usernames, the running one says 'Debug'
+# and carries neither. The host was authoritative and this is its content.
+#
+# The usernames are absent on purpose -- they live in zitadel_secrets.yaml
+# beside the passwords, which is a host file and stays one. See ./main.tf.
+#
+# Log.Level is 'Debug' because it was left that way while debugging. Probably
+# should be 'Info': bumba is a cpx11 with 2 GB of RAM and this is the noisiest
+# thing on it. Left alone here because a cutover should not also change
+# behaviour -- change it deliberately, as its own apply.
+
+# All possible options and their defaults: https://github.com/zitadel/zitadel/blob/main/cmd/defaults.yaml
+Log:
+  Level: 'Debug'
+    #Level: 'Info'
+
+ExternalDomain: auth.wvl.app
+ExternalPort: 443
+ExternalSecure: true
+
+TLS:
+  Enabled: false
+
+Database:
+  postgres:
+    Host: 'db'
+    Port: 5432
+    Database: zitadel

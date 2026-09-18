@@ -19,14 +19,56 @@
 # bumba -- default provider
 # =========================================================================
 
-# zitadel's own database, adopted -- see ../../imports.tf.
+# --- zitadel -------------------------------------------------------------
 #
-# `owner` is a plain string rather than a postgresql_role: adopting a database
-# does not require its role to be a resource. zitadel_root is a SUPERUSER and
-# deliberately not adopted yet; imports.tf has the two open questions.
+# Both roles ADOPTED and their passwords rotated on 2026-09-18, which retires
+# the last hand-maintained credential file on bumba
+# (/docker-volumes/zitadel/zitadel_secrets.yaml). ../services/zitadel generates
+# that file from these values now.
+#
+# imports.tf deferred this twice, for two reasons that are worth answering
+# rather than inheriting:
+#
+#   zitadel_root is a SUPERUSER. Kept superuser here because that is what it
+#   is, not because it was chosen -- zitadel needs elevated rights to run its
+#   migrations at boot. Narrowing it is a separate question, and doing it as a
+#   side effect of adoption would mean finding out at the next upgrade.
+#
+#   NOINHERIT on both. Preserved exactly; neither is a member of anything, so
+#   it is inert either way. An adoption should change what it was asked to
+#   change and nothing else.
+resource "random_password" "zitadel_user" {
+  length = 32
+
+  # No special characters: this lands in a YAML file zitadel parses, and a
+  # stray quote or backslash is a startup failure for the whole estate's auth.
+  special = false
+}
+
+resource "postgresql_role" "zitadel_user" {
+  name     = "zitadel_user"
+  login    = true
+  inherit  = false
+  password = random_password.zitadel_user.result
+}
+
+resource "random_password" "zitadel_root" {
+  length  = 32
+  special = false
+}
+
+resource "postgresql_role" "zitadel_root" {
+  name      = "zitadel_root"
+  login     = true
+  inherit   = false
+  superuser = true
+  password  = random_password.zitadel_root.result
+}
+
+# zitadel's own database, adopted -- see ../../imports.tf.
 resource "postgresql_database" "zitadel" {
   name  = "zitadel"
-  owner = "zitadel_root"
+  owner = postgresql_role.zitadel_root.name
 
   lifecycle {
     # A dropped database is not a slow apply. memos on 2026-09-15 is the worked

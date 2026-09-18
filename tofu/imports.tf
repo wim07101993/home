@@ -214,27 +214,37 @@ import {
 
 # --- Second pass: ROLES -------------------------------------------------
 #
-# Blocked on two questions, not on effort.
+# zitadel's two roles, adopted 2026-09-18. Their passwords are GENERATED, not
+# ignored -- which is why there is no ignore_changes here.
 #
-# 1. The three `databasus-*` roles. They are login roles owning no database,
-#    auto-named with a hex suffix, and `databasus-41ec78f0` is the one the
-#    memos dump referenced. If databasus PROVISIONS these, then tofu adopting
-#    them means two systems managing the same objects -- the portainer problem
-#    in a different costume. Find out what creates them first.
+# The usual rule for an adopted role is ignore_changes = [password], because
+# postgres returns only a SCRAM hash and an imported role otherwise lands in
+# state with password = "" and the next plan sets the LIVE password to empty.
+# That rule exists to protect a credential something else owns. Here nothing
+# else owns it: the only consumer is zitadel, and modules/services/zitadel
+# renders the same generated values into the file zitadel reads. Rotating both
+# in one apply is the point -- it retires the hand-maintained
+# /docker-volumes/zitadel/zitadel_secrets.yaml.
 #
-# 2. `zitadel_root` is a SUPERUSER (rolsuper = t). Zitadel needs elevated
-#    rights to create its schema at first boot; it does not need superuser
-#    forever. Worth checking against Zitadel's own requirements before
-#    encoding the current state as intentional.
-#
-# When they are adopted, every one needs this, without exception:
-#
-#   lifecycle {
-#     ignore_changes = [password]   # postgres returns only a SCRAM hash
-#   }
-#
-# import { to = module.databases.postgresql_role.zitadel_root, id = "zitadel_root" }
-# import { to = module.databases.postgresql_role.zitadel_user, id = "zitadel_user" }
+# `zitadel_root` stays SUPERUSER. That was one of the two reasons this was
+# deferred, and the honest answer is that zitadel needs elevated rights to run
+# its migrations at boot; narrowing it is a real question, but not one to
+# answer as a side effect of adoption, where you find out at the next upgrade.
+import {
+  to = module.databases.postgresql_role.zitadel_user
+  id = "zitadel_user"
+}
+
+import {
+  to = module.databases.postgresql_role.zitadel_root
+  id = "zitadel_root"
+}
+
+# STILL DEFERRED: the three `databasus-*` roles. Login roles owning no database,
+# auto-named with a hex suffix, and `databasus-41ec78f0` is the one the memos
+# dump referenced. If databasus PROVISIONS these, tofu adopting them means two
+# systems managing the same objects -- the portainer problem in a different
+# costume. Find out what creates them first.
 #
 # NOT adopted -- dropped instead, 2026-09-18:
 #

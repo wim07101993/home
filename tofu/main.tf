@@ -142,6 +142,27 @@ module "reverse_proxy_mindy" {
 }
 
 
+# auth.wvl.app's CONTAINERS. A cutover from the portainer git stack -- see the
+# module. `zitadel_server` is the deployment; `zitadel` below is its contents.
+#
+# depends_on because both containers attach to networks these modules own, and
+# because zitadel cannot start before its database container exists.
+module "zitadel_server" {
+  source = "./modules/services/zitadel"
+
+  providers = {
+    docker = docker.bumba
+  }
+
+  traefik_network = module.reverse_proxy_bumba.network_name
+  db_network      = module.postgres_bumba.network_name
+
+  masterkey      = var.zitadel_masterkey
+  db_credentials = module.databases.zitadel
+
+  depends_on = [module.postgres_bumba, module.reverse_proxy_bumba]
+}
+
 # Projects, roles and OIDC applications. A REBUILD, not an adoption -- orgs
 # and users are deliberately untouched. modules/zitadel/orgs.tf says why.
 #
@@ -166,7 +187,7 @@ module "zitadel" {
   smtp_user     = module.mailgun.auth_smtp_username
   smtp_password = module.mailgun.auth_smtp_password
 
-  depends_on = [module.reverse_proxy_bumba]
+  depends_on = [module.reverse_proxy_bumba, module.zitadel_server]
 }
 
 output "zitadel_apps" {

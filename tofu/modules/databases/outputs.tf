@@ -32,3 +32,17 @@ output "memos" {
     name     = postgresql_database.memos.name
   }
 }
+
+# Zitadel connects as two roles: `user` for normal operation, `admin` for the
+# migrations it runs at boot. ../services/zitadel renders these into the YAML
+# it uploads -- see there for why that file is generated rather than static.
+output "zitadel" {
+  description = "zitadel's postgres credentials on bumba."
+  sensitive   = true
+  value = {
+    user_username  = postgresql_role.zitadel_user.name
+    user_password  = random_password.zitadel_user.result
+    admin_username = postgresql_role.zitadel_root.name
+    admin_password = random_password.zitadel_root.result
+  }
+}
