@@ -187,6 +187,15 @@ resource "docker_container" "this" {
     read_only = true
   }
 
+  # Same shape for audio. audio-archive is NOT here -- it stays on samson and
+  # arrives as an NFS submount through the /data bind.
+  mounts {
+    type      = "bind"
+    source    = var.audio_path
+    target    = "/data/audio"
+    read_only = true
+  }
+
   # The document shares, from the local volume. Same nesting and same
   # identity-preserving path as photos above.
   dynamic "mounts" {

@@ -171,6 +171,16 @@ provider "docker" {
   host  = "ssh://root@${var.mindy_addr}"
 }
 
+# samson -- plex and databasus. Key auth as root, installed 2026-09-19.
+#
+# This provider CANNOT be declared without reachable SSH: a docker provider that
+# fails to dial breaks `tofu plan` for the whole root module, not just the
+# resources that use it.
+provider "docker" {
+  alias = "samson"
+  host  = "ssh://root@${var.samson_addr}"
+}
+
 # Zitadel's management API at auth.wvl.app.
 #
 # Authenticates as the `terraform` service user with a PAT and IAM_OWNER. That

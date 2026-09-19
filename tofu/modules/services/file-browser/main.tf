@@ -190,6 +190,14 @@ resource "docker_container" "this" {
     }
   }
 
+  # Audio, from rafiki. `audio-archive` is deliberately absent -- it is archival,
+  # stays on samson, and still arrives over NFS through the parent bind.
+  mounts {
+    type   = "bind"
+    source = var.audio_path
+    target = "/files/audio"
+  }
+
   # The document shares, from the local volume rather than from samson.
   # See var.documents_path. `audio`, `audio-archive`, `media` and `backups`
   # still arrive over NFS through the parent bind above -- audio is 55.4 GB and

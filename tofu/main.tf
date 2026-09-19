@@ -27,6 +27,11 @@ locals {
   # can follow.
   documents_path = "/mnt/rafiki/documents"
 
+  # The audio share, moved off samson on 2026-09-18 after `gigs`, part of `docs`
+  # and part of `software` were archived to `audio-archive` -- which STAYS on
+  # samson, by intent. ~19.5 GB moved; 32 GB stayed behind.
+  audio_path = "/mnt/rafiki/audio"
+
   document_shares = [
     "gezin-officieel",
     "gezin-officieel-archive",
@@ -311,6 +316,7 @@ module "file_browser" {
     docker = docker.mindy
   }
 
+  audio_path      = local.audio_path
   documents_path  = local.documents_path
   document_shares = local.document_shares
 
@@ -337,6 +343,20 @@ module "file_browser" {
   db_network      = module.postgres_mindy.network_name
 
   depends_on = [module.postgres_mindy]
+}
+
+# databasus -- the database backup tool, on samson. First thing in tofu on that
+# host; plex is the other compose container still there.
+#
+# A CUTOVER. The portainer stack (id 6, project `bakup-server`) MUST be deleted
+# before this is applied, or the create fails on the container name and the two
+# systems fight over it daily afterwards. See the module README.
+module "databasus" {
+  source = "./modules/services/databasus"
+
+  providers = {
+    docker = docker.samson
+  }
 }
 
 # homepage.wvl.app -- the dashboard.
@@ -392,6 +412,7 @@ module "kopia" {
 
   tailscale_ip = var.mindy_addr
   photos_path  = local.photos_path
+  audio_path   = local.audio_path
 
   documents_path  = local.documents_path
   document_shares = local.document_shares

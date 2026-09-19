@@ -119,3 +119,13 @@ variable "user_permissions" {
     download = true
   }
 }
+
+# The audio share, local on rafiki since 2026-09-18. Mounted at /files/audio --
+# the same container path it had over NFS, so config.yaml's source list and
+# filebrowser's index are unaffected by the move.
+#
+# `audio-archive` stays on samson: it is archival, and it still arrives as an
+# NFS submount through the /files bind.
+variable "audio_path" {
+  type = string
+}

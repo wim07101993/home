@@ -145,3 +145,14 @@ variable "documents_path" {
 variable "document_shares" {
   type = list(string)
 }
+
+# The audio share, local since 2026-09-18 -- same reasoning as var.photos_path.
+# Mounted at /data/audio, unchanged from when it arrived over NFS, so the source
+# identity `root@1da0a4624124:/data/audio` and its history survive the move.
+#
+# `audio-archive` deliberately does NOT move: it is archival and stays on
+# samson. It reaches this container as an NFS submount under the /data bind,
+# which is why that bind's rslave propagation still matters.
+variable "audio_path" {
+  type = string
+}

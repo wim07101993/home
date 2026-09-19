@@ -42,6 +42,11 @@ variable "mindy_addr" {
   description = "mindy's TAILNET address."
 }
 
+variable "samson_addr" {
+  type        = string
+  description = "samson's TAILNET address. Reached as root over SSH for the docker provider, like the other two hosts."
+}
+
 variable "pg_superuser_password_mindy" {
   type        = string
   sensitive   = true

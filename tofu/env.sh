@@ -119,6 +119,18 @@ fi
 export MINDY_ADDR
 export TF_VAR_mindy_addr="$MINDY_ADDR"
 
+if [ -z "${SAMSON_ADDR:-}" ]; then
+  : "${SAMSON_TS_HOST:=samson}"
+  SAMSON_ADDR="$(tailscale ip -4 "$SAMSON_TS_HOST" 2>/dev/null)" || SAMSON_ADDR=""
+  [ -n "$SAMSON_ADDR" ] || {
+    echo "env.sh: cannot resolve '$SAMSON_TS_HOST' on the tailnet." >&2
+    echo "        Check 'tailscale status', or set SAMSON_TS_HOST / SAMSON_ADDR." >&2
+    return 1
+  }
+fi
+export SAMSON_ADDR
+export TF_VAR_samson_addr="$SAMSON_ADDR"
+
 
 # A read-only token cannot create a database, so this module can no longer run
 # read-only indefinitely -- see the note in providers.tf. Use one anyway for
