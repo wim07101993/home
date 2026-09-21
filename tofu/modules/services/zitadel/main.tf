@@ -113,6 +113,40 @@ resource "docker_container" "zitadel" {
           }
         }
       }
+
+      # HOW TOFU WILL AUTHENTICATE TO ZITADEL, replacing the hand-made PAT.
+      #
+      # A System API user is trusted because of THIS FILE, not because of a row
+      # in zitadel's database -- which is the property that makes it
+      # bootstrappable. A PAT has to be created through the API, so tofu could
+      # never mint the credential it needs in order to call the API.
+      #
+      # It lives in the yamlencode'd file rather than in zitadel-config.yaml
+      # deliberately. That file is static and uploaded verbatim; a stray indent
+      # under SystemAPIUsers would stop zitadel booting, and zitadel fronts
+      # every OIDC login here. yamlencode cannot emit invalid YAML.
+      #
+      # `terraform` must match the `user` in the provider's system_api block --
+      # zitadel checks it against the JWT's issuer and subject claims.
+      #
+      # MemberType IAM scoped to this instance, NOT MemberType System. Upstream
+      # (cmd/defaults.yaml) notes that System with IAM_OWNER "basically enables
+      # god mode for the system user". IAM_OWNER on the instance is what the
+      # PAT already had.
+      SystemAPIUsers = [
+        {
+          terraform = {
+            KeyData = base64encode(tls_private_key.system_api.public_key_pem)
+            Memberships = [
+              {
+                MemberType  = "IAM"
+                Roles       = "IAM_OWNER"
+                AggregateID = var.instance_id
+              },
+            ]
+          }
+        },
+      ]
     })
   }
 
@@ -209,4 +243,15 @@ resource "docker_container" "login" {
 
   # The PAT has to exist before this starts.
   depends_on = [docker_container.zitadel]
+}
+
+# The key pair behind the System API user above. The PUBLIC half is handed to
+# zitadel in its config; the PRIVATE half stays in state and is what the
+# provider signs its JWTs with.
+#
+# RSA because zitadel requires a public RSA key or an X.509 certificate for
+# SystemAPIUsers -- ed25519 is not accepted there.
+resource "tls_private_key" "system_api" {
+  algorithm = "RSA"
+  rsa_bits  = 2048
 }

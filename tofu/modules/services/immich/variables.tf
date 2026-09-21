@@ -20,21 +20,6 @@ variable "traefik_network" {
   type = string
 }
 
-variable "db_password" {
-  type        = string
-  sensitive   = true
-  description = <<-EOT
-    The EXISTING password. Not generated: the cluster at
-    /docker-volumes/immich/postgres was initialised with it, and changing
-    POSTGRES_PASSWORD on an initialised cluster does nothing except break the
-    app's ability to connect.
-
-    Read it off the running container:
-      ssh root@<mindy> docker inspect immich_postgres \\
-        | jq -r '.[0].Config.Env[]|select(startswith("POSTGRES_PASSWORD"))'
-  EOT
-}
-
 variable "library_path" {
   type        = string
   default     = "/mnt/rafiki/photos"

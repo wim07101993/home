@@ -20,16 +20,6 @@ variable "pg_superuser_password" {
   description = "postgres superuser password, from /docker-volumes/db/db_password.txt on bumba."
 }
 
-# Passed down to modules/hetzner. hcloud_storage_box takes `password` as a
-# REQUIRED argument and the Cloud API never returns it, so config generation
-# cannot fill it in and tofu cannot verify it -- which is why that resource
-# also ignores changes to it.
-variable "storage_box_password" {
-  type        = string
-  sensitive   = true
-  description = "Storage Box password. TF_VAR_storage_box_password."
-}
-
 
 variable "zitadel_pat" {
   type        = string
@@ -53,44 +43,24 @@ variable "pg_superuser_password_mindy" {
   description = "postgres superuser password on MINDY, from /docker-volumes/db/db_password.txt there. Different file and different value from bumba's."
 }
 
-variable "immich_db_password" {
-  type        = string
-  sensitive   = true
-  description = <<-EOT
-    immich's EXISTING postgres password -- not generated. Its cluster is
-    already initialised, and changing POSTGRES_PASSWORD on an initialised
-    cluster changes nothing except immich's ability to connect.
-
-      ssh root@<mindy> docker inspect immich_postgres \
-        | jq -r '.[0].Config.Env[]|select(startswith("POSTGRES_PASSWORD"))|split("=")[1]'
-  EOT
-}
-
 # --- kopia ----------------------------------------------------------------
 #
-# TWO different credentials, and neither is var.storage_box_password above --
-# that one is the Storage Box MAIN account; kopia connects as a sub-account.
+# ONLY the repository password is supplied now. The SFTP sub-account password
+# moved into modules/hetzner as an adopted random_password (2026-09-19).
 #
-#   kopia_repository_password  encrypts the repository. Lose it and every
-#                              backup is unreadable. There is no reset.
-#   kopia_sftp_password        the Storage Box sub-account, how kopia reaches
-#                              the bytes at all.
+# This one DELIBERATELY did not move. It encrypts the repository: lose it and
+# every backup is unreadable, with no reset. Holding it only in tofu state --
+# which is itself encrypted with TF_VAR_state_passphrase -- would mean losing
+# that passphrase also loses the backups, which are exactly what you reach for
+# when something has gone badly wrong. An independent copy in the vault is what
+# keeps that recoverable. Same reasoning applies to TF_VAR_zitadel_masterkey.
 #
-# Extract them from mindy without displaying them:
+# Extract it from mindy without displaying it:
 #
 #   printf 'kopia_repository_password = "%s"\n' \
 #     "$(ssh root@<mindy> cat /docker-volumes/kopia/repository_password.txt)" \
 #     >> secrets.auto.tfvars
-#
-# The SFTP one is inside repository.config:
-#
-#   ssh root@<mindy> 'python3 -c "import json;print(json.load(open(\"/docker-volumes/kopia/kopia-config/repository.config\"))[\"storage\"][\"config\"][\"password\"])"'
 variable "kopia_repository_password" {
-  type      = string
-  sensitive = true
-}
-
-variable "kopia_sftp_password" {
   type      = string
   sensitive = true
 }

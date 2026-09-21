@@ -43,7 +43,6 @@ locals {
 module "hetzner" {
   source = "./modules/hetzner"
 
-  storage_box_password = var.storage_box_password
 }
 
 # Every database in the estate, on both hosts. One module, one file, grouped by
@@ -418,7 +417,7 @@ module "kopia" {
   document_shares = local.document_shares
 
   repository_password = var.kopia_repository_password
-  sftp_password       = var.kopia_sftp_password
+  sftp_password       = module.hetzner.storage_box_sftp_password
 }
 
 # photos.wvl.app -- four containers, an NFS library from samson, and immich's
@@ -432,7 +431,6 @@ module "immich" {
 
   library_path    = local.photos_path
   traefik_network = module.reverse_proxy_mindy.network_name
-  db_password     = var.immich_db_password
 }
 
 # keuken.wvl.app. Moved onto the shared postgres, off its own postgres:15.

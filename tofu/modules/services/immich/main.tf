@@ -71,7 +71,7 @@ locals {
   shared_env = [
     "DB_USERNAME=postgres",
     "DB_DATABASE_NAME=immich",
-    "DB_PASSWORD=${var.db_password}",
+    "DB_PASSWORD=${random_password.db.result}",
     "UPLOAD_LOCATION=${var.library_path}",
     "DB_DATA_LOCATION=${var.db_data_path}",
   ]
@@ -90,7 +90,7 @@ resource "docker_container" "postgres" {
   restart = "always"
 
   env = [
-    "POSTGRES_PASSWORD=${var.db_password}",
+    "POSTGRES_PASSWORD=${random_password.db.result}",
     "POSTGRES_USER=postgres",
     "POSTGRES_DB=immich",
     "POSTGRES_INITDB_ARGS=--data-checksums",
@@ -251,4 +251,26 @@ resource "docker_container" "server" {
     docker_container.postgres,
     docker_container.redis,
   ]
+}
+
+# ADOPTED, NOT GENERATED. immich's cluster was already initialised when tofu
+# took it over, and POSTGRES_PASSWORD is only read by initdb on an EMPTY data
+# directory -- so this value cannot be changed from here. Changing it would
+# alter the env of a running container and nothing else, leaving immich unable
+# to connect while every plan looked clean.
+#
+# Imported with the existing value:
+#
+#   tofu import 'module.immich.random_password.db' "$(bw get password 'mindy immich db user')"
+#
+# `ignore_changes = all` prevents the replacement that an imported
+# random_password otherwise plans when the config's generation attributes do
+# not match the imported value. Replacement here means a new password in the
+# container env and an unchanged one in postgres.
+resource "random_password" "db" {
+  length = 32
+
+  lifecycle {
+    ignore_changes = all
+  }
 }

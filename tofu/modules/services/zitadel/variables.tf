@@ -102,3 +102,15 @@ variable "login_port" {
   type    = number
   default = 3002
 }
+
+# This zitadel instance's own ID, for the System API user's IAM membership.
+#
+#   docker exec <postgres> psql -U postgres -d zitadel \
+#     -tAc "select id, name from projections.instances"
+#
+# Not discoverable from the provider: it is needed to BUILD the credential the
+# provider authenticates with.
+variable "instance_id" {
+  type    = string
+  default = "340576542272782341"
+}

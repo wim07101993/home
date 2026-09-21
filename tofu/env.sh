@@ -19,7 +19,6 @@
 #
 #   HCLOUD_TOKEN                  Hetzner Cloud API token
 #   TF_VAR_state_passphrase       state encryption passphrase, 16+ chars
-#   TF_VAR_storage_box_password   Storage Box (snow-white) password
 #   TF_VAR_pg_superuser_password        postgres superuser password on bumba
 #   TF_VAR_pg_superuser_password_mindy  ... and on mindy (a different value)
 #   TF_VAR_zitadel_pat            PAT for the `terraform` service user
@@ -41,6 +40,21 @@
 # dependency of this repo. For example:
 #
 #   export TF_VAR_state_passphrase="$(rbw get 'OpenTofu state')"   # or bw, pass, ...
+#
+# BITWARDEN (optional). Every secret lives as a hidden custom FIELD on ONE item
+# (default name "tofu home", override with TOFU_BW_ITEM). Field names are the
+# exact variable names below. Create or refresh it with:
+#
+#   export BW_SESSION="$(bw unlock --raw)"
+#   bash bw-seed.sh
+#
+# One item rather than one per secret because twelve separate lookups meant
+# twelve chances for a name to not match -- which is exactly what happened on
+# 2026-09-19, silently, since `bw get` prints "Not found." and exits 0.
+#
+# This stays OPTIONAL by construction: the repo is public and not everyone who
+# runs it uses Bitwarden. A missing `bw`, a locked vault, a missing item or a
+# missing field each fall back to the prompt. TOFU_NO_BW=1 skips it entirely.
 
 # Where this script lives, so the *.auto.tfvars lookup below does not depend on
 # the caller's working directory.
@@ -69,10 +83,66 @@ _tofu_has_tfvar() {   # _tofu_has_tfvar TF_VAR_foo
     "$_tofu_dir"/*.auto.tfvars "$_tofu_dir"/terraform.tfvars 2>/dev/null
 }
 
+# Fetches the item ONCE per sourcing and caches it -- `bw get` is a slow call
+# and there are a dozen fields to read out of it.
+_tofu_bw_state=""
+_tofu_bw_json=""
+_tofu_bw_init() {
+  [ -n "$_tofu_bw_state" ] && return 0
+  _tofu_bw_state=off
+  [ "${TOFU_NO_BW:-}" = "1" ] && return 0
+  command -v bw >/dev/null 2>&1 || return 0
+  command -v jq >/dev/null 2>&1 || {
+    echo "env.sh: bitwarden lookup needs jq -- prompting instead." >&2; return 0; }
+  case "$(bw status 2>/dev/null)" in
+    *'"status":"unlocked"'*) ;;
+    *'"status":"locked"'*)
+      echo "env.sh: bitwarden is locked -- prompting instead." >&2
+      echo '        export BW_SESSION="$(bw unlock --raw)" to use it.' >&2
+      return 0 ;;
+    *'"status":"unauthenticated"'*)
+      echo "env.sh: bitwarden is not logged in -- prompting instead." >&2
+      return 0 ;;
+    *) return 0 ;;
+  esac
+  _tofu_bw_json="$(bw get item "${TOFU_BW_ITEM:-tofu home}" 2>/dev/null)" || _tofu_bw_json=""
+  if [ -z "$_tofu_bw_json" ]; then
+    echo "env.sh: no bitwarden item '${TOFU_BW_ITEM:-tofu home}' -- prompting instead." >&2
+    echo "        create it with: bash bw-seed.sh" >&2
+    return 0
+  fi
+  _tofu_bw_state=on
+  return 0
+}
+
+# VARNAME -> the value of the hidden field with that exact name.
+#
+# Prints nothing and returns non-zero when the field is absent, so the caller
+# falls through to the prompt.
+_tofu_bw_get() {   # _tofu_bw_get VARNAME
+  local _v
+  _v="$(printf '%s' "$_tofu_bw_json" | jq -r --arg n "$1" '.fields[]? | select(.name==$n) | .value // empty' 2>/dev/null)"
+  [ -n "$_v" ] || return 1
+  printf '%s' "$_v"
+}
+
 _tofu_need() {   # _tofu_need VARNAME "human description"
   local _var="$1" _desc="$2" _val=""
   [ -n "${!_var:-}" ] && return 0
   _tofu_has_tfvar "$_var" && return 0
+
+  # Bitwarden, if it is available and unlocked. Anything less falls through.
+  _tofu_bw_init
+  if [ "$_tofu_bw_state" = on ]; then
+    _val="$(_tofu_bw_get "$_var" || true)"
+    if [ -n "$_val" ]; then
+      export "$_var=$_val"
+      _tofu_bw_hits=$(( ${_tofu_bw_hits:-0} + 1 ))
+      return 0
+    fi
+    _val=""
+  fi
+
   # -r /dev/tty is not enough: the file can exist and still fail to open when
   # there is no controlling terminal. Try it for real.
   if ! { exec 3<>/dev/tty; } 2>/dev/null; then
@@ -142,7 +212,6 @@ _tofu_need TF_VAR_state_passphrase "OpenTofu state encryption passphrase" || ret
 # never returns it, so config generation cannot fill it in and tofu cannot
 # verify it. storage-box.tf ignores changes to it for that reason -- but it
 # still has to be set. Reset it in the Cloud Console if it is not to hand.
-_tofu_need TF_VAR_storage_box_password "Storage Box (snow-white) password" || return 1
 
 _tofu_need TF_VAR_pg_superuser_password "postgres SUPERUSER password on bumba" || return 1
 
@@ -150,12 +219,10 @@ _tofu_need TF_VAR_pg_superuser_password "postgres SUPERUSER password on bumba" |
 # in the console -- modules/zitadel/README.md.
 _tofu_need TF_VAR_zitadel_pat "Zitadel PAT for the terraform service user" || return 1
 _tofu_need TF_VAR_pg_superuser_password_mindy "postgres SUPERUSER password on MINDY" || return 1
-_tofu_need TF_VAR_immich_db_password "immich's existing postgres password" || return 1
 
 # Kopia. Two credentials: the repository password (encrypts the backups) and
 # the Storage Box SUB-account password. Neither is TF_VAR_storage_box_password.
 _tofu_need TF_VAR_kopia_repository_password "kopia repository password" || return 1
-_tofu_need TF_VAR_kopia_sftp_password "kopia Storage Box sub-account password" || return 1
 
 # Zitadel's masterkey -- 32 bytes, and the one value in this estate that cannot
 # be regenerated. Prefer secrets.auto.tfvars over typing it; see
@@ -180,6 +247,10 @@ if [ -z "${PG_CONN_STR:-}" ]; then
   unset _pw
 fi
 
-unset -f _tofu_need _tofu_has_tfvar
+[ "${_tofu_bw_hits:-0}" -gt 0 ] && \
+  echo "env.sh: ${_tofu_bw_hits} secret(s) read from bitwarden." >&2
+
+unset -f _tofu_need _tofu_has_tfvar _tofu_bw_init _tofu_bw_get
+unset _tofu_bw_state _tofu_bw_hits _tofu_bw_json
 unset _tofu_dir
-echo "env.sh: environment set (bumba ${BUMBA_ADDR}, mindy ${MINDY_ADDR})"
+echo "env.sh: environment set (bumba ${BUMBA_ADDR}, mindy ${MINDY_ADDR}, samson ${SAMSON_ADDR})"
