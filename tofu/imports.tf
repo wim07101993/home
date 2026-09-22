@@ -5,7 +5,17 @@
 # for reading. See README.md, "Why this is one module".
 #
 # Import blocks live in the root and address resources inside modules by their
-# full path: `module.databases.postgresql_database.zitadel`.
+# full path: `module.memo.postgresql_database.this`.
+#
+# THEY MUST BE REPOINTED WHEN A RESOURCE MOVES. An import block naming an
+# address that no longer exists in config fails the WHOLE plan, even though the
+# import itself was applied months ago and is a no-op:
+#
+#   Error: Configuration for import target does not exist
+#
+# Five were repointed on 2026-09-22 when modules/databases was emptied into the
+# service slices. They could equally be deleted -- an applied import block does
+# nothing -- but the ids below are the adoption record, so they stay.
 #
 # The rule, unchanged:
 #
@@ -78,7 +88,7 @@ import {
 # to be a resource.
 
 import {
-  to = module.databases.postgresql_database.zitadel
+  to = module.zitadel_server.postgresql_database.this
   id = "zitadel"
 }
 
@@ -107,12 +117,12 @@ import {
 # generates configuration. The module's `providers` mapping in main.tf is what
 # decides where these land.
 import {
-  to = module.databases.postgresql_role.memos
+  to = module.memo.postgresql_role.this
   id = "memos"
 }
 
 import {
-  to = module.databases.postgresql_database.memos
+  to = module.memo.postgresql_database.this
   id = "memos"
 }
 
@@ -231,12 +241,12 @@ import {
 # its migrations at boot; narrowing it is a real question, but not one to
 # answer as a side effect of adoption, where you find out at the next upgrade.
 import {
-  to = module.databases.postgresql_role.zitadel_user
+  to = module.zitadel_server.postgresql_role.user
   id = "zitadel_user"
 }
 
 import {
-  to = module.databases.postgresql_role.zitadel_root
+  to = module.zitadel_server.postgresql_role.root
   id = "zitadel_root"
 }
 

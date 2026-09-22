@@ -37,7 +37,12 @@ by hand, once nothing references it.
 
 ## Shape
 
-One project per application, so access can be granted per app:
+One project per application, so access can be granted per app.
+
+**Most of these no longer live in this module.** On 2026-09-22 each project,
+role and client moved into the service that uses it — `../services/<svc>/auth.tf`
+— leaving only the orgs, the SMTP provider and `home` here. The table is kept
+because it describes the estate, not this directory:
 
 | project | applications | roles |
 |---|---|---|
@@ -47,6 +52,16 @@ One project per application, so access can be granted per app:
 | `drive` | drive | family |
 | `keuken` | transaction-importer, kitchen owl web-app | family |
 | `memo` | memo | family |
+
+| project | now lives in |
+|---|---|
+| `Score` | `../services/score/auth.tf` |
+| `home` | here — plop has no service module |
+| `photos` | `../services/immich/auth.tf` |
+| `drive` | `../services/file-browser/auth.tf` |
+| `keuken` | `../services/kitchen-owl/auth.tf` |
+| `memo` | `../services/memo/auth.tf` |
+| `status` | `../services/gatus/auth.tf` |
 
 Every project sets `has_project_check = true`. That is what makes the split
 worth having: without a grant to that project, a user cannot get a token for

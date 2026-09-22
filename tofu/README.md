@@ -7,7 +7,7 @@ server, a volume or a Storage Box, ever. It does create databases and roles.
 > - Hetzner: five resources adopted 2026-09-16.
 > - postgres: two databases adopted. Roles not yet — see the blockers below.
 > - traefik on **both** hosts: cut over from compose 2026-09-17. Routing
->   centralised per host in `dynamic.yml`, docker socket no longer mounted
+>   assembled per service into `dynamic.yml`, docker socket no longer mounted
 >   anywhere.
 > - zitadel: 6 projects, 6 roles, 8 applications built fresh. Nothing cut over
 >   yet -- see modules/zitadel/README.md.
@@ -25,11 +25,29 @@ tofu/
   variables.tf   root variables, all fed by env.sh
   main.tf        two module blocks
   imports.tf     adoption record and outstanding imports
-  moved.tf       one-time state renames from the merge -- deletable after apply
   modules/
     hetzner/        servers, volume, firewall, storage box -- adoption only
-    postgres/       databases, and later roles
+    network/        the traefik docker network, one per host
+    zitadel/        INSTANCE-level only: orgs, SMTP, home assistant
+    services/*/     one directory per service -- see below
 ```
+
+Services are **vertical slices** (2026-09-22). A service module owns everything
+that service needs, in files named the same way everywhere:
+
+```
+  services/memo/
+    main.tf        the container
+    database.tf    its postgres database and role
+    auth.tf        its zitadel project, role and OIDC client
+    routing.tf     its traefik routers and backends
+```
+
+There is no `modules/databases` and no per-service file under `modules/zitadel`
+any more; both were shared modules listing every service, and both were emptied
+into the slices. What stayed in `modules/zitadel` is genuinely instance-level:
+the orgs, the SMTP provider, and home assistant, which has no service module
+because plop is not in tofu yet.
 
 One root module, two child modules: **one state, one `init`, one `apply`**.
 The directories are for reading, not for isolation — `tofu` only loads `.tf`

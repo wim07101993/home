@@ -14,6 +14,16 @@
 # Everything behind this proxy is down while it is not running: auth.wvl.app,
 # score, partituren, and the dashboard.
 
+# Flattened once, used three times. Each service module contributes its own
+# routers/services/middlewares; nothing here cares which service a route came
+# from -- a name collision between two modules is a silent overwrite, which is
+# why names are host-unique by convention.
+locals {
+  routers     = merge([for x in var.routing : x.routers]...)
+  services    = merge([for x in var.routing : x.services]...)
+  middlewares = merge([for x in var.routing : x.middlewares]...)
+}
+
 resource "docker_image" "traefik" {
   name         = "traefik:${var.image_tag}"
   keep_locally = true
@@ -76,7 +86,14 @@ resource "docker_container" "this" {
   upload {
     file = "/etc/traefik/dynamic.yml"
     content = yamlencode({
-      http = {
+      # `middlewares` is omitted entirely when no service on this host defines
+      # one -- bumba has none, and an empty `middlewares: {}` is noise.
+      http = merge(length(local.middlewares) > 0 ? { middlewares = local.middlewares } : {}, {
+        # The for-expression drops `middlewares` when a router has none.
+        # var.routing types it as optional(list(string), []), so every router
+        # arrives carrying the key -- rendering it would put `middlewares: []`
+        # on nine routers that never had one. Harmless to traefik, noise in a
+        # file people read when something is broken.
         routers = merge(
           {
             # entryPoints and tls are omitted deliberately: websecure is
@@ -87,11 +104,16 @@ resource "docker_container" "this" {
               service = "api@internal"
             }
           },
-          merge([for r in var.routing : lookup(r, "routers", {})]...),
+          {
+            for name, r in local.routers :
+            name => merge(
+              { rule = r.rule, service = r.service },
+              length(r.middlewares) > 0 ? { middlewares = r.middlewares } : {},
+            )
+          },
         )
-        services    = merge([for r in var.routing : lookup(r, "services", {})]...)
-        middlewares = merge([for r in var.routing : lookup(r, "middlewares", {})]...)
-      }
+        services = local.services
+      })
     })
   }
 }

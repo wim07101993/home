@@ -196,7 +196,17 @@ module "zitadel" {
 output "zitadel_apps" {
   description = "New client ids and secrets for the cutover. `tofu output -json zitadel_apps`."
   sensitive   = true
-  value       = module.zitadel.apps
+  value = merge(
+    module.zitadel.apps,
+    module.score.zitadel_apps,
+    {
+      "memo/memo"                  = module.memo.zitadel_app
+      "keuken/kitchen owl web-app" = module.kitchen_owl.zitadel_app
+      "status/gatus"               = module.gatus.zitadel_app
+      "photos/immich"              = module.immich.zitadel_app
+      "drive/drive"                = module.file_browser.zitadel_app
+    },
+  )
 }
 
 output "zitadel_project_ids" {

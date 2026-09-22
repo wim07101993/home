@@ -2,9 +2,12 @@
 
 > **Status.** bumba cut over 2026-09-17, mindy the same day. Both plan clean.
 
-One module, two callers. Config lives here, one directory per host —
-`bumba/` and `mindy/`, each with `traefik.yml` (static) and `dynamic.yml`
-(routes). `var.host` picks the directory.
+One module, two callers. STATIC config lives here, one directory per host —
+`bumba/` and `mindy/`, each with `traefik.yml`. `var.host` picks the directory.
+
+**Routes do not live here any more.** Since 2026-09-22 each service owns its own
+routers and backends in `../<service>/routing.tf`; this module collects them
+through `var.routing` and renders one `dynamic.yml` with `yamlencode`.
 
 ## bumba's traefik
 
@@ -77,16 +80,29 @@ been running for a while.
 - **Everything else is identical**, including the traefik version. `v3.7.10` is
   pinned to what bumba runs today so the cutover changes one thing. mindy is on
   `v3.7.13`; closing that drift is a separate change.
-- **Routing moved from container labels to traefik's file provider.** Every
-  route is in `<host>/dynamic.yml`. See below.
+- **Routing moved from container labels to traefik's file provider.** The file
+  is assembled from every service's `routing.tf`. See below.
 - **The docker socket is no longer mounted**, which follows from that.
 
-## Routing is centralised
+## Routing is sliced per service
 
-`<host>/dynamic.yml` holds every router, service and middleware for that host,
-uploaded verbatim into the container. Plain YAML rather than `yamlencode`
-output, so editors, the traefik JSON schema and anything copy-pasted from the
-docs all work on it directly.
+Each service exposes a `traefik` output — its routers, its backends, and rarely
+a middleware. The root collects them into `var.routing` and this module merges
+them with the one route it owns itself (the dashboard, which is `api@internal`,
+traefik rather than a service) and renders `/etc/traefik/dynamic.yml`.
+
+`yamlencode` cannot emit invalid YAML, which is worth something for a file that
+takes every site on the host offline if malformed. What it cannot emit is
+COMMENTS — so the history that used to sit beside each route now lives in that
+service's `routing.tf`.
+
+Routers carry only a rule and a service. `entryPoints` and `tls` are omitted
+because `websecure` is `asDefault` and carries `certResolver: le` on both hosts,
+so every router inherits both. Without `asDefault` a router naming no entryPoint
+would bind to `web:80` as well.
+
+**A routing change now replaces this container**, and its content depends on
+every service module.
 
 Backends use the container name or compose's per-network alias — `zitadel`, not
 `zitadel-zitadel-1` — and the **container** port, not the host-published one.
@@ -106,9 +122,9 @@ in this change and it came for free.
 
 ### What it costs
 
-**No auto-discovery.** A service missing from `<host>/dynamic.yml` is
-unreachable, full stop. Adding a service now means editing this module as well
-as the service — coupling in the opposite direction from labels.
+**No auto-discovery.** A service with no `routing.tf`, or one missing from the
+root's `routing` list, is unreachable — full stop. The list in `../../../main.tf`
+is the thing to check first when a new service 404s.
 
 **Labels elsewhere are now inert.** The `traefik.*` labels on the zitadel and
 score compose files do nothing, because nothing reads them. Harmless, and worth

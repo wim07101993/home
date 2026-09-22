@@ -66,7 +66,7 @@ as the postgres note in [`../../../providers.tf`](../../../providers.tf).
 the migrations it runs at boot; it may not need superuser forever. Worth
 checking against zitadel's documented requirements rather than leaving the
 status quo as an implicit decision. Preserved deliberately on adoption — see
-[`../../databases/databases.tf`](../../databases/databases.tf).
+[`./database.tf`](./database.tf) -- moved into this module on 2026-09-22.
 
 **`Log.Level: 'Debug'`** in `zitadel-config.yaml`, left from debugging. bumba is
 a cpx11 with 2 GB of RAM and this is the noisiest thing on it. One-line change,

@@ -55,14 +55,35 @@ variable "letsencrypt_path" {
 # main.tf merges them into one dynamic.yml. A service missing from the list is
 # unreachable -- there is still no auto-discovery, the difference is only WHERE
 # the route is written.
+# TYPED, which took one iteration to get right. `list(any)` fails outright --
+# it unifies its element types, and only file-browser carries a middleware:
+#
+#   Error: all list elements must have the same type
+#
+# `optional(..., [])` is what fixes that. It gives every router the same OBJECT
+# TYPE whether or not the service wrote `middlewares`, so the elements unify --
+# and it documents the shape a service has to produce, which `any` did not.
+#
+# The middleware DEFINITIONS stay untyped on purpose: buffering, headers,
+# rateLimit and the rest share no schema, so a type here would be a lie.
 variable "routing" {
-  type        = list(any)
+  type = list(object({
+    routers = map(object({
+      rule        = string
+      service     = string
+      middlewares = optional(list(string), [])
+    }))
+    services = map(object({
+      loadBalancer = object({
+        servers = list(object({ url = string }))
+      })
+    }))
+    middlewares = optional(any, {})
+  }))
   default     = []
-  description = "Per-service traefik fragments: [{ routers = {}, services = {}, middlewares = {} }]"
+  description = "Per-service traefik fragments, from each service's `traefik` output."
 }
 
-# This host's own dashboard hostname. The dashboard router is the one route the
-# proxy owns rather than a service -- api@internal is traefik itself.
 variable "dashboard_host" {
   type = string
 }
