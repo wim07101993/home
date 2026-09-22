@@ -65,19 +65,6 @@ variable "kopia_repository_password" {
   sensitive = true
 }
 
-# --- zitadel --------------------------------------------------------------
-#
-# The masterkey. Zitadel encrypts every secret in its database with it, and a
-# wrong or lost value is unrecoverable -- there is no reset, only a rebuild.
-#
-# It is a variable because until 2026-09-18 it existed only on bumba's disk, and
-# nothing backs bumba up. See modules/services/zitadel/variables.tf for how to
-# populate it without putting it through a terminal.
-variable "zitadel_masterkey" {
-  type      = string
-  sensitive = true
-}
-
 # --- mailgun --------------------------------------------------------------
 #
 # Replaces the hand-typed gatus SMTP password: tofu now CREATES that credential

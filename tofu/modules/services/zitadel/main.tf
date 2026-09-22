@@ -154,14 +154,14 @@ resource "docker_container" "zitadel" {
   #
   # Same path and same --masterkeyFile flag as before, so zitadel sees no
   # difference. What changes is where the value LIVES: it used to exist only on
-  # bumba's unbacked-up disk. See var.masterkey.
+  # bumba's unbacked-up disk. See random_password.masterkey below.
   #
   # Changing this replaces the container, which is correct -- and is also why
   # the value must be exactly right. A wrong masterkey does not fail loudly; it
   # starts and cannot decrypt.
   upload {
     file    = "/run/secrets/zitadel_masterkey"
-    content = var.masterkey
+    content = random_password.masterkey.result
   }
 
   # Written BY zitadel at first init: login-client.pat, which zitadel-login
@@ -254,4 +254,29 @@ resource "docker_container" "login" {
 resource "tls_private_key" "system_api" {
   algorithm = "RSA"
   rsa_bits  = 2048
+}
+
+# ADOPTED, NOT GENERATED -- and it can never be regenerated. This key encrypts
+# every secret in zitadel's database. A different value means zitadel starts and
+# cannot read its own data; there is no migration and no reset.
+#
+# Imported with the existing value:
+#
+#   tofu import 'module.zitadel_server.random_password.masterkey' \
+#     "$(bw get item 'tofu home' | jq -r '.fields[]|select(.name=="TF_VAR_zitadel_masterkey")|.value')"
+#
+# `ignore_changes = all` is load-bearing here beyond the usual import caveat:
+# without it, ANY drift in the generation attributes plans a replacement, and a
+# replacement of this resource is an unrecoverable instance.
+#
+# Bitwarden keeps the independent copy. That matters: state is encrypted with
+# TF_VAR_state_passphrase, so if this key lived ONLY here, losing that
+# passphrase would take zitadel with it.
+resource "random_password" "masterkey" {
+  length  = 32
+  special = false
+
+  lifecycle {
+    ignore_changes = all
+  }
 }

@@ -186,7 +186,6 @@ module "zitadel_server" {
   traefik_network = module.reverse_proxy_bumba.network_name
   db_network      = module.postgres_bumba.network_name
 
-  masterkey      = var.zitadel_masterkey
   db_credentials = module.databases.zitadel
 
   depends_on = [module.postgres_bumba, module.reverse_proxy_bumba]

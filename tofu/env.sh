@@ -23,7 +23,6 @@
 #   TF_VAR_pg_superuser_password_mindy  ... and on mindy (a different value)
 #   TF_VAR_zitadel_pat            PAT for the `terraform` service user
 #   TF_VAR_mailgun_api_key        Mailgun API key (mints SMTP credentials)
-#   TF_VAR_zitadel_masterkey      Zitadel masterkey, 32 chars -- IRREPLACEABLE
 #   TOFU_STATE_DB_PASSWORD        the tofu_state role, for the BACKEND
 #   PG_CONN_STR                   overrides the last one entirely
 #   BUMBA_ADDR                    skips the `tailscale ip` lookup
@@ -227,7 +226,6 @@ _tofu_need TF_VAR_kopia_repository_password "kopia repository password" || retur
 # Zitadel's masterkey -- 32 bytes, and the one value in this estate that cannot
 # be regenerated. Prefer secrets.auto.tfvars over typing it; see
 # modules/services/zitadel/variables.tf.
-_tofu_need TF_VAR_zitadel_masterkey "Zitadel masterkey (32 chars)" || return 1
 
 # Mailgun. One key, not one password per service: tofu creates gatus's SMTP
 # credential itself (modules/mailgun), so there is no longer an SMTP password

@@ -17,6 +17,15 @@ resource "docker_container" "this" {
   image   = docker_image.this.image_id
   restart = "unless-stopped"
 
+  # Inherited from the compose stack. Not cosmetic: without these the container
+  # is REPLACED on every apply, because docker reports the live values and the
+  # config says none. A perpetual one-resource diff trains you to skim plans,
+  # which is how a real change gets approved by reflex.
+  log_opts = {
+    "max-file" = "3"
+    "max-size" = "50m"
+  }
+
   ports {
     internal = 4005
     external = var.host_port
