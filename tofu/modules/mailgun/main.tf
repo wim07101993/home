@@ -8,7 +8,7 @@ resource "random_password" "gatus" {
 }
 
 resource "mailgun_domain_credential" "gatus" {
-  domain = var.domain
+  domain   = var.domain
   login    = "gatus"
   password = random_password.gatus.result
   region   = var.region

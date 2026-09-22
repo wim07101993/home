@@ -51,6 +51,37 @@ module "mailgun" {
   source = "./modules/mailgun"
 }
 
+# The traefik networks, one per host. Extracted from the reverse-proxy module so
+# that routing can be sliced per service without a dependency cycle -- see
+# modules/network.
+module "network_bumba" {
+  source = "./modules/network"
+
+  providers = { docker = docker.bumba }
+
+  name = "reverse-proxy_reverse-proxy-network"
+  labels = {
+    "com.docker.compose.config-hash" = "269096a0575268b819c342ef4a1d6d6c8240ce7cd8ddfb507530a7587d85e957"
+    "com.docker.compose.network"     = "reverse-proxy-network"
+    "com.docker.compose.project"     = "reverse-proxy"
+    "com.docker.compose.version"     = ""
+  }
+}
+
+module "network_mindy" {
+  source = "./modules/network"
+
+  providers = { docker = docker.mindy }
+
+  name = "traefik_traefik-network"
+  labels = {
+    "com.docker.compose.config-hash" = "a28de9114d611e880f6424720a2fbf6580fde482deabb368bd099ee6e96b8c6c"
+    "com.docker.compose.network"     = "traefik-network"
+    "com.docker.compose.project"     = "traefik"
+    "com.docker.compose.version"     = ""
+  }
+}
+
 # bumba's traefik. A cutover, not an adoption -- see the module README.
 # mindy's traefik stays on compose for now.
 module "reverse_proxy_bumba" {
@@ -62,15 +93,15 @@ module "reverse_proxy_bumba" {
 
   host           = "bumba"
   container_name = "reverse-proxy"
-  network_name   = "reverse-proxy_reverse-proxy-network"
+  network_name   = module.network_bumba.name
   image_tag      = "v3.7.10"
+  dashboard_host = "wvl.app"
 
-  network_labels = {
-    "com.docker.compose.config-hash" = "269096a0575268b819c342ef4a1d6d6c8240ce7cd8ddfb507530a7587d85e957"
-    "com.docker.compose.network"     = "reverse-proxy-network"
-    "com.docker.compose.project"     = "reverse-proxy"
-    "com.docker.compose.version"     = ""
-  }
+  routing = [
+    module.zitadel_server.traefik,
+    module.gatus.traefik,
+  ]
+
 }
 
 # mindy's traefik. Same shape, different host. Cutover, not adoption.
@@ -83,24 +114,37 @@ module "reverse_proxy_mindy" {
 
   host           = "mindy"
   container_name = "traefik"
-  network_name   = "traefik_traefik-network"
+  network_name   = module.network_mindy.name
   image_tag      = "v3.7.13"
+  dashboard_host = "traefik.wvl.app"
+
+  routing = [
+    module.file_browser.traefik,
+    module.immich.traefik,
+    module.homepage.traefik,
+    module.it_tools.traefik,
+    module.kitchen_owl.traefik,
+    module.memo.traefik,
+    module.score.traefik,
+  ]
 
   # From `docker network inspect traefik_traefik-network` on mindy,
   # 2026-09-17. Note the project is `traefik` and the hash is mindy's own --
   # these were briefly hardcoded to bumba's values, which would have stamped
   # this network with the wrong stack's identity.
-  network_labels = {
-    "com.docker.compose.config-hash" = "a28de9114d611e880f6424720a2fbf6580fde482deabb368bd099ee6e96b8c6c"
-    "com.docker.compose.network"     = "traefik-network"
-    "com.docker.compose.project"     = "traefik"
-    "com.docker.compose.version"     = ""
-  }
 }
 
 
 # auth.wvl.app's CONTAINERS. A cutover from the portainer git stack -- see the
 # module. `zitadel_server` is the deployment; `zitadel` below is its contents.
+#
+# depends_on the NETWORK, not the proxy. It used to be module.reverse_proxy_bumba
+# because that module created the network; now routing flows the other way --
+# the proxy consumes this module's `traefik` output -- and naming the proxy here
+# is a cycle:
+#
+#   Cycle: module.zitadel_server (expand), module.zitadel_server.output.traefik,
+#          module.reverse_proxy_bumba.var.routing, ...
 #
 # depends_on because both containers attach to networks these modules own, and
 # because zitadel cannot start before its database container exists.
@@ -113,10 +157,10 @@ module "zitadel_server" {
     postgresql = postgresql
   }
 
-  traefik_network = module.reverse_proxy_bumba.network_name
+  traefik_network = module.network_bumba.name
   db_network      = module.postgres_bumba.network_name
 
-  depends_on = [module.postgres_bumba, module.reverse_proxy_bumba]
+  depends_on = [module.postgres_bumba, module.network_bumba]
 }
 
 # Projects, roles and OIDC applications. A REBUILD, not an adoption -- orgs
@@ -196,7 +240,7 @@ module "it_tools" {
     docker = docker.mindy
   }
 
-  network_name = module.reverse_proxy_mindy.network_name
+  network_name = module.network_mindy.name
 }
 
 # mindy's postgres. memos and filebrowser depend on it. Unlike bumba's, it
@@ -235,7 +279,7 @@ module "memo" {
     zitadel    = zitadel
   }
 
-  traefik_network = module.reverse_proxy_mindy.network_name
+  traefik_network = module.network_mindy.name
   db_network      = module.postgres_mindy.network_name
 
   org_id = module.zitadel.org_home_id
@@ -279,7 +323,7 @@ module "file_browser" {
   # Still the home-old project's app. See the variable's comment.
   oidc_client_id = "367153386023354372"
 
-  traefik_network = module.reverse_proxy_mindy.network_name
+  traefik_network = module.network_mindy.name
   db_network      = module.postgres_mindy.network_name
 
   depends_on = [module.postgres_mindy]
@@ -309,7 +353,7 @@ module "homepage" {
     docker = docker.mindy
   }
 
-  traefik_network = module.reverse_proxy_mindy.network_name
+  traefik_network = module.network_mindy.name
 }
 
 # score.wvl.app / partituren.wvl.app / score-api.wvl.app
@@ -327,7 +371,7 @@ module "score" {
     zitadel    = zitadel
   }
 
-  traefik_network = module.reverse_proxy_mindy.network_name
+  traefik_network = module.network_mindy.name
   db_network      = module.postgres_mindy.network_name
 
   org_id = module.zitadel.org_home_id
@@ -370,7 +414,7 @@ module "immich" {
   }
 
   library_path    = local.photos_path
-  traefik_network = module.reverse_proxy_mindy.network_name
+  traefik_network = module.network_mindy.name
 
   org_id = module.zitadel.org_home_id
 }
@@ -385,7 +429,7 @@ module "kitchen_owl" {
     zitadel    = zitadel
   }
 
-  traefik_network = module.reverse_proxy_mindy.network_name
+  traefik_network = module.network_mindy.name
   db_network      = module.postgres_mindy.network_name
 
   org_id = module.zitadel.org_home_id
@@ -409,7 +453,7 @@ module "gatus" {
     zitadel = zitadel
   }
 
-  traefik_network = module.reverse_proxy_bumba.network_name
+  traefik_network = module.network_bumba.name
   tailscale_ip    = var.bumba_addr
 
   org_id = module.zitadel.org_home_id
@@ -631,4 +675,14 @@ moved {
 moved {
   from = module.databases.postgresql_database.zitadel
   to   = module.zitadel_server.postgresql_database.this
+}
+
+moved {
+  from = module.reverse_proxy_bumba.docker_network.this
+  to   = module.network_bumba.docker_network.this
+}
+
+moved {
+  from = module.reverse_proxy_mindy.docker_network.this
+  to   = module.network_mindy.docker_network.this
 }

@@ -47,12 +47,22 @@ variable "letsencrypt_path" {
 
 
 
-variable "network_labels" {
-  type        = map(string)
-  default     = {}
-  description = <<-EOT
-    Labels already on the existing network, from `docker network inspect`.
-    Reproduced exactly so the import plans clean -- a missing label forces
-    replacement of a network every service is attached to.
-  EOT
+
+# Routing, assembled from the services themselves.
+#
+# Each service module exposes a `traefik` output holding its own routers,
+# services and (rarely) middlewares; the root collects them into this list and
+# main.tf merges them into one dynamic.yml. A service missing from the list is
+# unreachable -- there is still no auto-discovery, the difference is only WHERE
+# the route is written.
+variable "routing" {
+  type        = list(any)
+  default     = []
+  description = "Per-service traefik fragments: [{ routers = {}, services = {}, middlewares = {} }]"
+}
+
+# This host's own dashboard hostname. The dashboard router is the one route the
+# proxy owns rather than a service -- api@internal is traefik itself.
+variable "dashboard_host" {
+  type = string
 }

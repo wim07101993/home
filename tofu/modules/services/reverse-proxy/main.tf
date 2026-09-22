@@ -14,37 +14,6 @@
 # Everything behind this proxy is down while it is not running: auth.wvl.app,
 # score, partituren, and the dashboard.
 
-resource "docker_network" "this" {
-  name       = var.network_name
-  driver     = "bridge"
-  attachable = false
-  ingress    = false
-  ipv6       = false
-
-  # Whatever compose stamped on this network when it created it. Vestigial,
-  # and reproduced on purpose: dropping a label FORCES REPLACEMENT, and
-  # replacing the network every service on the host is attached to is not
-  # something to do as a side effect of an import. prevent_destroy caught
-  # exactly that on bumba, 2026-09-16.
-  #
-  # Per host, because they differ -- the project name and config-hash belong to
-  # that host's compose stack. They were briefly hardcoded to bumba's values,
-  # which would have stamped mindy's network with the wrong project.
-  dynamic "labels" {
-    for_each = var.network_labels
-    content {
-      label = labels.key
-      value = labels.value
-    }
-  }
-
-  lifecycle {
-    # zitadel and score are still compose-managed and attach to this by name.
-    # Destroying it detaches them with no warning.
-    prevent_destroy = true
-  }
-}
-
 resource "docker_image" "traefik" {
   name         = "traefik:${var.image_tag}"
   keep_locally = true
@@ -78,7 +47,7 @@ resource "docker_container" "this" {
   }
 
   networks_advanced {
-    name = docker_network.this.name
+    name = var.network_name
   }
 
   # Static: entrypoints, providers, ACME. A real YAML file, read verbatim.
@@ -94,15 +63,44 @@ resource "docker_container" "this" {
   # mount, not the container. If a route ever needs a tofu-managed value (an
   # OIDC client id, a generated password), the caller passes
   # templatefile(...) instead of file(...).
+  # ASSEMBLED, not a file. Every route comes from the service that owns it --
+  # see var.routing -- merged here with the one route the proxy owns itself.
+  #
+  # yamlencode cannot emit invalid YAML, which is worth something for a file
+  # that, if malformed, takes every site on this host offline. What it also
+  # cannot emit is COMMENTS: the history that used to live in dynamic.yml now
+  # lives in each service's routing.tf, which is where it is read anyway.
+  #
+  # Changing any route replaces this container. That is new: a routing edit used
+  # to touch one file on one module, and now depends on every service module.
   upload {
-    file    = "/etc/traefik/dynamic.yml"
-    content = file("${path.module}/${var.host}/dynamic.yml")
+    file = "/etc/traefik/dynamic.yml"
+    content = yamlencode({
+      http = {
+        routers = merge(
+          {
+            # entryPoints and tls are omitted deliberately: websecure is
+            # asDefault and carries certResolver: le on both hosts, so every
+            # router here inherits both. See ${var.host}/traefik.yml.
+            dashboard = {
+              rule    = "Host(`${var.dashboard_host}`)"
+              service = "api@internal"
+            }
+          },
+          merge([for r in var.routing : lookup(r, "routers", {})]...),
+        )
+        services    = merge([for r in var.routing : lookup(r, "services", {})]...)
+        middlewares = merge([for r in var.routing : lookup(r, "middlewares", {})]...)
+      }
+    })
   }
 }
 
 # So service modules can depend on the network rather than naming it as a
 # string -- which makes "created before traefik's network exists" impossible
 # rather than merely unlikely.
+# Echoes the input so existing consumers keep working; the network itself is
+# ../../network now.
 output "network_name" {
-  value = docker_network.this.name
+  value = var.network_name
 }
