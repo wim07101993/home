@@ -48,8 +48,8 @@ resource "docker_container" "this" {
   # environment before parsing, which keeps these out of the file -- necessary,
   # because this repo is public. Non-secret settings stay in config.yaml.
   env = [
-    "GATUS_OIDC_CLIENT_ID=${var.oidc_client_id}",
-    "GATUS_OIDC_CLIENT_SECRET=${var.oidc_client_secret}",
+    "GATUS_OIDC_CLIENT_ID=${zitadel_application_oidc.this.client_id}",
+    "GATUS_OIDC_CLIENT_SECRET=${zitadel_application_oidc.this.client_secret}",
     "GATUS_SMTP_USERNAME=${var.smtp_username}",
     "GATUS_SMTP_PASSWORD=${var.smtp_password}",
     "GATUS_KOPIA_TOKEN=${random_password.kopia_token.result}",

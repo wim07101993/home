@@ -18,45 +18,6 @@ variable "db_network" {
   type = string
 }
 
-# From module.databases, which declares every database in the estate. This
-# module only consumes them to build the API's connection string.
-variable "db_user" {
-  type = string
-}
-
-variable "db_password" {
-  type      = string
-  sensitive = true
-}
-
-variable "db_name" {
-  type = string
-}
-
-variable "api_client_id" {
-  type        = string
-  sensitive   = true
-  description = "zitadel_application_api.score_api.client_id -- used by the API to introspect tokens."
-}
-
-variable "api_client_secret" {
-  type      = string
-  sensitive = true
-}
-
-variable "web_client_id" {
-  type        = string
-  sensitive   = true
-  description = <<-EOT
-    zitadel_application_oidc.score_web_app.client_id.
-
-    This MUST match the project the API checks roles against. The frontend
-    obtains the token; the API introspects it and looks for
-    urn:zitadel:iam:org:project:roles. Point them at apps in different projects
-    and every request is authenticated and then refused.
-  EOT
-}
-
 variable "api_port" {
   type    = number
   default = 3005
@@ -65,4 +26,10 @@ variable "api_port" {
 variable "web_port" {
   type    = number
   default = 3006
+}
+
+# The org this project lives in. Passed from ../../zitadel, which owns the org
+# objects -- those are instance-level and not part of any one service.
+variable "org_id" {
+  type = string
 }

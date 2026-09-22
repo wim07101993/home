@@ -104,12 +104,12 @@ resource "docker_container" "zitadel" {
       Database = {
         postgres = {
           User = {
-            Username = var.db_credentials.user_username
-            Password = var.db_credentials.user_password
+            Username = postgresql_role.user.name
+            Password = random_password.db_user.result
           }
           Admin = {
-            Username = var.db_credentials.admin_username
-            Password = var.db_credentials.admin_password
+            Username = postgresql_role.root.name
+            Password = random_password.db_root.result
           }
         }
       }

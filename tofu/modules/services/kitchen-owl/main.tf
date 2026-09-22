@@ -41,8 +41,8 @@ resource "docker_container" "this" {
 
     "OIDC_ISSUER=https://auth.wvl.app",
     "OIDC_NAME=Home",
-    "OIDC_CLIENT_ID=${var.oidc_client_id}",
-    "OIDC_CLIENT_SECRET=${var.oidc_client_secret}",
+    "OIDC_CLIENT_ID=${zitadel_application_oidc.this.client_id}",
+    "OIDC_CLIENT_SECRET=${zitadel_application_oidc.this.client_secret}",
 
     # Set on the live container but in neither the compose file nor its .env --
     # a portainer stack override, invisible to the repo. Reproduced from what
@@ -56,9 +56,9 @@ resource "docker_container" "this" {
     "DB_DRIVER=postgresql",
     "DB_HOST=db",
     "DB_PORT=5432",
-    "DB_NAME=${var.db_name}",
-    "DB_USER=${var.db_user}",
-    "DB_PASSWORD=${var.db_password}",
+    "DB_NAME=${postgresql_database.this.name}",
+    "DB_USER=${postgresql_role.this.name}",
+    "DB_PASSWORD=${random_password.db.result}",
   ]
 
   capabilities {

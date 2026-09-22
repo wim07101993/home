@@ -24,21 +24,13 @@ variable "db_network" {
 # existed only on that disk. It is generated in main.tf now from the values
 # below. The old file can be deleted once this has applied.
 
-# From module.databases -- see ../score/variables.tf.
-variable "db_user" {
-  type = string
-}
-
-variable "db_password" {
-  type      = string
-  sensitive = true
-}
-
-variable "db_name" {
-  type = string
-}
-
 variable "host_port" {
   type    = number
   default = 3007
+}
+
+# The org every project here lives in. Passed from ../../zitadel, which owns the
+# org objects -- those are instance-level and not part of any one service.
+variable "org_id" {
+  type = string
 }

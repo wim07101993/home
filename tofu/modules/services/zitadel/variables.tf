@@ -21,18 +21,6 @@ variable "db_network" {
   description = "bumba's postgres network. Zitadel reaches it as `db`."
 }
 
-# From module.databases, which adopted both roles and generates their
-# passwords. Retires the hand-maintained zitadel_secrets.yaml on bumba.
-variable "db_credentials" {
-  type = object({
-    user_username  = string
-    user_password  = string
-    admin_username = string
-    admin_password = string
-  })
-  sensitive = true
-}
-
 variable "config_path" {
   type        = string
   default     = "/docker-volumes/zitadel"

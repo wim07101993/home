@@ -54,3 +54,9 @@ variable "db_data_path" {
   type    = string
   default = "/docker-volumes/immich/postgres"
 }
+
+# The org this project lives in. Passed from ../../zitadel, which owns the org
+# objects -- those are instance-level and not part of any one service.
+variable "org_id" {
+  type = string
+}

@@ -21,26 +21,26 @@ locals {
   # bumba -- which is why the host move needs no change here.
   api_secrets = jsonencode({
     dbConnectionString = join(" ", [
-      "user=${var.db_user}",
-      "password=${var.db_password}",
+      "user=${postgresql_role.this.name}",
+      "password=${random_password.db.result}",
       "host=db",
       "port=5432",
-      "dbname=${var.db_name}",
+      "dbname=${postgresql_database.this.name}",
       "sslmode=disable",
     ])
 
     tokenIntrospectionUrl          = "https://auth.wvl.app/oauth/v2/introspect"
     userInfoUrl                    = "https://auth.wvl.app/oidc/v1/userinfo"
     rolesKey                       = "urn:zitadel:iam:org:project:roles"
-    tokenIntrospectionClientId     = var.api_client_id
-    tokenIntrospectionClientSecret = var.api_client_secret
+    tokenIntrospectionClientId     = zitadel_application_api.api.client_id
+    tokenIntrospectionClientSecret = zitadel_application_api.api.client_secret
   })
 
   # Runtime config, not baked into the image -- which is the only reason the
   # frontend could be cut over to the new zitadel app without rebuilding it.
   web_config = jsonencode({
     oidc = {
-      clientId              = var.web_client_id
+      clientId              = zitadel_application_oidc.web.client_id
       redirectUri           = "https://score.wvl.app/"
       authorizationEndpoint = "https://auth.wvl.app/oauth/v2/authorize"
       tokenEndpoint         = "https://auth.wvl.app/oauth/v2/token"

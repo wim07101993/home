@@ -54,11 +54,11 @@ resource "docker_container" "this" {
   upload {
     file = "/run/secrets/db_connection_string"
     content = join(" ", [
-      "user=${var.db_user}",
-      "password=${var.db_password}",
+      "user=${postgresql_role.this.name}",
+      "password=${random_password.db.result}",
       "host=db",
       "port=5432",
-      "dbname=${var.db_name}",
+      "dbname=${postgresql_database.this.name}",
       "sslmode=disable",
     ])
   }

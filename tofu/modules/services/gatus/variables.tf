@@ -43,15 +43,6 @@ variable "host_port" {
   default = 3009
 }
 
-variable "oidc_client_id" {
-  type = string
-}
-
-variable "oidc_client_secret" {
-  type      = string
-  sensitive = true
-}
-
 # Sender and recipient are in config.yaml -- they are choices, and belong in
 # the file that documents this deployment.
 #
@@ -66,4 +57,10 @@ variable "smtp_username" {
 variable "smtp_password" {
   type      = string
   sensitive = true
+}
+
+# The org this project lives in. Passed from ../../zitadel, which owns the org
+# objects -- those are instance-level and not part of any one service.
+variable "org_id" {
+  type = string
 }

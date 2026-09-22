@@ -129,3 +129,9 @@ variable "user_permissions" {
 variable "audio_path" {
   type = string
 }
+
+# The org this project lives in. Passed from ../../zitadel, which owns the org
+# objects -- those are instance-level and not part of any one service.
+variable "org_id" {
+  type = string
+}

@@ -45,31 +45,6 @@ module "hetzner" {
 
 }
 
-# Every database in the estate, on both hosts. One module, one file, grouped by
-# host -- so "what databases exist?" has a single answer.
-#
-# Not the same layer as `modules/services/postgres`, which is the postgres
-# CONTAINER (docker provider, one instance per host). This is the logical
-# objects inside them.
-#
-# depends_on because the postgresql provider dials port 5432 directly over the
-# tailnet, so nothing in the graph would otherwise order this after the
-# containers. An apply that replaced one would race the connection -- the same
-# failure as the zitadel provider one below, different port.
-module "databases" {
-  source = "./modules/databases"
-
-  # Both hosts. MINDY is the default -- it holds four of the five databases --
-  # and bumba's is the alias. Passing a providers map at all switches off
-  # default inheritance, so both must be listed even though one keeps its name.
-  providers = {
-    postgresql       = postgresql.mindy
-    postgresql.bumba = postgresql
-  }
-
-  depends_on = [module.postgres_bumba, module.postgres_mindy]
-}
-
 # SMTP credentials for outbound alerts. Credentials only -- the sending domain
 # is deliberately unmanaged, see the module.
 module "mailgun" {
@@ -132,14 +107,14 @@ module "reverse_proxy_mindy" {
 module "zitadel_server" {
   source = "./modules/services/zitadel"
 
+  # A VERTICAL SLICE: zitadel owns its own database and roles, on bumba.
   providers = {
-    docker = docker.bumba
+    docker     = docker.bumba
+    postgresql = postgresql
   }
 
   traefik_network = module.reverse_proxy_bumba.network_name
   db_network      = module.postgres_bumba.network_name
-
-  db_credentials = module.databases.zitadel
 
   depends_on = [module.postgres_bumba, module.reverse_proxy_bumba]
 }
@@ -171,6 +146,9 @@ module "zitadel" {
   depends_on = [module.reverse_proxy_bumba, module.zitadel_server]
 }
 
+# Assembled from the instance-level module and each vertical slice. The cutover
+# needs every client id in one place even though the resources now live with the
+# service that uses them.
 output "zitadel_apps" {
   description = "New client ids and secrets for the cutover. `tofu output -json zitadel_apps`."
   sensitive   = true
@@ -178,7 +156,14 @@ output "zitadel_apps" {
 }
 
 output "zitadel_project_ids" {
-  value = module.zitadel.project_ids
+  value = merge(module.zitadel.project_ids, {
+    "memo"   = module.memo.zitadel_project_id
+    "keuken" = module.kitchen_owl.zitadel_project_id
+    "status" = module.gatus.zitadel_project_id
+    "photos" = module.immich.zitadel_project_id
+    "drive"  = module.file_browser.zitadel_project_id
+    "Score"  = module.score.zitadel_project_id
+  })
 }
 
 # bumba's postgres. The container holding zitadel's database, score's, and --
@@ -241,16 +226,19 @@ module "postgres_mindy" {
 module "memo" {
   source = "./modules/services/memo"
 
+  # A VERTICAL SLICE -- memo owns its database, role and zitadel client. Three
+  # providers: docker and postgresql are per-host and passed explicitly, zitadel
+  # is a single instance.
   providers = {
-    docker = docker.mindy
+    docker     = docker.mindy
+    postgresql = postgresql.mindy
+    zitadel    = zitadel
   }
 
   traefik_network = module.reverse_proxy_mindy.network_name
   db_network      = module.postgres_mindy.network_name
 
-  db_user     = module.databases.memos.user
-  db_password = module.databases.memos.password
-  db_name     = module.databases.memos.name
+  org_id = module.zitadel.org_home_id
 
   # The db_network reference orders this after the NETWORK, not after the
   # database container -- so tofu created both in parallel on 2026-09-17 and
@@ -264,7 +252,8 @@ module "file_browser" {
   source = "./modules/services/file-browser"
 
   providers = {
-    docker = docker.mindy
+    docker  = docker.mindy
+    zitadel = zitadel
   }
 
   audio_path      = local.audio_path
@@ -294,6 +283,8 @@ module "file_browser" {
   db_network      = module.postgres_mindy.network_name
 
   depends_on = [module.postgres_mindy]
+
+  org_id = module.zitadel.org_home_id
 }
 
 # databasus -- the database backup tool, on samson. First thing in tofu on that
@@ -331,19 +322,15 @@ module "score" {
   source = "./modules/services/score"
 
   providers = {
-    docker = docker.mindy
+    docker     = docker.mindy
+    postgresql = postgresql.mindy
+    zitadel    = zitadel
   }
 
   traefik_network = module.reverse_proxy_mindy.network_name
   db_network      = module.postgres_mindy.network_name
 
-  db_user     = module.databases.score.user
-  db_password = module.databases.score.password
-  db_name     = module.databases.score.name
-
-  api_client_id     = module.zitadel.apps["Score/score-api"].client_id
-  api_client_secret = module.zitadel.apps["Score/score-api"].client_secret
-  web_client_id     = module.zitadel.apps["Score/score-web-app"].client_id
+  org_id = module.zitadel.org_home_id
 
   depends_on = [module.postgres_mindy]
 }
@@ -378,11 +365,14 @@ module "immich" {
   source = "./modules/services/immich"
 
   providers = {
-    docker = docker.mindy
+    docker  = docker.mindy
+    zitadel = zitadel
   }
 
   library_path    = local.photos_path
   traefik_network = module.reverse_proxy_mindy.network_name
+
+  org_id = module.zitadel.org_home_id
 }
 
 # keuken.wvl.app. Moved onto the shared postgres, off its own postgres:15.
@@ -390,18 +380,15 @@ module "kitchen_owl" {
   source = "./modules/services/kitchen-owl"
 
   providers = {
-    docker = docker.mindy
+    docker     = docker.mindy
+    postgresql = postgresql.mindy
+    zitadel    = zitadel
   }
 
   traefik_network = module.reverse_proxy_mindy.network_name
   db_network      = module.postgres_mindy.network_name
 
-  db_user     = module.databases.kitchenowl.user
-  db_password = module.databases.kitchenowl.password
-  db_name     = module.databases.kitchenowl.name
-
-  oidc_client_id     = module.zitadel.apps["keuken/kitchen owl web-app"].client_id
-  oidc_client_secret = module.zitadel.apps["keuken/kitchen owl web-app"].client_secret
+  org_id = module.zitadel.org_home_id
 
   depends_on = [module.postgres_mindy]
 }
@@ -418,14 +405,14 @@ module "gatus" {
   source = "./modules/services/gatus"
 
   providers = {
-    docker = docker.bumba
+    docker  = docker.bumba
+    zitadel = zitadel
   }
 
   traefik_network = module.reverse_proxy_bumba.network_name
   tailscale_ip    = var.bumba_addr
 
-  oidc_client_id     = module.zitadel.apps["status/gatus"].client_id
-  oidc_client_secret = module.zitadel.apps["status/gatus"].client_secret
+  org_id = module.zitadel.org_home_id
 
   # Created by tofu rather than typed in: modules/mailgun mints this credential
   # and the value never leaves the graph.
@@ -466,4 +453,182 @@ output "gatus_kopia_push_token" {
 
 output "gatus_kopia_push_url" {
   value = module.gatus.kopia_push_url
+}
+
+# --- vertical slicing, 2026-09-22 -----------------------------------------
+#
+# memo's database and zitadel client moved out of the shared modules and into
+# the service that uses them. Every one of these is a RENAME: without them tofu
+# sees six resources disappear and six appear, and plans to DROP a database and
+# DELETE an OIDC client whose id memos stores as its usernames.
+#
+# Remove them once applied -- see the note where the previous batch was deleted.
+moved {
+  from = module.databases.random_password.memos
+  to   = module.memo.random_password.db
+}
+
+moved {
+  from = module.databases.postgresql_role.memos
+  to   = module.memo.postgresql_role.this
+}
+
+moved {
+  from = module.databases.postgresql_database.memos
+  to   = module.memo.postgresql_database.this
+}
+
+moved {
+  from = module.zitadel.zitadel_project.memo
+  to   = module.memo.zitadel_project.this
+}
+
+moved {
+  from = module.zitadel.zitadel_project_role.memo_family
+  to   = module.memo.zitadel_project_role.family
+}
+
+moved {
+  from = module.zitadel.zitadel_application_oidc.memo
+  to   = module.memo.zitadel_application_oidc.this
+}
+
+moved {
+  from = module.databases.random_password.kitchenowl
+  to   = module.kitchen_owl.random_password.db
+}
+
+moved {
+  from = module.databases.postgresql_role.kitchenowl
+  to   = module.kitchen_owl.postgresql_role.this
+}
+
+moved {
+  from = module.databases.postgresql_database.kitchenowl
+  to   = module.kitchen_owl.postgresql_database.this
+}
+
+moved {
+  from = module.zitadel.zitadel_project.keuken
+  to   = module.kitchen_owl.zitadel_project.this
+}
+
+moved {
+  from = module.zitadel.zitadel_project_role.keuken_family
+  to   = module.kitchen_owl.zitadel_project_role.family
+}
+
+moved {
+  from = module.zitadel.zitadel_application_oidc.kitchen_owl_web_app
+  to   = module.kitchen_owl.zitadel_application_oidc.this
+}
+
+moved {
+  from = module.databases.random_password.score_api
+  to   = module.score.random_password.db
+}
+
+moved {
+  from = module.databases.postgresql_role.score_api
+  to   = module.score.postgresql_role.this
+}
+
+moved {
+  from = module.databases.postgresql_database.score
+  to   = module.score.postgresql_database.this
+}
+
+moved {
+  from = module.zitadel.zitadel_project.score
+  to   = module.score.zitadel_project.this
+}
+
+moved {
+  from = module.zitadel.zitadel_project_role.score_editor
+  to   = module.score.zitadel_project_role.editor
+}
+
+moved {
+  from = module.zitadel.zitadel_project_role.score_viewer
+  to   = module.score.zitadel_project_role.viewer
+}
+
+moved {
+  from = module.zitadel.zitadel_application_api.score_api
+  to   = module.score.zitadel_application_api.api
+}
+
+moved {
+  from = module.zitadel.zitadel_application_oidc.score_web_app
+  to   = module.score.zitadel_application_oidc.web
+}
+
+moved {
+  from = module.zitadel.zitadel_project.status
+  to   = module.gatus.zitadel_project.this
+}
+
+moved {
+  from = module.zitadel.zitadel_project_role.status_admin
+  to   = module.gatus.zitadel_project_role.admin
+}
+
+moved {
+  from = module.zitadel.zitadel_application_oidc.gatus
+  to   = module.gatus.zitadel_application_oidc.this
+}
+
+moved {
+  from = module.zitadel.zitadel_project.photos
+  to   = module.immich.zitadel_project.this
+}
+
+moved {
+  from = module.zitadel.zitadel_project_role.photos_family
+  to   = module.immich.zitadel_project_role.family
+}
+
+moved {
+  from = module.zitadel.zitadel_application_oidc.immich
+  to   = module.immich.zitadel_application_oidc.this
+}
+
+moved {
+  from = module.zitadel.zitadel_project.drive
+  to   = module.file_browser.zitadel_project.this
+}
+
+moved {
+  from = module.zitadel.zitadel_project_role.drive_family
+  to   = module.file_browser.zitadel_project_role.family
+}
+
+moved {
+  from = module.zitadel.zitadel_application_oidc.drive
+  to   = module.file_browser.zitadel_application_oidc.this
+}
+
+moved {
+  from = module.databases.random_password.zitadel_user
+  to   = module.zitadel_server.random_password.db_user
+}
+
+moved {
+  from = module.databases.postgresql_role.zitadel_user
+  to   = module.zitadel_server.postgresql_role.user
+}
+
+moved {
+  from = module.databases.random_password.zitadel_root
+  to   = module.zitadel_server.random_password.db_root
+}
+
+moved {
+  from = module.databases.postgresql_role.zitadel_root
+  to   = module.zitadel_server.postgresql_role.root
+}
+
+moved {
+  from = module.databases.postgresql_database.zitadel
+  to   = module.zitadel_server.postgresql_database.this
 }

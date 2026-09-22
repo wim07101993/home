@@ -12,30 +12,6 @@ variable "db_network" {
   type = string
 }
 
-# From module.databases -- see ../score/variables.tf.
-variable "db_user" {
-  type = string
-}
-
-variable "db_password" {
-  type      = string
-  sensitive = true
-}
-
-variable "db_name" {
-  type = string
-}
-
-variable "oidc_client_id" {
-  type      = string
-  sensitive = true
-}
-
-variable "oidc_client_secret" {
-  type      = string
-  sensitive = true
-}
-
 variable "data_path" {
   type        = string
   default     = "/docker-volumes/kitchen-owl/data"
@@ -45,4 +21,10 @@ variable "data_path" {
 variable "host_port" {
   type    = number
   default = 3002
+}
+
+# The org this project lives in. Passed from ../../zitadel, which owns the org
+# objects -- those are instance-level and not part of any one service.
+variable "org_id" {
+  type = string
 }
