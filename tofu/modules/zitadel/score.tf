@@ -2,7 +2,7 @@
 
 resource "zitadel_project" "score" {
   name   = "Score"
-  org_id = local.org_home
+  org_id = zitadel_org.home.id
 
   project_role_assertion = true
   project_role_check     = true
@@ -10,21 +10,21 @@ resource "zitadel_project" "score" {
 }
 
 resource "zitadel_project_role" "score_editor" {
-  org_id       = local.org_home
+  org_id       = zitadel_org.home.id
   project_id   = zitadel_project.score.id
   role_key     = "score_editor"
   display_name = "Score editor"
 }
 
 resource "zitadel_project_role" "score_viewer" {
-  org_id       = local.org_home
+  org_id       = zitadel_org.home.id
   project_id   = zitadel_project.score.id
   role_key     = "score_viewer"
   display_name = "score viewer"
 }
 
 resource "zitadel_application_api" "score_api" {
-  org_id     = local.org_home
+  org_id     = zitadel_org.home.id
   project_id = zitadel_project.score.id
   name       = "score-api"
 
@@ -33,7 +33,7 @@ resource "zitadel_application_api" "score_api" {
 }
 
 resource "zitadel_application_oidc" "score_web_app" {
-  org_id     = local.org_home
+  org_id     = zitadel_org.home.id
   project_id = zitadel_project.score.id
   name       = "score-web-app"
 

@@ -12,10 +12,10 @@ modules, and `memos` was declared nowhere at all.
 
 Different layer, different provider:
 
-| | provider | manages |
-|---|---|---|
-| [`../services/postgres`](../services/postgres) | `docker` | the postgres **container**, one instance per host |
-| `modules/databases` (here) | `postgresql` | the **databases and roles** inside them |
+|                                                | provider     | manages                                           |
+|------------------------------------------------|--------------|---------------------------------------------------|
+| [`../services/postgres`](../services/postgres) | `docker`     | the postgres **container**, one instance per host |
+| `modules/databases` (here)                     | `postgresql` | the **databases and roles** inside them           |
 
 They cannot be merged: the container must exist before the provider can connect
 to it. The root gives this module
@@ -56,12 +56,12 @@ and discarded on 2026-09-18, and the argument is in this repo's history.
 
 ## Deliberately absent
 
-| | why |
-|---|---|
+|              | why                                                                                                                                                                                             |
+|--------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `tofu_state` | holds this layer's own state. If tofu managed it, the credential needed to **read** state would live **inside** state. Created by [`../../bootstrap-state-db.sh`](../../bootstrap-state-db.sh). |
-| `postgres` | the maintenance database initdb creates, and where the provider connects. |
-| `immich` | lives in its own instance (`immich_postgres` on mindy), created by that image from `POSTGRES_DB`. Managing it would need a third provider alias for one database that appears anyway. |
-| filebrowser | uses SQLite, not postgres. A `filebrowser` **role** exists on mindy owning nothing — a leftover, and should be dropped. |
+| `postgres`   | the maintenance database initdb creates, and where the provider connects.                                                                                                                       |
+| `immich`     | lives in its own instance (`immich_postgres` on mindy), created by that image from `POSTGRES_DB`. Managing it would need a third provider alias for one database that appears anyway.           |
+| filebrowser  | uses SQLite, not postgres. A `filebrowser` **role** exists on mindy owning nothing — a leftover, and should be dropped.                                                                         |
 
 ## Roles
 

@@ -11,9 +11,15 @@ resource "hcloud_storage_box" "backups" {
   location         = "fsn1"
   password         = random_password.storage_box.result
 
-  delete_protection = false
-  labels            = {}
-  snapshot_plan     = null
+  # Hetzner-side protection: blocks deletion from the API and the Cloud Console,
+  # not just from tofu. `prevent_destroy` below only stops tofu.
+  #
+  # Was false because import captured whatever the console had -- the volume
+  # happened to have it on and this did not. The asymmetry ran the wrong way:
+  # a storage box holding every backup was less protected than a 100 GB volume.
+  #
+  # Cost: a real teardown becomes two applies -- flip this, then destroy.
+  delete_protection = true
   ssh_keys          = []
 
   access_settings = {
@@ -35,55 +41,94 @@ resource "hcloud_storage_box" "backups" {
       # kopia repository with it.
       ssh_keys,
 
-      # The API never returns it, so tofu cannot tell whether the value in
-      # state matches the live one. Without this, a wrong or stale value in
-      # random_password.storage_box would silently RESET the real password on
-      # the next apply. Rotate in the Cloud Console, not here -- tofu REMEMBERS
-      # this password, it does not enforce it.
-      password,
+      # `password` was here too, because the API never returns it and tofu could
+      # not tell a stale config value from the live one. That ended when tofu
+      # became the only writer -- see random_password.storage_box below.
     ]
   }
 }
 
-# ADOPTED, NOT GENERATED. Imported with the existing value:
+# GENERATED, and tofu is the only writer.
 #
-#   tofu import 'module.hetzner.random_password.storage_box' "$(bw get password 'hetzner snow white user')"
+# It was adopted with ignore_changes = all while the real value lived in
+# Bitwarden. That is no longer needed: `password` carries no RequiresReplace
+# (unlike `ssh_keys` on the same resource) and Update calls the Storage Box
+# ResetPassword action, so a change is an in-place rotation and not a rebuild of
+# the box holding every backup.
 #
-# `ignore_changes = all` is what makes that safe. An imported random_password
-# takes the provider's DEFAULT generation attributes, so a config that says
-# length = 32 against a value of a different length plans a REPLACEMENT -- which
-# for this resource means silently minting a new password. Every attribute here
-# is nominal; the value comes from the import and must never change.
+# NOT the credential kopia uses. That is the sub-account below. This is the MAIN
+# account: Cloud Console login, SMB, and SSH as u643732.
+#
+# The API never returns it, so the output is the only way to read it back:
+#
+#   tofu output -raw storage_box_password
+#
+# The min_ values are REQUIRED, not defensive. Hetzner enforces a password
+# policy and rejects the whole apply otherwise:
+#
+#   invalid input in field password (invalid_input) 422
+#   The password must contain at least one upper case letter, one lower case
+#   letter, one number, and a special character
+#
+# random_password only guarantees a class is PRESENT if a min_ is set for it --
+# by default it merely permits them, so a generated value can legitimately
+# contain none and fail this intermittently, at apply time.
 resource "random_password" "storage_box" {
-  length = 32
+  length           = 32
+  min_upper        = 1
+  min_lower        = 1
+  min_numeric      = 1
+  min_special      = 1
+  override_special = "!@#%^*()-_=+"
+}
+
+# The sub-account kopia connects as. ADOPTED (created by hand in the Cloud
+# Console), with its password now generated.
+#
+# kopia reaches it as sftp://u643732-sub1@... with path "backup", which is
+# RELATIVE TO home_directory -- so the repository lives at backup/backup on the
+# box. home_directory is Required but NOT replace-forcing: a wrong value moves
+# the directory rather than destroying the sub-account, which is visible in the
+# plan and recoverable, but it would take kopia's repository with it.
+#
+# Imported as "<storage_box_id>/<subaccount_id>", e.g. 625908/281501.
+resource "hcloud_storage_box_subaccount" "kopia" {
+  storage_box_id = hcloud_storage_box.backups.id
+
+  # A LABEL, not the login. `username` is computed and assigned by Hetzner
+  # (u643732-sub1); kopia authenticates with that and is unaffected by this.
+  # It defaulted to the username, which made the two look like one field.
+  #
+  # Pinned rather than omitted: `name` is Optional+Computed, so leaving it out
+  # shows "known after apply" on every plan.
+  name           = "kopia"
+  home_directory = "backup/"
+  description    = "Repository target for the kopia server on mindy."
+
+  password = random_password.storage_box_sftp.result
+
+  access_settings = {
+    reachable_externally = false
+    samba_enabled        = false
+    ssh_enabled          = true
+    webdav_enabled       = false
+    readonly             = false
+  }
 
   lifecycle {
-    ignore_changes = all
+    prevent_destroy = true
   }
 }
 
-# The sub-account kopia connects as (u643732-sub1), created by hand in the Cloud
-# Console. Only the PASSWORD is held here; the sub-account itself is still
-# unmanaged.
+# GENERATED. Same policy minimums as the main account -- see above.
 #
-# It could be adopted -- hcloud_storage_box_subaccount exists and supports
-# import -- and then `password` being a required attribute would make tofu
-# ENFORCE this value rather than merely remember it. Not done here because
-# adopting it also brings home_directory and access_settings under management,
-# and a mismatch there reconfigures a live backup target.
-# ADOPTED, NOT GENERATED. Imported with the existing value:
-#
-#   tofu import 'module.hetzner.random_password.storage_box_sftp' "$(bw get password 'snow-white ssh subaccount password')"
-#
-# `ignore_changes = all` is what makes that safe. An imported random_password
-# takes the provider's DEFAULT generation attributes, so a config that says
-# length = 32 against a value of a different length plans a REPLACEMENT -- which
-# for this resource means silently minting a new password. Every attribute here
-# is nominal; the value comes from the import and must never change.
+# Rotating this recreates the kopia container, because its repository.config is
+# generated from this value. Both happen in one apply.
 resource "random_password" "storage_box_sftp" {
-  length = 32
-
-  lifecycle {
-    ignore_changes = all
-  }
+  length           = 32
+  min_upper        = 1
+  min_lower        = 1
+  min_numeric      = 1
+  min_special      = 1
+  override_special = "!@#%^*()-_=+"
 }

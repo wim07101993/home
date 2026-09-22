@@ -183,10 +183,18 @@ provider "docker" {
 
 # Zitadel's management API at auth.wvl.app.
 #
-# Authenticates as the `terraform` service user with a PAT and IAM_OWNER. That
-# credential is created BY HAND in the console -- the provider needs
-# credentials issued by the instance it is about to manage, which is a
-# chicken-and-egg no amount of config solves. See modules/zitadel/README.md.
+# Authenticates as a SYSTEM API USER, with a key tofu generates itself.
+#
+# This used to be a hand-made PAT, on the reasoning that the provider needs
+# credentials issued by the instance it is about to manage -- a chicken-and-egg
+# no config solves. That was wrong for System API users specifically: zitadel
+# trusts them because of its CONFIG FILE, not because of a row in its database,
+# and tofu already writes that file (modules/services/zitadel). So the loop
+# breaks, and there is no credential to create by hand or keep in a vault.
+#
+# The migration ran in two applies, deliberately: first the key was added to
+# zitadel's config while this block still used the PAT, then this switched over.
+# Reversing it is putting `access_token = var.zitadel_pat` back.
 #
 # Deliberately NOT the login-client PAT at
 # /docker-volumes/zitadel/login-client/login-client.pat: that one belongs to
@@ -196,10 +204,12 @@ provider "zitadel" {
   domain = "auth.wvl.app"
   port   = "443"
 
-  # `access_token`, not `token`. The deprecated `token` expects a PATH to a
-  # file; a PAT passed to it is read as a filename and fails with
-  # "file name too long".
-  access_token = var.zitadel_pat
+  # `user` must match the key's name in zitadel's SystemAPIUsers config --
+  # zitadel checks it against the JWT's issuer AND subject claims.
+  system_api {
+    user = module.zitadel_server.system_api_user
+    key  = module.zitadel_server.system_api_private_key
+  }
 }
 
 # Mailgun, for the SMTP credential gatus sends alerts with. Credentials only --

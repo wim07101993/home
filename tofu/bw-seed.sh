@@ -59,18 +59,18 @@ describe() {
   esac
 }
 
-# VARNAME -> the tofu state address holding it, for secrets tofu generated or
-# adopted. Saves typing values that are already recorded.
+# VARNAME -> the tofu state address holding it, for secrets tofu GENERATES or
+# has adopted. For these, state is AUTHORITATIVE: it is read before the existing
+# vault field, so a rotation propagates here instead of the stale copy winning.
 #
-# TF_VAR_storage_box_password is DELIBERATELY absent. Its state entry is the
-# throwaway value from a fresh create on 2026-09-19, not the real Storage Box
-# password -- the Cloud API never returns that one, so tofu cannot know it and
-# the resource carries ignore_changes = [password]. Reading it from state would
-# store a confident-looking lie.
+# Anything not listed is the other way round -- the vault is the source of truth
+# and state never holds it.
 state_addr() {
   case "$1" in
-    TF_VAR_immich_db_password) echo "module.immich|db" ;;
-    TF_VAR_kopia_sftp_password) echo "module.hetzner|storage_box_sftp" ;;
+    TF_VAR_storage_box_password) echo "module.hetzner|storage_box" ;;
+    TF_VAR_kopia_sftp_password)  echo "module.hetzner|storage_box_sftp" ;;
+    TF_VAR_immich_db_password)   echo "module.immich|db" ;;
+    TF_VAR_zitadel_masterkey)    echo "module.zitadel_server|masterkey" ;;
     *) echo "" ;;
   esac
 }
@@ -106,18 +106,26 @@ fi
 
 fields='[]'
 for v in "${VARS[@]}"; do
-  cur="${!v:-}"
+  cur=""
   src=""
-  # Fall back to whatever the item already holds, so a skipped prompt keeps it.
-  if [ -z "$cur" ] && [ -n "$existing" ]; then
-    cur="$(printf '%s' "$existing" | jq -r --arg n "$v" '.fields[]? | select(.name==$n) | .value // empty')"
-  fi
 
-  # Then tofu state, for the ones it already owns.
-  src="env/item"
-  if [ -z "$cur" ]; then
+  # 1. tofu state, for the secrets tofu owns. AUTHORITATIVE -- checked before
+  #    the vault, so a rotation propagates instead of a stale copy winning.
+  if [ -n "$(state_addr "$v")" ]; then
     cur="$(from_state "$v" || true)"
     [ -n "$cur" ] && src="tofu state"
+  fi
+
+  # 2. the environment, so sourcing env.sh first avoids retyping.
+  if [ -z "$cur" ] && [ -n "${!v:-}" ]; then
+    cur="${!v}"
+    src="env"
+  fi
+
+  # 3. whatever the item already holds, so a skipped prompt keeps its value.
+  if [ -z "$cur" ] && [ -n "$existing" ]; then
+    cur="$(printf '%s' "$existing" | jq -r --arg n "$v" '.fields[]? | select(.name==$n) | .value // empty')"
+    [ -n "$cur" ] && src="vault"
   fi
 
   if [ -n "$cur" ]; then

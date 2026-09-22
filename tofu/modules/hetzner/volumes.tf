@@ -43,9 +43,6 @@ resource "hcloud_volume" "data" {
   size     = 100
 
   delete_protection = true
-  automount         = null
-  format            = null
-  labels            = {}
 
   lifecycle {
     # Holds the only remaining copy of bumba's pre-migration postgres data
@@ -53,13 +50,6 @@ resource "hcloud_volume" "data" {
     # database has proven itself.
     prevent_destroy = true
   }
-}
-
-# Was `bumba_db`. Renamed because it is no longer bumba's, and no longer a
-# database volume.
-moved {
-  from = hcloud_volume.bumba_db
-  to   = hcloud_volume.data
 }
 
 # The attachment as its own resource, rather than `server_id` on the volume.
@@ -83,5 +73,4 @@ moved {
 resource "hcloud_volume_attachment" "data" {
   volume_id = hcloud_volume.data.id
   server_id = hcloud_server.mindy.id
-  automount = false
 }

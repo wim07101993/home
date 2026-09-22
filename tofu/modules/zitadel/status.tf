@@ -6,7 +6,7 @@
 
 resource "zitadel_project" "status" {
   name   = "status"
-  org_id = local.org_home
+  org_id = zitadel_org.home.id
 
   project_role_assertion = true
   project_role_check     = true
@@ -14,7 +14,7 @@ resource "zitadel_project" "status" {
 }
 
 resource "zitadel_project_role" "status_admin" {
-  org_id       = local.org_home
+  org_id       = zitadel_org.home.id
   project_id   = zitadel_project.status.id
   role_key     = "admin"
   display_name = "admin"
@@ -22,7 +22,7 @@ resource "zitadel_project_role" "status_admin" {
 }
 
 resource "zitadel_application_oidc" "gatus" {
-  org_id     = local.org_home
+  org_id     = zitadel_org.home.id
   project_id = zitadel_project.status.id
   name       = "gatus"
 

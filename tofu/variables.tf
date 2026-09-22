@@ -21,12 +21,6 @@ variable "pg_superuser_password" {
 }
 
 
-variable "zitadel_pat" {
-  type        = string
-  sensitive   = true
-  description = "PAT for the `terraform` service user (IAM_OWNER). TF_VAR_zitadel_pat."
-}
-
 variable "mindy_addr" {
   type        = string
   description = "mindy's TAILNET address."

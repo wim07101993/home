@@ -12,11 +12,15 @@ Providers are inherited from the root module; this one configures none.
 
 ## Naming
 
-| kind | convention | current |
-|---|---|---|
-| servers | Studio 100 characters | `bumba`, `mindy` (and at home: `samson`, `plop`) |
-| storage boxes | Disney princesses | `snow-white` |
-| volumes | Disney side characters | `rafiki` |
+| kind          | convention             | current                                          |
+|---------------|------------------------|--------------------------------------------------|
+| servers       | Studio 100 characters  | `bumba`, `mindy` (and at home: `samson`, `plop`) |
+| storage boxes | Disney princesses      | `snow-white`                                     |
+| volumes       | Disney side characters | `rafiki`                                         |
+| firewalls     | Tolkien dwarves        | `durin`                                          |
+
+Dwarves for firewalls because they built gates that held. Successors after
+`durin`: `balin`, `thorin`, `gimli`, `dwalin`, `bofur`.
 
 Cloud-side names follow the convention; tofu resource addresses describe the
 ROLE (`hcloud_volume.data`, `hcloud_storage_box.backups`), so a rename is a

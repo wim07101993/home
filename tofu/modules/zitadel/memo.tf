@@ -9,7 +9,7 @@
 
 resource "zitadel_project" "memo" {
   name   = "memo"
-  org_id = local.org_home
+  org_id = zitadel_org.home.id
 
   project_role_assertion = true
   project_role_check     = true
@@ -17,7 +17,7 @@ resource "zitadel_project" "memo" {
 }
 
 resource "zitadel_project_role" "memo_family" {
-  org_id       = local.org_home
+  org_id       = zitadel_org.home.id
   project_id   = zitadel_project.memo.id
   role_key     = "family"
   display_name = "family"
@@ -25,7 +25,7 @@ resource "zitadel_project_role" "memo_family" {
 }
 
 resource "zitadel_application_oidc" "memo" {
-  org_id     = local.org_home
+  org_id     = zitadel_org.home.id
   project_id = zitadel_project.memo.id
   name       = "memo"
 

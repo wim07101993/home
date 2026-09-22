@@ -3,7 +3,7 @@
 
 resource "zitadel_project" "home" {
   name   = "home"
-  org_id = local.org_home
+  org_id = zitadel_org.home.id
 
   project_role_assertion = true
   project_role_check     = true
@@ -11,7 +11,7 @@ resource "zitadel_project" "home" {
 }
 
 resource "zitadel_project_role" "home_family" {
-  org_id       = local.org_home
+  org_id       = zitadel_org.home.id
   project_id   = zitadel_project.home.id
   role_key     = "family"
   display_name = "family"
@@ -19,7 +19,7 @@ resource "zitadel_project_role" "home_family" {
 }
 
 resource "zitadel_application_oidc" "home_assistant" {
-  org_id     = local.org_home
+  org_id     = zitadel_org.home.id
   project_id = zitadel_project.home.id
   name       = "home assistant"
 

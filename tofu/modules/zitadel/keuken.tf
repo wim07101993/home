@@ -7,7 +7,7 @@
 
 resource "zitadel_project" "keuken" {
   name   = "keuken"
-  org_id = local.org_home
+  org_id = zitadel_org.home.id
 
   project_role_assertion = true
   project_role_check     = true
@@ -15,7 +15,7 @@ resource "zitadel_project" "keuken" {
 }
 
 resource "zitadel_project_role" "keuken_family" {
-  org_id       = local.org_home
+  org_id       = zitadel_org.home.id
   project_id   = zitadel_project.keuken.id
   role_key     = "family"
   display_name = "family"
@@ -35,7 +35,7 @@ resource "zitadel_project_role" "keuken_family" {
 # whatever needs it, if that day comes.
 
 resource "zitadel_application_oidc" "kitchen_owl_web_app" {
-  org_id     = local.org_home
+  org_id     = zitadel_org.home.id
   project_id = zitadel_project.keuken.id
   name       = "kitchen owl web-app"
 

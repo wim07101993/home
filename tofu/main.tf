@@ -59,63 +59,16 @@ module "hetzner" {
 module "databases" {
   source = "./modules/databases"
 
-  # Both hosts. The default is bumba's; mindy's is passed explicitly, which the
-  # module accepts via configuration_aliases.
+  # Both hosts. MINDY is the default -- it holds four of the five databases --
+  # and bumba's is the alias. Passing a providers map at all switches off
+  # default inheritance, so both must be listed even though one keeps its name.
   providers = {
-    postgresql       = postgresql
-    postgresql.mindy = postgresql.mindy
+    postgresql       = postgresql.mindy
+    postgresql.bumba = postgresql
   }
 
   depends_on = [module.postgres_bumba, module.postgres_mindy]
 }
-
-# State moves. Every one is a RENAME -- nothing live changes.
-#
-# Without them tofu sees the old addresses gone and the new ones absent, and
-# plans to DROP three databases and recreate them empty. prevent_destroy would
-# catch it -- by failing the apply, after the plan had already offered to
-# destroy the data.
-#
-# 2026-09-18: modules/postgres -> modules/databases.
-moved {
-  from = module.postgres.postgresql_database.zitadel
-  to   = module.databases.postgresql_database.zitadel
-}
-
-# 2026-09-18: score's and kitchen-owl's roles and databases centralised out of
-# their service modules. The random_passwords move with them -- same generated
-# values, so nothing rotates and neither container restarts.
-moved {
-  from = module.score.random_password.db
-  to   = module.databases.random_password.score_api
-}
-
-moved {
-  from = module.score.postgresql_role.api
-  to   = module.databases.postgresql_role.score_api
-}
-
-moved {
-  from = module.score.postgresql_database.this
-  to   = module.databases.postgresql_database.score
-}
-
-moved {
-  from = module.kitchen_owl.random_password.db
-  to   = module.databases.random_password.kitchenowl
-}
-
-moved {
-  from = module.kitchen_owl.postgresql_role.this
-  to   = module.databases.postgresql_role.kitchenowl
-}
-
-moved {
-  from = module.kitchen_owl.postgresql_database.this
-  to   = module.databases.postgresql_database.kitchenowl
-}
-
-# memos is NOT moved -- it was never in tofu. It is imported; see imports.tf.
 
 # SMTP credentials for outbound alerts. Credentials only -- the sending domain
 # is deliberately unmanaged, see the module.
@@ -490,6 +443,18 @@ module "gatus" {
 #   tofu output -raw filebrowser_admin_password
 output "filebrowser_admin_password" {
   value     = module.file_browser.admin_password
+  sensitive = true
+}
+
+# Generated, and unreadable anywhere else -- the Cloud API never returns it.
+#
+#   tofu output -raw storage_box_password
+output "storage_box_id" {
+  value = module.hetzner.storage_box_id
+}
+
+output "storage_box_password" {
+  value     = module.hetzner.storage_box_password
   sensitive = true
 }
 

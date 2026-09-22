@@ -2,7 +2,7 @@
 
 resource "zitadel_project" "photos" {
   name   = "photos"
-  org_id = local.org_home
+  org_id = zitadel_org.home.id
 
   project_role_assertion = true
   project_role_check     = true
@@ -10,7 +10,7 @@ resource "zitadel_project" "photos" {
 }
 
 resource "zitadel_project_role" "photos_family" {
-  org_id       = local.org_home
+  org_id       = zitadel_org.home.id
   project_id   = zitadel_project.photos.id
   role_key     = "family"
   display_name = "family"
@@ -18,7 +18,7 @@ resource "zitadel_project_role" "photos_family" {
 }
 
 resource "zitadel_application_oidc" "immich" {
-  org_id     = local.org_home
+  org_id     = zitadel_org.home.id
   project_id = zitadel_project.photos.id
   name       = "immich"
 

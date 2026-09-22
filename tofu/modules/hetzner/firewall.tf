@@ -6,43 +6,41 @@
 # binds 0.0.0.0. Hetzner default-denies inbound and there is no rule for 5432,
 # so it is dropped on both address families. There is no rule for 22 either --
 # Tailscale is the only way in.
+#
+# `durin` per the naming convention in README.md. Was `firewall-1`, Hetzner's
+# default. Renaming must plan as an IN-PLACE update -- a replacement would
+# detach the firewall from both servers while the new one is created, leaving
+# them open on every port for the length of the apply.
 
 resource "hcloud_firewall" "default" {
-  name   = "firewall-1"
-  labels = {}
+  name = "durin"
 
-  apply_to {
-    label_selector = ""
-    server         = 100750341
-  }
-  apply_to {
-    label_selector = ""
-    server         = 124902827
-  }
+  # NO apply_to HERE. The attachment is declared on the SERVERS (servers.tf,
+  # firewall_ids) and only there -- declaring it on both sides is two sources
+  # of truth for one fact, and referencing in both directions is a dependency
+  # cycle.
+  #
+  # The servers own it rather than this resource because `firewall_ids`
+  # guarantees a server is attached BEFORE ITS FIRST BOOT. Neither apply_to nor
+  # hcloud_firewall_attachment does, so both leave a window where a freshly
+  # recreated server is briefly reachable on every port.
 
   rule {
-    description     = ""
-    destination_ips = []
-    direction       = "in"
-    port            = ""
-    protocol        = "icmp"
-    source_ips      = ["0.0.0.0/0", "::/0"]
+    direction  = "in"
+    protocol   = "icmp"
+    source_ips = ["0.0.0.0/0", "::/0"]
   }
   rule {
-    description     = ""
-    destination_ips = []
-    direction       = "in"
-    port            = "443"
-    protocol        = "tcp"
-    source_ips      = ["0.0.0.0/0", "::/0"]
+    direction  = "in"
+    port       = "443"
+    protocol   = "tcp"
+    source_ips = ["0.0.0.0/0", "::/0"]
   }
   rule {
-    description     = ""
-    destination_ips = []
-    direction       = "in"
-    port            = "80"
-    protocol        = "tcp"
-    source_ips      = ["0.0.0.0/0", "::/0"]
+    direction  = "in"
+    port       = "80"
+    protocol   = "tcp"
+    source_ips = ["0.0.0.0/0", "::/0"]
   }
 
   lifecycle {

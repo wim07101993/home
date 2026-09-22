@@ -1,8 +1,3 @@
-# Consumed by the service modules, which build their own connection strings.
-#
-# Grouped per service rather than exposed as one map, so a service module takes
-# exactly the three values it needs and nothing else.
-
 output "score" {
   description = "score-api's database credentials on mindy."
   sensitive   = true
@@ -33,9 +28,6 @@ output "memos" {
   }
 }
 
-# Zitadel connects as two roles: `user` for normal operation, `admin` for the
-# migrations it runs at boot. ../services/zitadel renders these into the YAML
-# it uploads -- see there for why that file is generated rather than static.
 output "zitadel" {
   description = "zitadel's postgres credentials on bumba."
   sensitive   = true

@@ -2,7 +2,7 @@
 
 resource "zitadel_project" "drive" {
   name   = "drive"
-  org_id = local.org_home
+  org_id = zitadel_org.home.id
 
   project_role_assertion = true
   project_role_check     = true
@@ -10,7 +10,7 @@ resource "zitadel_project" "drive" {
 }
 
 resource "zitadel_project_role" "drive_family" {
-  org_id       = local.org_home
+  org_id       = zitadel_org.home.id
   project_id   = zitadel_project.drive.id
   role_key     = "family"
   display_name = "family"
@@ -18,7 +18,7 @@ resource "zitadel_project_role" "drive_family" {
 }
 
 resource "zitadel_application_oidc" "drive" {
-  org_id     = local.org_home
+  org_id     = zitadel_org.home.id
   project_id = zitadel_project.drive.id
   name       = "drive"
 
