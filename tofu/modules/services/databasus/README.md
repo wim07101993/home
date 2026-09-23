@@ -176,3 +176,53 @@ documents — not against samson. As of 2026-09-22 no second copy of these dumps
 has been found; the OMV config was only grepped shallowly, so confirm before
 relying on that either way. If it holds, losing samson loses every database
 backup, and none of the monitoring above would say a word about it.
+
+## The dumps were being backed up from the wrong copy (2026-09-23)
+
+kopia snapshots samson's `/export/backups`. databasus was writing to
+`/docker-volumes/backup-server/databasus/data` — **a different filesystem**:
+
+```
+databasus writes → /docker-volumes/backup-server/databasus/data   1.3 GB   /dev/sda1, live
+kopia snapshots  → /export/backups/backup-server/databasus/data   1.4 GB   /dev/sde,  frozen 2026-08-01
+```
+
+Same path shape, same contents at a glance, seven weeks apart. The shape
+suggests the data directory once lived on the array and was moved to the root
+disk, leaving the old copy behind — which is what made it look right.
+
+So for seven weeks the off-site backup of every database was a snapshot of a
+snapshot that had stopped moving. It would have restored cleanly, to August.
+
+**The fix is a nested bind**, not a move. `var.dumps_path` mounts the array
+over `/databasus-data/backups` inside the container, leaving `pgdata` and
+`temp` on the root disk. Both halves matter:
+
+- the dumps have to be on the array, because that is what kopia can see
+- `pgdata` must NOT be, because the array is btrfs and that is databasus's own
+  embedded postgres
+
+databasus has no setting for this: `local_storages` has no path column and the
+location is hardcoded to `<data-dir>/backups`. Mounting over it is the only
+lever.
+
+### Migrating (do this before the apply)
+
+The container must be stopped, because it is writing to the directory being
+moved. The stale copy is set aside rather than deleted, until the live dumps
+are confirmed in place and a kopia run has picked them up.
+
+```bash
+docker stop databasus databasus-backup-check
+mv /export/backups/backup-server/databasus/data/backups \
+   /export/backups/backup-server/databasus/data/backups.superseded-2026-08-01
+mkdir -p /export/backups/backup-server/databasus/data/backups
+mv /docker-volumes/backup-server/databasus/data/backups/* \
+   /export/backups/backup-server/databasus/data/backups/
+# then: tofu apply
+```
+
+Afterwards the file count in the new location must match what databasus lists,
+and `/docker-volumes/backup-server/databasus/data/backups` must be empty — it
+becomes a mountpoint. Delete `backups.superseded-2026-08-01` (1.4 GB) once a
+kopia snapshot has run.

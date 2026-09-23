@@ -10,6 +10,32 @@ variable "host_port" {
   description = "Web UI. samson has no reverse proxy, so this is the only way in -- it is reached directly on the tailnet, not through traefik."
 }
 
+variable "dumps_path" {
+  type    = string
+  default = "/export/backups/backup-server/databasus/data/backups"
+
+  description = <<-EOT
+    Where the dump FILES go -- on samson's array, inside the tree exported to
+    mindy as /export/backups, which is what kopia snapshots.
+
+    Mounted over var.data_path/backups rather than moving the whole data
+    directory, because that directory also holds databasus's own embedded
+    postgres (`pgdata`). The array is btrfs; a postgres cluster on
+    copy-on-write storage is a performance problem nobody asked for. Nested
+    binds apply in path-depth order, so the state stays on ext4 and only the
+    dumps land on the array.
+
+    databasus has no setting for this -- its `local_storages` table has no path
+    column and the location is hardcoded to <data-dir>/backups inside the
+    container. The mount is the only lever.
+
+    UNTIL 2026-09-23 the dumps were written to the root disk and kopia was
+    snapshotting a COPY of this directory that had stopped updating on
+    2026-08-01. Same path shape on a different filesystem, seven weeks stale,
+    and nothing said a word. See README.md.
+  EOT
+}
+
 variable "data_path" {
   type        = string
   default     = "/docker-volumes/backup-server/databasus/data"

@@ -70,6 +70,23 @@ it and hand Home Assistant the wrong radio. `/dev/serial/by-id/...` is the
 stable spelling; switching needs the id read off plop and is worth doing on its
 own.
 
+## Prerequisites that are not in code
+
+Two things must exist inside Home Assistant before the generated
+`configuration.yaml` means anything, and neither can be installed from here:
+
+- [HACS](https://www.hacs.xyz/docs/use/configuration/basic/)
+- the [openid integration](https://my.home-assistant.io/redirect/hacs_repository/?category=integration&repository=hass-openid&owner=cavefire),
+  installed through HACS
+
+`openid:` is a CUSTOM component, not core — which is what the startup warning
+`custom integration openid which has not been tested by Home Assistant` is
+about. Without it that whole block is inert and login falls back to Home
+Assistant's own users.
+
+(Moved here from plop/homeassistant/readme.md, which described a deployment
+this module replaced.)
+
 ## configuration.yaml is generated
 
 `configuration.yaml.tftpl` is rendered by tofu and uploaded on every container

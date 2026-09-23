@@ -462,6 +462,12 @@ module "kopia" {
 
   repository_password = var.kopia_repository_password
   sftp_password       = module.hetzner.storage_box_sftp_password
+
+  # The heartbeat. kopia reports snapshot freshness to gatus on bumba, which is
+  # the only thing that would have caught either of the two outages this
+  # service has had -- five weeks crash-looping, and four days cleanly stopped.
+  gatus_token    = module.gatus.kopia_push_token
+  gatus_base_url = module.gatus.external_endpoint_base_url
 }
 
 # photos.wvl.app -- four containers, an NFS library from samson, and immich's

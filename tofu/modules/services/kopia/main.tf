@@ -36,6 +36,14 @@ resource "docker_container" "this" {
 
   env = [
     "KOPIA_SERVER_USERNAME=${var.server_username}",
+
+    # For heartbeat.sh. Plain env, unlike the two passwords below, because none
+    # of these are secret -- and threading them through the entrypoint instead
+    # meant a backgrounded prefix-assignment chain that worked only by POSIX
+    # subtlety. The token stays in a file.
+    "GATUS_BASE=${var.gatus_base_url}",
+    "HEARTBEAT_MAX_AGE=${var.heartbeat_max_age_seconds}",
+    "HEARTBEAT_INTERVAL=${var.heartbeat_interval_seconds}",
   ]
 
   # The passwords are read from files INSIDE the container and exported, rather
@@ -68,6 +76,12 @@ resource "docker_container" "this" {
       "--delete-other-policies",
       "--config-file=/app/repository.config",
       "|| echo 'KOPIA POLICY IMPORT FAILED -- starting with the policies already in the repository' ;",
+
+      # Backgrounded before the server takes over the process. It inherits
+      # KOPIA_PASSWORD from the exports above, which is the whole reason it
+      # lives in here rather than in a checker container of its own. Its
+      # non-secret settings come from `env` instead.
+      "/app/heartbeat.sh &",
 
       "exec kopia server start",
       "--address=0.0.0.0:${var.port}",
@@ -147,6 +161,20 @@ resource "docker_container" "this" {
   upload {
     file    = "/run/secrets/repository_password"
     content = var.repository_password
+  }
+
+  # Same reasoning: the heartbeat's bearer token is read from a file, not env.
+  upload {
+    file    = "/run/secrets/gatus_token"
+    content = var.gatus_token
+  }
+
+  # Reports snapshot freshness to gatus. See the file for why it runs in here
+  # rather than as its own container.
+  upload {
+    file       = "/app/heartbeat.sh"
+    content    = file("${path.module}/heartbeat.sh")
+    executable = true
   }
 
   # Retention, scheduling and per-source overrides. See the entrypoint.

@@ -128,6 +128,19 @@ variable "sftp_path" {
 variable "repository_hostname" {
   type    = string
   default = "1da0a4624124"
+
+  description = <<-EOT
+    LOOKS LIKE A MISTAKE, IS NOT. A container id, kept on purpose.
+
+    kopia keys every source as <user>@<hostname>:<path>. This value is the
+    identity the repository already knows -- all 56 sources are
+    root@1da0a4624124:/data/... -- so changing it to `mindy` would mint a fresh
+    identity and every source would restart from zero history, with the old
+    snapshots orphaned under a hostname nothing writes to any more.
+
+    Distinct from the CONTAINER hostname in main.tf, which is `mindy` and
+    exists so the id does not change on every recreate.
+  EOT
 }
 
 variable "repository_username" {
@@ -155,4 +168,38 @@ variable "document_shares" {
 # which is why that bind's rslave propagation still matters.
 variable "audio_path" {
   type = string
+}
+
+# --- heartbeat -------------------------------------------------------------
+
+variable "gatus_token" {
+  type        = string
+  sensitive   = true
+  description = "Bearer token for gatus's backups_kopia-mindy external endpoint. From modules/services/gatus."
+}
+
+variable "gatus_base_url" {
+  type        = string
+  description = "e.g. https://status.wvl.app/api/v1/endpoints -- heartbeat.sh appends the endpoint name."
+}
+
+variable "heartbeat_max_age_seconds" {
+  type    = number
+  default = 93600
+
+  description = <<-EOT
+    How old the newest snapshot in the repository may be before kopia reports
+    down. 26h: the daily 05:00 run plus room for a slow night over the home
+    uplink.
+
+    Must stay under the heartbeat interval on the gatus side, or a repository
+    that stopped being written to would read as healthy until the heartbeat
+    expired -- which is the failure this exists to catch early.
+  EOT
+}
+
+variable "heartbeat_interval_seconds" {
+  type        = number
+  default     = 3600
+  description = "Seconds between checks. Hourly, so gatus's failure-threshold of 3 means mail within about three hours."
 }

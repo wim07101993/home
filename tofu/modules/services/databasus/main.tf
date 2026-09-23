@@ -41,6 +41,19 @@ resource "docker_container" "this" {
     target = "/databasus-data"
   }
 
+  # NESTED, and deliberately deeper than the bind above -- mounts apply in
+  # path-depth order, so this one wins for /databasus-data/backups while
+  # everything else in that directory stays on the root disk.
+  #
+  # That split is the point: `pgdata` and `temp` stay on ext4, and only the
+  # finished dumps go to the btrfs array, where kopia can reach them through
+  # /export/backups.
+  mounts {
+    type   = "bind"
+    source = var.dumps_path
+    target = "/databasus-data/backups"
+  }
+
   # No networks_advanced: samson runs no reverse proxy, so this stays on the
   # default bridge exactly as compose left it. The published port above is the
   # access path.
@@ -99,7 +112,7 @@ resource "docker_container" "checker" {
   # are wrong.
   mounts {
     type      = "bind"
-    source    = "${var.data_path}/backups"
+    source    = var.dumps_path
     target    = "/backups"
     read_only = true
   }
