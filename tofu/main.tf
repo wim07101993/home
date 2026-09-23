@@ -493,6 +493,24 @@ module "immich" {
   superuser_password = var.immich_pg_superuser_password
 }
 
+# The hop that lets samson and plop reach the Storage Box at all.
+#
+# On bumba because bumba is in Hetzner and is already a single point of failure
+# -- it holds this layer's state and the monitoring -- so routing through it
+# adds no new one. mindy would have worked equally well technically, and was
+# rejected so the machine taking snapshots is not also the one every other host
+# depends on to store them.
+module "storage_box_proxy" {
+  source = "./modules/services/storage-box-proxy"
+
+  providers = {
+    docker = docker.bumba
+  }
+
+  target_host  = module.hetzner.storage_box_host
+  tailscale_ip = var.bumba_addr
+}
+
 # keuken.wvl.app. Moved onto the shared postgres, off its own postgres:15.
 module "kitchen_owl" {
   source = "./modules/services/kitchen-owl"

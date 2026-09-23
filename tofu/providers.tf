@@ -24,6 +24,11 @@ terraform {
     }
     # Community provider (wgebis), pre-1.0. Used for ONE thing -- SMTP
     # credentials -- so the exposure to it breaking is a single resource type.
+    #
+    # THE SOURCE IS LOAD-BEARING. Without it, `provider "mailgun"` resolves to
+    # hashicorp/mailgun -- a different provider entirely, which authenticates
+    # against nothing and answers 401 with a perfectly valid key. Removed by
+    # accident on 2026-09-23 and it cost an hour of chasing the credential.
     mailgun = {
       source  = "wgebis/mailgun"
       version = "~> 0.10"

@@ -209,7 +209,7 @@ provider "registry.opentofu.org/wgebis/mailgun" {
 
 provider "registry.opentofu.org/zitadel/zitadel" {
   version     = "2.12.8"
-  constraints = "~> 2.0"
+  constraints = "~> 2.0, ~> 2.12"
   hashes = [
     "h1:/KtT6/u4Tl8FlfNu3fDAAUEpwpcsDwZPHAH44OdQ4zM=",
     "h1:3kMM+shoaxGTue0q2sljwYuDMFYAYtPcx2lVaRFJQXQ=",

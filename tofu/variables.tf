@@ -94,3 +94,9 @@ variable "mailgun_api_key" {
   type      = string
   sensitive = true
 }
+
+variable "tailscale_contact_email" {
+  type        = string
+  default     = ""
+  description = "Where Tailscale sends account, security and support mail. Empty leaves the tailnet's contacts untouched."
+}

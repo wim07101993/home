@@ -16,6 +16,13 @@
 #
 # Migration runbook: ../../../../samson/kopia/README.md
 
+locals {
+  # Direct to the Storage Box unless a forwarder is given. mindy is in Hetzner
+  # and connects straight there; samson and plop cannot.
+  connect_host = var.connect_host == "" ? var.sftp_host : var.connect_host
+  connect_port = var.connect_port == 0 ? var.sftp_port : var.connect_port
+}
+
 resource "docker_image" "this" {
   name         = "kopia/kopia:${var.image_tag}"
   keep_locally = true
@@ -128,14 +135,27 @@ resource "docker_container" "this" {
       storage = {
         type = "sftp"
         config = {
-          path           = var.sftp_path
-          host           = var.sftp_host
-          port           = var.sftp_port
-          username       = var.sftp_username
-          password       = var.sftp_password
-          knownHostsData = file("${path.module}/known_hosts")
-          externalSSH    = false
-          dirShards      = null
+          path     = var.sftp_path
+          host     = local.connect_host
+          port     = local.connect_port
+          username = var.sftp_username
+          password = var.sftp_password
+
+          # REWRITTEN, not read verbatim. known_hosts entries are keyed by the
+          # address you dial -- `[u643732.your-storagebox.de]:23` -- so a client
+          # going through the forwarder on bumba presents the Storage Box's own
+          # host key from a different address and verification fails.
+          #
+          # The key material is untouched; only the pattern changes. That keeps
+          # the guarantee intact: a forwarder that pointed somewhere else would
+          # still be caught, because the key would not match.
+          knownHostsData = replace(
+            file("${path.module}/known_hosts"),
+            "[${var.sftp_host}]:${var.sftp_port}",
+            "[${local.connect_host}]:${local.connect_port}",
+          )
+          externalSSH = false
+          dirShards   = null
         }
       }
 

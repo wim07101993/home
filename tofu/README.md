@@ -744,6 +744,36 @@ contains `Password: Password1234!` in a public repo. Blast radius is small —
 bootstrap-only, and `PasswordChangeRequired: true` — but confirm that account's
 password was actually changed rather than assuming the flag did it.
 
+## Tailnet settings that are NOT in code, and why
+
+Two facts about the tailnet that nothing in this directory enforces. Both were
+built as a `modules/tailscale` on 2026-09-23 and then deleted, because the
+module needed a Tailscale API token — which caps at 90 days and, when it
+lapses, breaks `tofu plan` for the WHOLE root module, not only the tailnet
+resources. A recurring outage to manage two settings that never change was the
+wrong trade.
+
+**Node key expiry must be disabled on all four servers.** On 2026-09-23 mindy's
+key expired mid-session: the services stayed up behind traefik so nothing
+looked wrong, but tofu could not plan and SSH was gone — on the host holding
+the photos and running the backups. Console → Machines → each of bumba, mindy,
+samson, plop → Disable key expiry. Servers only; expiry is the right default
+for a device a person carries.
+
+**The Storage Box route is no longer needed.** An earlier design had bumba
+advertise snow-white's /32 to the tailnet so samson and plop could reach it.
+That needed route advertisement on the host, an API credential, tags, and the
+ACL — four prerequisites for one hop. It was replaced by
+`modules/services/storage-box-proxy`, a socat container, which is entirely in
+code and has no credential at all.
+
+The ACL is also unmanaged. Adopting it would unlock tags (a tagged device does
+not expire, making the console step above unnecessary), an OAuth client that
+never expires, and a pre-authorised enrolment key so a rebuilt server can
+rejoin without a browser. It is worth doing deliberately: the policy file is a
+single document, and getting it wrong locks every host out of every other,
+including the SSH the docker provider rides on.
+
 ## Deliberately not here yet
 
 - **Containers.** `docker_service` / `docker_secret` need swarm mode; the hosts

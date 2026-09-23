@@ -94,6 +94,27 @@ variable "sftp_username" {
   default = "u643732-sub1"
 }
 
+variable "connect_host" {
+  type    = string
+  default = ""
+
+  description = <<-EOT
+    Where this kopia CONNECTS, when that differs from the Storage Box itself.
+    Empty means connect to var.sftp_host directly, which is what mindy does.
+
+    samson and plop cannot authenticate to the Storage Box at all -- it offers
+    them no auth methods, see ../storage-box-proxy -- so they point here at
+    bumba's forwarder instead. The repository, the path and the credentials are
+    identical; only the address changes.
+  EOT
+}
+
+variable "connect_port" {
+  type        = number
+  default     = 0
+  description = "Port for var.connect_host. 0 means use var.sftp_port."
+}
+
 variable "sftp_host" {
   type    = string
   default = "u643732.your-storagebox.de"
