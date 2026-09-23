@@ -23,3 +23,60 @@ variable "data_path" {
     looking healthy while backing up nothing.
   EOT
 }
+
+# renovate: datasource=docker depName=curlimages/curl
+variable "checker_image_tag" {
+  type    = string
+  default = "8.11.1"
+}
+
+variable "gatus_token" {
+  type        = string
+  sensitive   = true
+  description = "Bearer token for gatus's external endpoints. From modules/services/gatus, not typed in."
+}
+
+variable "gatus_base_url" {
+  type        = string
+  description = "e.g. https://status.wvl.app/api/v1/endpoints -- the checker appends the endpoint name."
+}
+
+variable "max_age_seconds" {
+  type        = number
+  default     = 93600
+  description = <<-EOT
+    How old the newest dump may be before the database reports down. 26h:
+    the daily schedule plus room for a slow run.
+
+    Must stay under the heartbeat interval on the gatus side, or a database
+    that stopped being dumped would be reported as healthy right up until the
+    heartbeat expired -- which is the failure this is meant to catch early.
+  EOT
+}
+
+variable "check_interval_seconds" {
+  type        = number
+  default     = 3600
+  description = "Seconds between sweeps. Hourly, so three consecutive bad sweeps (gatus's failure-threshold) means mail within about three hours."
+}
+
+variable "monitored" {
+  type = map(object({
+    prefix    = string
+    min_bytes = number
+  }))
+  description = <<-EOT
+    The databases to check, keyed by the gatus endpoint suffix -- the endpoint
+    is `backups_databasus-<key>` and must exist in ../gatus/config.yaml.
+
+    `prefix` is how databasus names the file, which is the DISPLAY name and so
+    carries its capitalisation: `KitchenOwl-20260922-...`, but `zitadel-...`.
+
+    `min_bytes` is a floor, not an expectation: roughly half of what the
+    database produces today. Generous enough that ordinary shrinkage does not
+    page anyone, tight enough to catch the 64-byte dumps that databasus wrote
+    while reporting nothing. It does not catch a dump that is truncated at 60%
+    -- nothing short of a restore test does, and that is a bigger piece of work
+    than this one.
+  EOT
+}

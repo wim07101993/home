@@ -21,6 +21,7 @@
 #   TF_VAR_state_passphrase       state encryption passphrase, 16+ chars
 #   TF_VAR_pg_superuser_password        postgres superuser password on bumba
 #   TF_VAR_pg_superuser_password_mindy  ... and on mindy (a different value)
+#   TF_VAR_immich_pg_superuser_password ... and on immich's own postgres, :5434
 #   TF_VAR_mailgun_api_key        Mailgun API key (mints SMTP credentials)
 #   TOFU_STATE_DB_PASSWORD        the tofu_state role, for the BACKEND
 #   PG_CONN_STR                   overrides the last one entirely
@@ -199,6 +200,19 @@ fi
 export SAMSON_ADDR
 export TF_VAR_samson_addr="$SAMSON_ADDR"
 
+# plop -- the house. Home Assistant and the Matter server.
+if [ -z "${PLOP_ADDR:-}" ]; then
+  : "${PLOP_TS_HOST:=plop}"
+  PLOP_ADDR="$(tailscale ip -4 "$PLOP_TS_HOST" 2>/dev/null)" || PLOP_ADDR=""
+  [ -n "$PLOP_ADDR" ] || {
+    echo "env.sh: cannot resolve '$PLOP_TS_HOST' on the tailnet." >&2
+    echo "        Check 'tailscale status', or set PLOP_TS_HOST / PLOP_ADDR." >&2
+    return 1
+  }
+fi
+export PLOP_ADDR
+export TF_VAR_plop_addr="$PLOP_ADDR"
+
 
 # A read-only token cannot create a database, so this module can no longer run
 # read-only indefinitely -- see the note in providers.tf. Use one anyway for
@@ -213,9 +227,12 @@ _tofu_need TF_VAR_state_passphrase "OpenTofu state encryption passphrase" || ret
 
 _tofu_need TF_VAR_pg_superuser_password "postgres SUPERUSER password on bumba" || return 1
 
-# PAT for the `terraform` service user in Zitadel (IAM_OWNER). Created by hand
-# in the console -- modules/zitadel/README.md.
 _tofu_need TF_VAR_pg_superuser_password_mindy "postgres SUPERUSER password on MINDY" || return 1
+
+# immich runs its OWN postgres on mindy:5434. Unlike the two above, this value
+# is ENFORCED: the container re-applies it on every start, so changing it here
+# and applying rotates it. See modules/services/immich/README.md.
+_tofu_need TF_VAR_immich_pg_superuser_password "postgres SUPERUSER password on IMMICH'S postgres (mindy:5434)" || return 1
 
 # Kopia. Two credentials: the repository password (encrypts the backups) and
 # the Storage Box SUB-account password. Neither is TF_VAR_storage_box_password.
@@ -249,4 +266,4 @@ fi
 unset -f _tofu_need _tofu_has_tfvar _tofu_bw_init _tofu_bw_get
 unset _tofu_bw_state _tofu_bw_hits _tofu_bw_json
 unset _tofu_dir
-echo "env.sh: environment set (bumba ${BUMBA_ADDR}, mindy ${MINDY_ADDR}, samson ${SAMSON_ADDR})"
+echo "env.sh: environment set (bumba ${BUMBA_ADDR}, mindy ${MINDY_ADDR}, samson ${SAMSON_ADDR}, plop ${PLOP_ADDR})"

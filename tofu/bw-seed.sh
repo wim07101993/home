@@ -21,18 +21,26 @@ set -uo pipefail
 
 ITEM_NAME="${TOFU_BW_ITEM:-tofu home}"
 
+# Where this script lives, so the tfvars lookup below does not depend on the
+# caller's working directory -- same reasoning as _tofu_dir in env.sh.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # The full set. Order is display order in Bitwarden.
 #
-# The first nine are read by env.sh. The last three are NOT -- they are adopted
-# into tofu state as random_password, and live here only as the out-of-band copy
-# you would need to rebuild state from nothing.
+# The first nine are read by env.sh. The last three are NOT -- they are held in
+# tofu state as random_password, and live here only as the out-of-band copy you
+# would need to rebuild state from nothing.
+#
+# Each value is resolved in order: tofu state, the environment, a tfvars file,
+# the field already on the item, and only then a prompt. The tfvars step exists
+# because env.sh deliberately does not export those -- see from_tfvars below.
 VARS=(
   HCLOUD_TOKEN
   TOFU_STATE_DB_PASSWORD
   TF_VAR_state_passphrase
   TF_VAR_pg_superuser_password
   TF_VAR_pg_superuser_password_mindy
-  TF_VAR_zitadel_pat
+  TF_VAR_immich_pg_superuser_password
   TF_VAR_zitadel_masterkey
   TF_VAR_kopia_repository_password
   TF_VAR_mailgun_api_key
@@ -48,12 +56,12 @@ describe() {
     TF_VAR_state_passphrase)            echo "state encryption passphrase, 16+ chars" ;;
     TF_VAR_pg_superuser_password)       echo "postgres superuser on bumba" ;;
     TF_VAR_pg_superuser_password_mindy) echo "postgres superuser on mindy (different value)" ;;
-    TF_VAR_zitadel_pat)                 echo "PAT for the terraform service user" ;;
+    TF_VAR_immich_pg_superuser_password) echo "postgres superuser on immich's own postgres, mindy:5434" ;;
     TF_VAR_zitadel_masterkey)           echo "zitadel masterkey, 32 chars -- IRREPLACEABLE" ;;
     TF_VAR_kopia_repository_password)   echo "encrypts the backups -- lost = unreadable" ;;
     TF_VAR_mailgun_api_key)             echo "Mailgun API key" ;;
     TF_VAR_storage_box_password)        echo "Storage Box snow-white, MAIN account" ;;
-    TF_VAR_immich_db_password)          echo "immich postgres (adopted into state)" ;;
+    TF_VAR_immich_db_password)          echo "immich's APP role (generated, in state)" ;;
     TF_VAR_kopia_sftp_password)         echo "Storage Box sub-account (adopted into state)" ;;
     *)                                  echo "" ;;
   esac
@@ -85,8 +93,27 @@ from_state() {   # from_state VARNAME
   fi
   printf '%s' "$_state_json" \
     | jq -r --arg m "$m" --arg n "$n" \
-        '.resources[]? | select(.module==$m and .type=="random_password" and .name==$n)
+        '.resources[]? | select((.module // "")==$m and .type=="random_password" and .name==$n)
          | .instances[0].attributes.result // empty' 2>/dev/null | grep . || return 1
+}
+
+# VARNAME -> the value a tfvars file already defines, if any.
+#
+# env.sh deliberately does NOT export these: a *.auto.tfvars entry beats a
+# TF_VAR_ environment variable at apply time, so exporting one would be a
+# value that looks authoritative and is not. That leaves them invisible to the
+# environment, and a secret that lives only in a gitignored file on one laptop
+# is the one most worth having a vault copy of.
+#
+# Same matcher as _tofu_has_tfvar in env.sh, and the same reason for demanding
+# a non-empty value: a secrets.auto.tfvars copied from the .example and not yet
+# filled in would otherwise seed the vault with "".
+from_tfvars() {   # from_tfvars VARNAME
+  local n="${1#TF_VAR_}"
+  [ "$n" = "$1" ] && return 1
+  sed -nE "s/^[[:space:]]*${n}[[:space:]]*=[[:space:]]*\"([^\"]+)\".*/\\1/p" \
+    "$SCRIPT_DIR"/*.auto.tfvars "$SCRIPT_DIR"/terraform.tfvars 2>/dev/null \
+    | head -1 | grep . || return 1
 }
 
 command -v bw >/dev/null 2>&1 || { echo "bw not installed" >&2; exit 1; }
@@ -122,7 +149,14 @@ for v in "${VARS[@]}"; do
     src="env"
   fi
 
-  # 3. whatever the item already holds, so a skipped prompt keeps its value.
+  # 3. a tfvars file, which env.sh leaves out of the environment on purpose.
+  #    Ahead of the vault because it is what tofu actually reads.
+  if [ -z "$cur" ]; then
+    cur="$(from_tfvars "$v" || true)"
+    [ -n "$cur" ] && src="tfvars"
+  fi
+
+  # 4. whatever the item already holds, so a skipped prompt keeps its value.
   if [ -z "$cur" ] && [ -n "$existing" ]; then
     cur="$(printf '%s' "$existing" | jq -r --arg n "$v" '.fields[]? | select(.name==$n) | .value // empty')"
     [ -n "$cur" ] && src="vault"

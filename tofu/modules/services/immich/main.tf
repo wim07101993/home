@@ -69,7 +69,9 @@ locals {
   # parity, but with the CORRECT paths rather than the broken one the live
   # container carries.
   shared_env = [
-    "DB_USERNAME=postgres",
+    # Referenced, not spelled: this is what orders the role's creation before
+    # the container that authenticates with it.
+    "DB_USERNAME=${postgresql_role.this.name}",
     "DB_DATABASE_NAME=immich",
     "DB_PASSWORD=${random_password.db.result}",
     "UPLOAD_LOCATION=${var.library_path}",
@@ -89,12 +91,68 @@ resource "docker_container" "postgres" {
   image   = docker_image.postgres.image_id
   restart = "always"
 
+  # The image's entrypoint, wrapped. See assert-superuser-password.sh: the
+  # wrapper re-applies the superuser password on every start and then execs
+  # docker-entrypoint.sh, which is what makes that password a tofu value
+  # rather than a fact about the day the cluster was initialised.
+  entrypoint = ["/bin/bash", "/usr/local/bin/assert-superuser-password.sh"]
+
+  # The image's own CMD, reproduced. Dropping `-c config_file=` would start
+  # postgres on the stock configuration instead of immich's tuned one -- which
+  # is where shared_preload_libraries lives, so vchord and vectors would not
+  # load and immich's search would fail against a cluster that looks healthy.
+  command = ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+
+  # _FILE, not the value. The image reads either; this one keeps the password
+  # out of `docker inspect`. initdb still only reads it on an EMPTY data
+  # directory -- the wrapper is what covers every start after the first.
   env = [
-    "POSTGRES_PASSWORD=${random_password.db.result}",
+    "POSTGRES_PASSWORD_FILE=/run/secrets/postgres_superuser_password",
+    # What the wrapper execs. See assert-superuser-password.sh.
+    "REAL_ENTRYPOINT=/usr/local/bin/immich-docker-entrypoint.sh",
     "POSTGRES_USER=postgres",
     "POSTGRES_DB=immich",
     "POSTGRES_INITDB_ARGS=--data-checksums",
   ]
+
+  upload {
+    file       = "/usr/local/bin/assert-superuser-password.sh"
+    content    = file("${path.module}/assert-superuser-password.sh")
+    executable = true
+  }
+
+  upload {
+    file    = "/run/secrets/postgres_superuser_password"
+    content = var.superuser_password
+  }
+
+  # Healthy means BOTH postgres is accepting connections and the new password
+  # is live -- the marker file is written only after the ALTER succeeds. With
+  # `wait` below, that is what stops the postgresql provider from connecting
+  # during the window where the container is up and still carries the old
+  # password.
+  healthcheck {
+    # The image's own healthcheck, ANDed with the marker. Replacing it outright
+    # would have thrown away whatever /usr/local/bin/healthcheck.sh knows about
+    # this cluster in exchange for a pg_isready.
+    test     = ["CMD-SHELL", "test -f /tmp/.superuser-password-asserted && /usr/local/bin/healthcheck.sh"]
+    interval = "10s"
+    timeout  = "5s"
+    retries  = 12
+
+    # Spelled the way DOCKER reports them back, not the way you would write
+    # them. `60s` is stored as `1m0s`, and an unset start_interval is 5s rather
+    # than 0 -- so the obvious spellings both plan an in-place update on every
+    # single apply. A permanent one-resource diff is how a real change gets
+    # approved by reflex.
+    start_period   = "1m0s"
+    start_interval = "5s"
+  }
+
+  # Blocks the apply until the above passes. Costs a few seconds on every
+  # replacement and removes the race entirely.
+  wait         = true
+  wait_timeout = 180
 
   security_opts = ["no-new-privileges:true"]
 
@@ -253,24 +311,24 @@ resource "docker_container" "server" {
   ]
 }
 
-# ADOPTED, NOT GENERATED. immich's cluster was already initialised when tofu
-# took it over, and POSTGRES_PASSWORD is only read by initdb on an EMPTY data
-# directory -- so this value cannot be changed from here. Changing it would
-# alter the env of a running container and nothing else, leaving immich unable
-# to connect while every plan looked clean.
+# GENERATED. The password for the `immich` role in database.tf -- an ordinary
+# rotatable credential since 2026-09-23.
 #
-# Imported with the existing value:
+# It used to be the postgres SUPERUSER's password, adopted with
+# `ignore_changes = all` because `POSTGRES_PASSWORD` is only read by initdb on
+# an EMPTY data directory, so tofu could set the container env and nothing
+# else. That value now lives in var.superuser_password.
 #
-#   tofu import 'module.immich.random_password.db' "$(bw get password 'mindy immich db user')"
+# Rotating is one command, and the provider issues the ALTER ROLE itself:
 #
-# `ignore_changes = all` prevents the replacement that an imported
-# random_password otherwise plans when the config's generation attributes do
-# not match the imported value. Replacement here means a new password in the
-# container env and an unchanged one in postgres.
+#   tofu apply -replace='module.immich.random_password.db'
+#
 resource "random_password" "db" {
   length = 32
 
-  lifecycle {
-    ignore_changes = all
-  }
+  # No `ignore_changes` any more. It was there to suppress the replacement an
+  # imported random_password plans when the config's generation attributes do
+  # not match the adopted value -- which was correct while a replacement would
+  # have changed the container env and NOT the database. Now a replacement
+  # changes both, in one apply, which is the whole point.
 }

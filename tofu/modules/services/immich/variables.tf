@@ -60,3 +60,24 @@ variable "db_data_path" {
 variable "org_id" {
   type = string
 }
+
+variable "superuser_password" {
+  type      = string
+  sensitive = true
+
+  description = <<-EOT
+    postgres superuser password on immich's own cluster.
+
+    Generated in the ROOT (random_password.immich_pg_superuser), because it
+    also configures the postgresql provider aliased at mindy:5434.
+
+    It is written to a file in the container and re-applied on every start by
+    assert-superuser-password.sh. That is what makes it a declared value rather
+    than a fact about the day initdb ran -- POSTGRES_PASSWORD alone is read
+    only when the data directory is empty, which on this cluster was years ago.
+
+    Rotating it is an ordinary apply:
+
+      tofu apply -replace=random_password.immich_pg_superuser
+  EOT
+}

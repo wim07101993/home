@@ -49,3 +49,67 @@ resource "docker_container" "this" {
   # restart, one port, one volume. That is why this is the right first thing to
   # move on samson, for the same reason it-tools was on mindy.
 }
+
+# ---------------------------------------------------------------- checker ---
+# Pushes the state of each dump to gatus. See check-backups.sh for why this
+# reads the directory instead of asking databasus.
+#
+# It lives here rather than in its own module because it is inseparable from
+# the thing above it: same host, same bind mount, and the floors in
+# var.monitored are only meaningful next to the service that produces the
+# files.
+resource "docker_image" "checker" {
+  name         = "curlimages/curl:${var.checker_image_tag}"
+  keep_locally = true
+}
+
+resource "docker_container" "checker" {
+  name    = "databasus-backup-check"
+  image   = docker_image.checker.image_id
+  restart = "unless-stopped"
+
+  # The image's ENTRYPOINT is `curl` itself, so running anything else means
+  # replacing it rather than passing a command.
+  entrypoint = ["/bin/sh", "/check-backups.sh"]
+
+  # Tiny by construction: a shell loop and one curl per database per hour.
+  memory      = 32
+  memory_swap = 64
+
+  security_opts = ["no-new-privileges:true"]
+
+  # Samson's dockerd sets these daemon-wide, so omitting them is not "no
+  # opinion" -- the provider reads the live values back and plans a replacement
+  # on every apply. Same reason they are pinned on the container above.
+  log_opts = {
+    "max-file" = "3"
+    "max-size" = "50m"
+  }
+
+  env = [
+    "CHECKS=${join(" ", [for k, m in var.monitored : "${k}:${m.prefix}:${m.min_bytes}"])}",
+    "GATUS_BASE=${var.gatus_base_url}",
+    "GATUS_TOKEN=${var.gatus_token}",
+    "MAX_AGE=${var.max_age_seconds}",
+    "INTERVAL=${var.check_interval_seconds}",
+  ]
+
+  # READ-ONLY, and the only thing this container can see. A checker that can
+  # write to the backups it validates is a checker that can be the reason they
+  # are wrong.
+  mounts {
+    type      = "bind"
+    source    = "${var.data_path}/backups"
+    target    = "/backups"
+    read_only = true
+  }
+
+  # No networks_advanced: the default bridge reaches status.wvl.app over the
+  # public internet, which is also what makes this an independent signal --
+  # it does not share a path with anything it is reporting on.
+
+  upload {
+    file    = "/check-backups.sh"
+    content = file("${path.module}/check-backups.sh")
+  }
+}

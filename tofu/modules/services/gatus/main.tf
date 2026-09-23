@@ -25,6 +25,14 @@ resource "random_password" "kopia_token" {
   special = false
 }
 
+# One token for all five databasus endpoints rather than one each. They are
+# pushed by a single process on a single host, so per-endpoint tokens would
+# divide nothing -- anything that can read one can read them all.
+resource "random_password" "databasus_token" {
+  length  = 40
+  special = false
+}
+
 resource "docker_image" "this" {
   name         = "ghcr.io/twin/gatus:${var.image_tag}"
   keep_locally = true
@@ -53,6 +61,7 @@ resource "docker_container" "this" {
     "GATUS_SMTP_USERNAME=${var.smtp_username}",
     "GATUS_SMTP_PASSWORD=${var.smtp_password}",
     "GATUS_KOPIA_TOKEN=${random_password.kopia_token.result}",
+    "GATUS_DATABASUS_TOKEN=${random_password.databasus_token.result}",
   ]
 
   # Reached by traefik over the shared network, and directly over tailscale so
@@ -94,4 +103,20 @@ output "kopia_push_token" {
 
 output "kopia_push_url" {
   value = "https://status.wvl.app/api/v1/endpoints/backups_kopia-mindy/external?success=true"
+}
+
+# Consumed by ../databasus, which runs the checker on samson. Passing the token
+# through the graph rather than copying it by hand is what keeps the two sides
+# from drifting: rotating it here restarts both containers.
+output "databasus_push_token" {
+  value     = random_password.databasus_token.result
+  sensitive = true
+}
+
+# The checker appends "/backups_databasus-<key>/external?success=<bool>". The
+# keys come from var.monitored there and must match the external-endpoints in
+# config.yaml here. Nothing enforces that match -- a typo on either side reads
+# as a permanently-down endpoint, which is at least the safe direction to fail.
+output "external_endpoint_base_url" {
+  value = "https://status.wvl.app/api/v1/endpoints"
 }

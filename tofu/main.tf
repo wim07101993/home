@@ -197,9 +197,9 @@ output "zitadel_apps" {
   description = "New client ids and secrets for the cutover. `tofu output -json zitadel_apps`."
   sensitive   = true
   value = merge(
-    module.zitadel.apps,
     module.score.zitadel_apps,
     {
+      "home/home assistant"        = module.home_assistant.zitadel_app
       "memo/memo"                  = module.memo.zitadel_app
       "keuken/kitchen owl web-app" = module.kitchen_owl.zitadel_app
       "status/gatus"               = module.gatus.zitadel_app
@@ -210,14 +210,15 @@ output "zitadel_apps" {
 }
 
 output "zitadel_project_ids" {
-  value = merge(module.zitadel.project_ids, {
+  value = {
+    "home"   = module.home_assistant.zitadel_project_id
     "memo"   = module.memo.zitadel_project_id
     "keuken" = module.kitchen_owl.zitadel_project_id
     "status" = module.gatus.zitadel_project_id
     "photos" = module.immich.zitadel_project_id
     "drive"  = module.file_browser.zitadel_project_id
     "Score"  = module.score.zitadel_project_id
-  })
+  }
 }
 
 # bumba's postgres. The container holding zitadel's database, score's, and --
@@ -353,6 +354,56 @@ module "databasus" {
   providers = {
     docker = docker.samson
   }
+
+  # The dumps are checked from here and reported to gatus on bumba -- the token
+  # crosses hosts through the graph rather than by hand. See
+  # modules/services/databasus/check-backups.sh.
+  gatus_token    = module.gatus.databasus_push_token
+  gatus_base_url = module.gatus.external_endpoint_base_url
+
+  # Floors are roughly half of what each database produced on 2026-09-22:
+  # 675 KB, 142 MB, 111 MB, 966 KB, 806 KB. Prefixes are databasus's DISPLAY
+  # names, which is why only zitadel is lower-case.
+  monitored = {
+    kitchenowl = { prefix = "KitchenOwl", min_bytes = 300000 }
+    immich     = { prefix = "Immich", min_bytes = 70000000 }
+    memos      = { prefix = "Memos", min_bytes = 55000000 }
+    score      = { prefix = "Score", min_bytes = 450000 }
+    zitadel    = { prefix = "zitadel", min_bytes = 400000 }
+  }
+}
+
+# Home Assistant and the Matter server on plop.
+#
+# CUT OVER FROM A PORTAINER STACK, and this one is NOT a plain stack delete:
+# the Matter fabric is in an anonymous docker volume that the delete can
+# destroy. Read the module README first.
+#
+# The zitadel client for Home Assistant is in ../zitadel rather than here --
+# it predates this module, and moving it is a separate `moved` block.
+module "home_assistant" {
+  source = "./modules/services/home-assistant"
+
+  providers = {
+    docker  = docker.plop
+    zitadel = zitadel
+  }
+
+  org_id       = module.zitadel.org_home_id
+  tailscale_ip = var.plop_addr
+}
+
+# plex on samson. No reverse proxy, no zitadel client: Plex does its own auth
+# against plex.tv and is reached on the tailnet at 32400.
+#
+# CUT OVER FROM A PORTAINER STACK -- delete it there first. See the module
+# README; this is the same order databasus needed.
+module "plex" {
+  source = "./modules/services/plex"
+
+  providers = {
+    docker = docker.samson
+  }
 }
 
 # homepage.wvl.app -- the dashboard.
@@ -421,12 +472,19 @@ module "immich" {
   providers = {
     docker  = docker.mindy
     zitadel = zitadel
+
+    # immich's OWN cluster on mindy:5434, NOT postgresql.mindy. The alias is
+    # the only thing distinguishing them, and pointing this at the shared
+    # instance would create the role in the wrong database.
+    postgresql = postgresql.immich
   }
 
   library_path    = local.photos_path
   traefik_network = module.network_mindy.name
 
   org_id = module.zitadel.org_home_id
+
+  superuser_password = var.immich_pg_superuser_password
 }
 
 # keuken.wvl.app. Moved onto the shared postgres, off its own postgres:15.
@@ -695,4 +753,23 @@ moved {
 moved {
   from = module.reverse_proxy_mindy.docker_network.this
   to   = module.network_mindy.docker_network.this
+}
+
+# Home assistant's zitadel client joined its service module on 2026-09-23 --
+# the last project that was still in modules/zitadel. Moves, not recreates:
+# a recreate would mint a new client id and secret and lock everyone out of
+# Home Assistant until the config caught up.
+moved {
+  from = module.zitadel.zitadel_project.home
+  to   = module.home_assistant.zitadel_project.this
+}
+
+moved {
+  from = module.zitadel.zitadel_project_role.home_family
+  to   = module.home_assistant.zitadel_project_role.family
+}
+
+moved {
+  from = module.zitadel.zitadel_application_oidc.home_assistant
+  to   = module.home_assistant.zitadel_application_oidc.this
 }

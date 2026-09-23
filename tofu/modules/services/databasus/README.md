@@ -124,3 +124,55 @@ completely empty dump across three days.
 Because the configuration is manual, that monitoring is the only thing standing
 between a moved database and silent data loss. It belongs in gatus, using the
 same external-push pattern as the kopia heartbeat (see modules/services/gatus).
+
+## The check that was missing (2026-09-22)
+
+Built. `check-backups.sh` runs beside databasus on samson and pushes one gatus
+external endpoint per database, hourly, reading the backups directory
+read-only.
+
+A database reports **down** when the newest dump is older than 26h, when it is
+under `min_bytes`, or when nothing has pushed at all — the last covered by
+gatus's own heartbeat, which is what catches the checker dying.
+
+Endpoint names are `backups_databasus-<key>` and the keys come from
+`var.monitored` here. They must match the `external-endpoints` in
+`../gatus/config.yaml`; nothing enforces it, and a mismatch reads as an
+endpoint that is permanently down.
+
+### What the state of things actually was
+
+Re-examined on 2026-09-22, and it was worse than the table above records.
+`kitchenowl`, `memos` and `score` had **no target configured at all** — no rows
+in databasus's `databases` table, no backup config, no dump files. Only Immich
+and zitadel were being backed up, and both were current, which is why the UI
+looked fine. All five are configured now.
+
+Two `databasus-*` roles on bumba's postgres were left behind by targets deleted
+at some point before that, and have been dropped.
+
+### Why it reads files instead of asking databasus
+
+databasus has a webhook notifier that would have been less work. It can only
+report what databasus believes, and both failures this estate has had were
+invisible from there: a database with no target configured produces no failure
+to notify about, and the 64-byte dumps were known to databasus — it wrote no
+`.metadata` sidecar beside them — without that reaching anyone.
+
+Age and size are properties of the artifact, which is the thing being relied on
+when it matters.
+
+### What it still does not check
+
+That a dump **restores**. A file truncated at 60% passes both conditions.
+Nothing short of restoring into a scratch database catches that, and databasus's
+own restore verification did not catch a completely empty dump across three
+days, so it is not a substitute.
+
+### The dumps exist in one place
+
+Storage is `Local`, on samson. kopia runs on mindy against photos, audio and
+documents — not against samson. As of 2026-09-22 no second copy of these dumps
+has been found; the OMV config was only grepped shallowly, so confirm before
+relying on that either way. If it holds, losing samson loses every database
+backup, and none of the monitoring above would say a word about it.

@@ -20,7 +20,6 @@ variable "pg_superuser_password" {
   description = "postgres superuser password, from /docker-volumes/db/db_password.txt on bumba."
 }
 
-
 variable "mindy_addr" {
   type        = string
   description = "mindy's TAILNET address."
@@ -31,10 +30,34 @@ variable "samson_addr" {
   description = "samson's TAILNET address. Reached as root over SSH for the docker provider, like the other two hosts."
 }
 
+variable "plop_addr" {
+  type        = string
+  description = "plop's TAILNET address. Home Assistant and the Matter server; reached as root over SSH for the docker provider."
+}
+
 variable "pg_superuser_password_mindy" {
   type        = string
   sensitive   = true
   description = "postgres superuser password on MINDY, from /docker-volumes/db/db_password.txt there. Different file and different value from bumba's."
+}
+
+variable "immich_pg_superuser_password" {
+  type      = string
+  sensitive = true
+
+  description = <<-EOT
+    postgres superuser password on IMMICH'S OWN postgres (mindy:5434), a
+    different cluster from the shared one above.
+
+    Supplied rather than generated: it configures the postgresql.immich
+    provider, and a provider is configured at PLAN time, where a generated
+    value is still unknown. Tried on 2026-09-23 and the plan failed with
+    `password authentication failed for user "postgres"`.
+
+    Unlike the other two, this one is ENFORCED. The container re-applies it on
+    every start -- modules/services/immich/assert-superuser-password.sh -- so
+    changing it here and applying is the whole rotation. No manual ALTER.
+  EOT
 }
 
 # --- kopia ----------------------------------------------------------------

@@ -149,6 +149,45 @@ provider "postgresql" {
   max_connections = 4
 }
 
+# immich's OWN postgres, also on mindy but a separate cluster on 5434 with its
+# own superuser. Aliased separately because it is not the shared instance
+# above: different data directory, different credential, and a vchord/pgvector
+# build rather than stock postgres.
+#
+# SUPPLIED, not generated -- and this was tried the other way on 2026-09-23.
+#
+# The container can set its own superuser password (see the wrapper in
+# ../modules/services/immich), so it is tempting to make the value a
+# random_password and have tofu own it end to end. That fails, and not subtly:
+# a provider must be CONFIGURED AT PLAN TIME, and a random_password that has
+# not been created yet -- or that `-replace` is about to regenerate -- has an
+# unknown `result`. The provider gets nothing and the plan dies with
+#
+#   password authentication failed for user "postgres" (28P01)
+#
+# before it can create the thing that would fix it. Which is the same wall as
+# before, just further along: the wrapper removes the manual ALTER, but the
+# credential a provider authenticates with still has to be KNOWN, and a value
+# tofu generates is not known until after it has been applied.
+#
+# Getting past it needs an auth path that does not use this password at all --
+# a second stable role, or client certificates. Neither is worth it today.
+#
+# What the wrapper DID buy: this variable is now authoritative. Change it and
+# the next apply makes the cluster agree. Before, it was a value tofu carried
+# and could not enforce.
+provider "postgresql" {
+  alias    = "immich"
+  host     = var.mindy_addr
+  port     = 5434
+  database = "postgres"
+  username = "postgres"
+  password = var.immich_pg_superuser_password
+  sslmode  = "disable"
+
+  max_connections = 4
+}
+
 # Reaches dockerd over SSH on the tailnet.
 #
 # This connects on EVERY plan. If the Tailscale ACL is in `check` mode it
@@ -179,6 +218,17 @@ provider "docker" {
 provider "docker" {
   alias = "samson"
   host  = "ssh://root@${var.samson_addr}"
+}
+
+# plop -- home assistant and the matter server, on the home LAN.
+#
+# Same caveat as samson: a docker provider that cannot dial breaks `tofu plan`
+# for the WHOLE root module, not just the resources that use it. plop is on
+# domestic power and a domestic uplink, so it is the most likely of the four to
+# be unreachable when you want to plan something unrelated.
+provider "docker" {
+  alias = "plop"
+  host  = "ssh://root@${var.plop_addr}"
 }
 
 # Zitadel's management API at auth.wvl.app.

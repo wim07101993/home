@@ -256,3 +256,59 @@ external-endpoints:
       interval: 26h
     alerts:
       - type: email
+
+  # The five database dumps, pushed hourly by the checker beside databasus on
+  # samson -- ../databasus/check-backups.sh.
+  #
+  # The checker reports on the FILE, not on databasus's opinion of itself. That
+  # distinction is the whole point: on 2026-09-22 kitchenowl, memos and score
+  # had never been configured at all, and before that a run of dumps landed at
+  # 64 bytes each. databasus knew -- it wrote no .metadata beside them -- and
+  # said nothing anyone heard.
+  #
+  # Two ways to go red, plus a third for free:
+  #   - the newest dump is older than 26h      pushed as success=false
+  #   - the newest dump is under its floor     pushed as success=false
+  #   - nothing pushes at all                  the heartbeat below
+  #
+  # The heartbeat is what covers the checker itself dying, which is the failure
+  # mode a checker is most likely to have.
+  - name: databasus-zitadel
+    group: backups
+    token: "${GATUS_DATABASUS_TOKEN}"
+    heartbeat:
+      interval: 26h
+    alerts:
+      - type: email
+
+  - name: databasus-immich
+    group: backups
+    token: "${GATUS_DATABASUS_TOKEN}"
+    heartbeat:
+      interval: 26h
+    alerts:
+      - type: email
+
+  - name: databasus-kitchenowl
+    group: backups
+    token: "${GATUS_DATABASUS_TOKEN}"
+    heartbeat:
+      interval: 26h
+    alerts:
+      - type: email
+
+  - name: databasus-memos
+    group: backups
+    token: "${GATUS_DATABASUS_TOKEN}"
+    heartbeat:
+      interval: 26h
+    alerts:
+      - type: email
+
+  - name: databasus-score
+    group: backups
+    token: "${GATUS_DATABASUS_TOKEN}"
+    heartbeat:
+      interval: 26h
+    alerts:
+      - type: email
