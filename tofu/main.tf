@@ -32,6 +32,21 @@ locals {
   # samson, by intent. ~19.5 GB moved; 32 GB stayed behind.
   audio_path = "/mnt/rafiki/audio"
 
+  # What samson backs up, RELATIVE TO THE MOUNT ROOT. Read by both kopia and
+  # backrest while they run in parallel, each prepending its own root -- see
+  # modules/services/backrest/samson-media-sources.txt for why the file holds
+  # neither.
+  #
+  # ONE LIST. The selection drifting between the two systems is exactly how the
+  # whole 8.4 TB library came into scope twice on 2026-09-25.
+  samson_backup_paths = concat(
+    ["audio-archive", "backups"],
+    [
+      for line in split("\n", trimspace(file("${path.module}/modules/services/backrest/samson-media-sources.txt"))) :
+      trimspace(line) if trimspace(line) != "" && !startswith(trimspace(line), "#")
+    ],
+  )
+
   document_shares = [
     "gezin-officieel",
     "gezin-officieel-archive",
@@ -453,12 +468,25 @@ module "kopia" {
     docker = docker.mindy
   }
 
-  tailscale_ip = var.mindy_addr
-  photos_path  = local.photos_path
-  audio_path   = local.audio_path
+  tailscale_ip       = var.mindy_addr
+  container_hostname = "mindy"
 
-  documents_path  = local.documents_path
-  document_shares = local.document_shares
+  # Keys are container paths under /data, and they ARE the snapshot identity --
+  # `photos` because that is what it was when it came over NFS from samson, not
+  # because it reads well. See the module's var.sources.
+  #
+  # audio-archive, backups and media are absent on purpose: they stay on samson
+  # and arrive as NFS submounts through the /data bind. They move to samson's
+  # own kopia instance, not here.
+  mounts = merge(
+    {
+      photos = local.photos_path
+      audio  = local.audio_path
+    },
+    { for share in local.document_shares : share => "${local.documents_path}/${share}" },
+  )
+
+  # `sources` unset: nothing to exclude, so kopia backs up every mount.
 
   repository_password = var.kopia_repository_password
   sftp_password       = module.hetzner.storage_box_sftp_password
@@ -468,6 +496,12 @@ module "kopia" {
   # service has had -- five weeks crash-looping, and four days cleanly stopped.
   gatus_token    = module.gatus.kopia_push_token
   gatus_base_url = module.gatus.external_endpoint_base_url
+  gatus_endpoint = "backups_kopia-mindy"
+
+  # mindy is the ONE instance that writes policies.json into the repository.
+  # See the module's var.import_policies -- a second importer would delete
+  # this one's policies on a schedule.
+  import_policies = true
 }
 
 # photos.wvl.app -- four containers, an NFS library from samson, and immich's
@@ -491,6 +525,240 @@ module "immich" {
   org_id = module.zitadel.org_home_id
 
   superuser_password = var.immich_pg_superuser_password
+}
+
+# samson's kopia. Snapshots the array LOCALLY, where mindy has been walking it
+# over NFS-over-Tailscale -- the scanning that produced the recurring
+# `nfs: server not responding` stalls and took filebrowser down on 2026-08-09.
+#
+# SAME repository as mindy, reached through the proxy on bumba because the
+# Storage Box offers samson no authentication methods directly. Sharing it is
+# what makes this cheap: ~800 GB of media and audio-archive is already stored,
+# so the first snapshot dedups rather than uploading.
+#
+# Its own identity (`samson`), so these become new sources rather than
+# continuing mindy's. History for the old `root@1da0a4624124:/data/media/...`
+# sources is not lost -- it ages out under the existing retention.
+#
+# PREREQUISITE, host state: /docker-volumes/kopia must exist on samson. A
+# missing bind source is not an error; docker creates an empty directory and
+# kopia starts with no config.
+#
+# mindy keeps snapshotting these three paths until samson demonstrably is --
+# see the module README. Removing them from mindy first leaves a window where
+# nothing covers the array.
+module "kopia_samson" {
+  source = "./modules/services/kopia"
+
+  providers = {
+    docker = docker.samson
+  }
+
+  tailscale_ip       = var.samson_addr
+  container_hostname = "samson"
+
+  # The array is local here, so hashing is bound by CPU rather than by a
+  # network walk. samson is a NAS with nothing else competing for cores.
+  #
+  # "4.0", not "4" -- docker normalises it and `cpus = "4"` reads back as a
+  # change that FORCES REPLACEMENT, rebuilding this container on every apply.
+  cpus = "4.0"
+
+  # samson's dockerd sets these daemon-wide; omitting them plans a replacement
+  # every time. See the module's var.log_opts.
+  log_opts = {
+    "max-file" = "3"
+    "max-size" = "50m"
+  }
+
+  # MOUNTED: the whole library. SNAPSHOTTED: 48 chosen paths under it.
+  #
+  # That split is the point. /export/media is 8.4 TB against 4.5 TB free on the
+  # Storage Box, so backing up the directory is not an option -- it would fill
+  # the box and stop EVERY backup, database dumps and photos included. It was
+  # briefly configured that way on 2026-09-25 and caught mid-bootstrap.
+  #
+  # The 48 are a deliberate choice about what is worth off-site, made before
+  # this migration. They move here rather than staying on mindy because this is
+  # where the data lives; mindy was reading them over NFS across the home
+  # uplink, which is what produced the `nfs: server not responding` stalls.
+  mounts = {
+    media         = "/export/media"
+    audio-archive = "/export/audio-archive"
+    backups       = "/export/backups"
+  }
+
+  # MOVED to ../backrest, which is the module that outlives this one. Both read
+  # the same file during the parallel period so the selection cannot drift
+  # between the two systems.
+  #
+  # The 48 titles live in their own file, because they are a LIST. They were
+  # 48 empty entries in policies.json until 2026-09-25 -- policies that said
+  # nothing, existing only to be enumerated here. kopia inherits (global) with
+  # or without an empty policy, so they carried no meaning and made a file
+  # where every other line matters look like boilerplate.
+  sources = [for p in local.samson_backup_paths : "/data/${p}"]
+
+  # No NFS submounts to propagate here -- these are local btrfs subvolumes, so
+  # nothing arrives after the container starts. The /data bind is not just
+  # redundant but breaking: it is read-only, so docker cannot create the nested
+  # mount targets inside it. See the module's var.bind_data_root.
+  bind_data_root = false
+  config_path    = "/docker-volumes/kopia"
+
+  repository_hostname = "samson"
+  repository_password = var.kopia_repository_password
+  sftp_password       = module.hetzner.storage_box_sftp_password
+
+  # Through bumba. samson cannot authenticate to the Storage Box directly --
+  # it is offered no auth methods at all. See modules/services/storage-box-proxy.
+  connect_host = var.bumba_addr
+  connect_port = 2223
+
+  gatus_token    = module.gatus.kopia_push_token
+  gatus_base_url = module.gatus.external_endpoint_base_url
+  gatus_endpoint = "backups_kopia-samson"
+
+  # import_policies stays FALSE. mindy owns policies.json for the whole
+  # repository; a second importer would delete mindy's policies on a schedule.
+}
+
+# --- backrest: replacing kopia --------------------------------------------
+#
+# Running in PARALLEL with both kopia instances above, deliberately. The repo
+# formats are unrelated, so this is a fresh upload rather than a conversion, and
+# a backup migration is not the place to trust a new tool before it has proven
+# it can read back what it wrote.
+#
+# SPACE. The Storage Box is 5.5 TB with 4.6 TB available as of 2026-09-24. The
+# two restic repositories duplicate roughly what kopia already holds -- samson's
+# ~800 GB of selected media plus mindy's photos, audio and documents -- so the
+# parallel period costs about another 0.9 TB and lands near 3.7 TB free, before
+# the 14 Storage Box snapshots pin anything. Comfortable, and the number to
+# watch: modules/hetzner/storage-box.tf explains why `available` falling faster
+# than the daily backup size means snapshots rather than backups.
+#
+# kopia comes out once these two have a full retention window and one restore
+# has actually been tested from the UI.
+# Encrypts BOTH restic repositories. GENERATED, unlike the kopia equivalent it
+# replaces.
+#
+# It can be generated because it configures nothing at plan time -- it is a
+# string written into an uploaded config.json. That is the distinction immich's
+# superuser password could not clear (see providers.tf): a provider must be
+# CONFIGURED before anything is created, so a value that does not exist yet
+# cannot authenticate one. Nothing here authenticates with this.
+#
+# ONE value for both hosts. Their repositories are separated to confine the
+# Storage Box DELETE credential -- see modules/hetzner/storage-box.tf -- not to
+# compartmentalise the encryption, and two irreplaceable secrets instead of one
+# is a worse trade in the only scenario either matters.
+#
+# prevent_destroy IS NOT OPTIONAL HERE. This password has no reset path: a
+# `-replace` on it, or any change to `keepers`, regenerates the value, the next
+# apply writes a new config.json, and restic can no longer open either
+# repository. The old value is gone from state with no copy anywhere. That is a
+# different class of accident from the Storage Box passwords, which tofu also
+# generates precisely because Hetzner can reset them.
+#
+# Read it out and keep a vault copy -- bw-seed.sh does this for you:
+#
+#   tofu output -raw backrest_repository_password
+resource "random_password" "backrest_repository" {
+  length = 32
+
+  # No punctuation. The value is interpolated into JSON and read back by restic
+  # through env; nothing here needs the extra entropy of characters that have to
+  # survive three layers of quoting.
+  special = false
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+module "backrest_mindy" {
+  source = "./modules/services/backrest"
+
+  providers = {
+    docker = docker.mindy
+  }
+
+  instance     = "mindy"
+  tailscale_ip = var.mindy_addr
+
+  # The same data kopia backs up here, at /backup instead of /data -- see the
+  # module's var.mounts for why that path moved.
+  #
+  # audio-archive, backups and media are absent on purpose: they live on samson
+  # and are backed up there.
+  mounts = merge(
+    {
+      photos = local.photos_path
+      audio  = local.audio_path
+    },
+    { for share in local.document_shares : share => "${local.documents_path}/${share}" },
+  )
+
+  # `paths` unset: nothing to exclude, so every mount is backed up.
+
+  repository_password = random_password.backrest_repository.result
+  repo_path           = "restic"
+  sftp_username       = module.hetzner.backrest_sftp["mindy"].username
+  sftp_password       = module.hetzner.backrest_sftp["mindy"].password
+
+  gatus_token    = module.gatus.backrest_push_token
+  gatus_base_url = module.gatus.external_endpoint_base_url
+  gatus_endpoint = "backups_backrest-mindy"
+}
+
+module "backrest_samson" {
+  source = "./modules/services/backrest"
+
+  providers = {
+    docker = docker.samson
+  }
+
+  instance     = "samson"
+  tailscale_ip = var.samson_addr
+  config_path  = "/docker-volumes/backrest"
+
+  # The array is local here, so hashing is CPU-bound rather than a network walk.
+  # "4.0", not "4" -- see the module's var.cpus.
+  cpus = "4.0"
+
+  # samson's dockerd sets these daemon-wide; omitting them plans a replacement
+  # on every apply. See the module's var.log_opts.
+  log_opts = {
+    "max-file" = "3"
+    "max-size" = "50m"
+  }
+
+  # MOUNTED: the whole library. BACKED UP: the 48 chosen paths below.
+  mounts = {
+    media         = "/export/media"
+    audio-archive = "/export/audio-archive"
+    backups       = "/export/backups"
+  }
+
+  # THE SAME FILE kopia reads, with the mount root swapped. One list, so the
+  # selection cannot drift between the two systems while they run in parallel --
+  # which is exactly the drift that put the whole 8.4 TB library in scope twice
+  # on 2026-09-25.
+  paths = [for p in local.samson_backup_paths : "/backup/${p}"]
+
+  repository_password = random_password.backrest_repository.result
+  repo_path           = "restic"
+  sftp_username       = module.hetzner.backrest_sftp["samson"].username
+  sftp_password       = module.hetzner.backrest_sftp["samson"].password
+
+  # Through bumba. samson cannot authenticate to the Storage Box directly.
+  connect_host = var.bumba_addr
+  connect_port = 2223
+
+  gatus_token    = module.gatus.backrest_push_token
+  gatus_base_url = module.gatus.external_endpoint_base_url
+  gatus_endpoint = "backups_backrest-samson"
 }
 
 # The hop that lets samson and plop reach the Storage Box at all.
@@ -585,6 +853,58 @@ output "gatus_kopia_push_token" {
   description = "Bearer token for kopia's heartbeat push to gatus."
   sensitive   = true
   value       = module.gatus.kopia_push_token
+}
+
+# The kopia web UI logins, one per instance. Username is `wim` on both --
+# var.server_username in the module.
+#
+# These became tofu-generated on 2026-09-24, when the password stopped being a
+# hand-made file on the host. That silently invalidated whatever was in the
+# browser's password manager, and without these outputs there was no way to
+# find the new one short of reading state.
+#
+#   tofu output -raw kopia_mindy_password
+#   tofu output -raw kopia_samson_password
+output "kopia_mindy_password" {
+  value     = module.kopia.server_password
+  sensitive = true
+}
+
+output "kopia_samson_password" {
+  value     = module.kopia_samson.server_password
+  sensitive = true
+}
+
+# The restic repository password. GENERATED, so this output is the ONLY way to
+# read it -- and it must end up somewhere that is not tofu state, because state
+# is encrypted with the state passphrase and these backups are what you reach
+# for when something has gone badly wrong.
+#
+#   tofu output -raw backrest_repository_password
+output "backrest_repository_password" {
+  value     = random_password.backrest_repository.result
+  sensitive = true
+}
+
+# Backrest UI credentials, per host. Username is `wim` on both.
+#
+#   tofu output -raw backrest_mindy_password
+#   tofu output -raw backrest_samson_password
+output "backrest_mindy_password" {
+  value     = module.backrest_mindy.ui_password
+  sensitive = true
+}
+
+output "backrest_samson_password" {
+  value     = module.backrest_samson.ui_password
+  sensitive = true
+}
+
+output "backrest_urls" {
+  value = {
+    mindy  = module.backrest_mindy.url
+    samson = module.backrest_samson.url
+  }
 }
 
 output "gatus_kopia_push_url" {

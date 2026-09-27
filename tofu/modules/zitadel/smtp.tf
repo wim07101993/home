@@ -4,7 +4,11 @@
 # ADOPTED, not created. It existed before tofu and was imported:
 #
 #   tofu import 'module.zitadel.zitadel_email_provider_smtp.this' \
-#     '390328479847022594:placeholder'
+#     '392334600367505411:placeholder'
+#
+# That id changed on 2026-09-25: the config was DESTROYED AND RECREATED to fix
+# the defect below, which had left the notification sender on a stale password.
+# The old 390328479847022594 no longer exists.
 #
 # The import id is `<id>:<password>`, and the password cannot be read back out
 # of zitadel -- it is encrypted with the instance masterkey. A placeholder was
@@ -36,26 +40,27 @@ resource "zitadel_email_provider_smtp" "this" {
   sender_name      = "auth@mail.wvl.app"
   reply_to_address = "wim@wvl.app"
 
-  # set_active is deliberately UNSET. Omitted, the provider leaves whatever
-  # state zitadel already has -- which is what an adopted, already-active
-  # config needs.
+  # Normally this is UNSET: omitted, the provider leaves whatever state zitadel
+  # already has, which is what an adopted and already-active config needs.
   #
-  # `set_active = true` is usable only at CREATION. On update the provider calls
-  # Activate unconditionally and zitadel refuses to activate an already-active
-  # config:
+  # It was set to true for the 2026-09-25 recreate and removed again straight
+  # after: a newly added config is INACTIVE, but on any UPDATE the provider
+  # calls Activate unconditionally and zitadel refuses:
   #
   #   Error: failed to activate email provider smtp: FailedPrecondition
   #   Errors.SMTPConfig.AlreadyActive (COMMAND-vUHBSmBzaw)
   #
-  # It fails BEFORE applying the update, so the whole change is lost while the
-  # apply reports only an activation error. Hit on 2026-09-17.
-  #
-  # If this is ever recreated from scratch, activate it once in the console, or
-  # add set_active = true for that single apply and remove it again.
+  # which fails BEFORE applying the update, losing the change and reporting
+  # only an activation error.
+
 }
 
 # --------------------------------------------------------------------------
-# KNOWN DEFECT, zitadel v4.17.3 + provider 2.12.8 -- cosmetic, not functional.
+# KNOWN DEFECT, zitadel v4.17.3 + provider 2.12.8. IT BREAKS MAIL.
+#
+# Called "cosmetic, not functional" here until 2026-09-25, on the strength of a
+# console test mail that sent fine. That test uses a different code path from
+# real notifications and proves nothing about them -- see below.
 #
 # An update writes an `instance.smtp.config.changed` event carrying the password
 # TWICE, at the top level and again under `plainAuth`:
@@ -71,11 +76,20 @@ resource "zitadel_email_provider_smtp" "this" {
 # It retries 5 times, gives up, and skips the event, so the row in
 # projections.smtp_configs6_smtp keeps the OLD ciphertext and description.
 #
-# VERIFIED 2026-09-17 that mail still SENDS correctly after such an update --
-# a test mail went out on the rotated password while the projection still held
-# the old one. So zitadel does not source the sending credential from that
-# projection. Do not conclude from a stale `smtp_configs6_smtp` row that mail is
-# broken; send a test mail, which is the only reliable check.
+# THIS BREAKS MAIL. An earlier note here said the opposite -- that a test mail
+# sent fine on the rotated password while the projection held the old one, so
+# the sending credential must not come from the projection. That inference was
+# WRONG, and it cost hours on 2026-09-25.
+#
+# The two paths read different sources. Measured, two minutes apart, same
+# config:
+#
+#   TestSMTPConfigById         -> OK, mail delivered   (command/event side)
+#   real passkey notification  -> CouldNotAuth 535     (projection, stale)
+#
+# So a passing console test proves nothing about whether users receive mail.
+# The only honest check is a REAL notification -- trigger a passkey
+# registration or password reset and watch for `could not connect to smtp`.
 #
 # THE PRACTICAL CONSEQUENCE IS NOT COSMETIC: this resource is effectively
 # READ-ONLY to tofu. Because the write never reaches the read model, the API
@@ -92,4 +106,33 @@ resource "zitadel_email_provider_smtp" "this" {
 # `instance.smtp.config.added` carries only `plainAuth` and projects cleanly,
 # so creates are unaffected. Worth fixing upstream: the changed-event reducer
 # should set `password` once.
+# --------------------------------------------------------------------------
+
+# --------------------------------------------------------------------------
+# 2026-09-25: MAIL STOPPED SENDING. Not this defect, though it looked like it.
+#
+#   could not connect to smtp ... Errors.SMTP.CouldNotAuth
+#     Parent=(535 "Authentication failed")
+#
+# The password zitadel held and the password Mailgun held had diverged. HOW is
+# not established -- nothing in that session touched either side, and both are
+# tofu-managed from the same random_password. Recorded as unexplained rather
+# than guessed at.
+#
+# THE FIX, one command, because it rewrites both sides from one value:
+#
+#   tofu apply -replace='module.mailgun.random_password.auth'
+#
+# The failed projection above is a red herring here and cost an hour. It was
+# still stuck at 122/123 afterwards, and mail sends fine -- which CONFIRMS the
+# 2026-09-17 finding that the sending credential does not come from
+# projections.smtp_configs6. A stale row there is not evidence of anything.
+#
+# The only reliable check remains a test send: console -> Settings ->
+# Notifications -> SMTP -> Test. It logs
+# `TestSMTPConfigById code=OK` and no CouldNotAuth.
+#
+# Ignore `could not connect using normal tls. trying starttls instead...` --
+# zitadel tries implicit TLS first on every send and falls back. It is printed
+# at warning level on a healthy path.
 # --------------------------------------------------------------------------

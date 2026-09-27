@@ -58,24 +58,6 @@
       "parallelUploadAboveSize": 2147483648
     }
   },
-  "root@1da0a4624124:/data/audio": {
-    "actions": {},
-    "compression": {},
-    "errorHandling": {},
-    "files": {},
-    "logging": {
-      "directories": {},
-      "entries": {}
-    },
-    "metadataCompression": {},
-    "osSnapshots": {
-      "volumeShadowCopy": {}
-    },
-    "retention": {},
-    "scheduling": {},
-    "splitter": {},
-    "upload": {}
-  },
   "root@1da0a4624124:/data/audio-archive": {
     "actions": {},
     "compression": {},
@@ -90,7 +72,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -108,43 +92,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
-    "splitter": {},
-    "upload": {}
-  },
-  "root@1da0a4624124:/data/gezin-officieel": {
-    "actions": {},
-    "compression": {},
-    "errorHandling": {},
-    "files": {},
-    "logging": {
-      "directories": {},
-      "entries": {}
+    "scheduling": {
+      "manual": true
     },
-    "metadataCompression": {},
-    "osSnapshots": {
-      "volumeShadowCopy": {}
-    },
-    "retention": {},
-    "scheduling": {},
-    "splitter": {},
-    "upload": {}
-  },
-  "root@1da0a4624124:/data/gezin-officieel-archive": {
-    "actions": {},
-    "compression": {},
-    "errorHandling": {},
-    "files": {},
-    "logging": {
-      "directories": {},
-      "entries": {}
-    },
-    "metadataCompression": {},
-    "osSnapshots": {
-      "volumeShadowCopy": {}
-    },
-    "retention": {},
-    "scheduling": {},
     "splitter": {},
     "upload": {}
   },
@@ -162,7 +112,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -180,7 +132,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -198,7 +152,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -216,7 +172,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -234,7 +192,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -252,7 +212,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -270,7 +232,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -288,7 +252,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -306,7 +272,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -324,7 +292,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -342,7 +312,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -360,7 +332,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -378,7 +352,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -396,7 +372,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -414,7 +392,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -432,7 +412,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -450,7 +432,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -468,7 +452,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -486,7 +472,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -504,7 +492,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -522,7 +512,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -540,7 +532,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -558,7 +552,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -576,7 +572,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -594,7 +592,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -612,7 +612,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -630,7 +632,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -648,7 +652,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -666,7 +672,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -684,7 +692,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -702,7 +712,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -720,7 +732,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -738,7 +752,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -756,7 +772,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -774,7 +792,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -792,7 +812,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -810,7 +832,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -828,7 +852,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -846,7 +872,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -864,7 +892,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -882,7 +912,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -900,7 +932,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -918,7 +952,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -936,7 +972,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -954,7 +992,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -972,7 +1012,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -990,7 +1032,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
+    "scheduling": {
+      "manual": true
+    },
     "splitter": {},
     "upload": {}
   },
@@ -1008,61 +1052,9 @@
       "volumeShadowCopy": {}
     },
     "retention": {},
-    "scheduling": {},
-    "splitter": {},
-    "upload": {}
-  },
-  "root@1da0a4624124:/data/photos": {
-    "actions": {},
-    "compression": {},
-    "errorHandling": {},
-    "files": {},
-    "logging": {
-      "directories": {},
-      "entries": {}
+    "scheduling": {
+      "manual": true
     },
-    "metadataCompression": {},
-    "osSnapshots": {
-      "volumeShadowCopy": {}
-    },
-    "retention": {},
-    "scheduling": {},
-    "splitter": {},
-    "upload": {}
-  },
-  "root@1da0a4624124:/data/sara": {
-    "actions": {},
-    "compression": {},
-    "errorHandling": {},
-    "files": {},
-    "logging": {
-      "directories": {},
-      "entries": {}
-    },
-    "metadataCompression": {},
-    "osSnapshots": {
-      "volumeShadowCopy": {}
-    },
-    "retention": {},
-    "scheduling": {},
-    "splitter": {},
-    "upload": {}
-  },
-  "root@1da0a4624124:/data/wim": {
-    "actions": {},
-    "compression": {},
-    "errorHandling": {},
-    "files": {},
-    "logging": {
-      "directories": {},
-      "entries": {}
-    },
-    "metadataCompression": {},
-    "osSnapshots": {
-      "volumeShadowCopy": {}
-    },
-    "retention": {},
-    "scheduling": {},
     "splitter": {},
     "upload": {}
   }

@@ -82,6 +82,7 @@ variable "kopia_repository_password" {
   sensitive = true
 }
 
+
 # --- mailgun --------------------------------------------------------------
 #
 # Replaces the hand-typed gatus SMTP password: tofu now CREATES that credential

@@ -1,72 +1,116 @@
-# THE source of truth, as of 2026-09-17. Uploaded into the container by
-# ../main.tf -- edit here and `tofu apply`.
+# THE source of truth. Uploaded into the container by ../main.tf -- edit here
+# and `tofu apply`.
 #
-# Until then this was a copy of /docker-volumes/homepage/config on mindy that
-# nobody had to sync, and it had drifted: Memo listed under Bumba though it
-# runs on mindy, and Keuken missing entirely despite being routed since March.
+# Until 2026-09-17 this was a copy of /docker-volumes/homepage/config on mindy
+# that nobody had to sync, and it had drifted. Uploading fixed the mechanism;
+# it did not fix the contents, and a full audit against `docker ps` on all four
+# hosts on 2026-09-24 found it still wrong:
+#
+#   Score listed under Bumba      it has run on mindy since 2026-09-17
+#   Plop listed a Database        plop has never had postgres -- no container,
+#                                 nothing listening on 5432
+#   Status missing                gatus, the thing that watches everything else
+#   Partituren missing            routed since March
+#   Kopia missing                 on both hosts that run it
+#
+# Grouped by HOST, so this doubles as the answer to "what runs where". Three
+# containers are deliberately absent because they have no interface to link to:
+# storage-box-proxy on bumba (socat), databasus-backup-check on samson, and
+# matterjs-server on plop.
+#
+# Icons are local files from ../icons, uploaded alongside. An entry with no
+# icon has no file there -- homepage renders the initial instead, which is
+# honest and costs nothing.
 
-- Plop:
-    - Portainer:
-        href: 'https://100.117.36.52:9443/'
-        icon: /icons/portainer-dark.svg
+- Bumba:
+    - Zitadel:
+        href: 'https://auth.wvl.app'
+        icon: /icons/zitadel-light.svg
+        description: Identity provider
+    - Status:
+        href: 'https://status.wvl.app'
+        icon: /icons/gatus.svg
+        description: gatus -- uptime and backup heartbeats
+    - Traefik:
+        href: 'https://wvl.app'
+        icon: /icons/traefik.svg
+        description: Reverse proxy
     - Database:
-        href: 'postgresql://100.117.36.52:5432/'
+        href: 'postgresql://100.104.241.49:5432/'
         icon: /icons/postgresql.svg
-    - HomeAssistant:
-        href: 'http://100.117.36.52:8123/'
-        icon: /icons/home-assistant.svg
+        description: zitadel, and this layer's tofu state
+    - Portainer:
+        href: 'https://100.104.241.49:9443/'
+        icon: /icons/portainer-dark.svg
+
+- Mindy:
+    - Photos:
+        href: 'https://photos.wvl.app'
+        icon: /icons/immich.svg
+        description: immich
+    - Drive:
+        href: 'https://drive.wvl.app'
+        icon: /icons/filebrowser-quantum.svg
+    - Memo:
+        href: 'https://memo.wvl.app'
+        icon: /icons/memos.svg
+    - Keuken:
+        href: 'https://keuken.wvl.app'
+        icon: /icons/kitchenowl.svg
+        description: KitchenOwl
+    - Score:
+        href: 'https://score.wvl.app'
+        description: Moved here from bumba on 2026-09-17
+    - Partituren:
+        href: 'https://partituren.wvl.app'
+        description: Same backend as Score, second hostname
+    - ItTools:
+        href: 'https://it-tools.wvl.app'
+        icon: /icons/it-tools-light.svg
+    - Kopia:
+        href: 'https://100.127.106.121:51515/'
+        icon: /icons/kopia.svg
+        description: Backups -- rafiki. Self-signed cert, expect a warning
+    - Backrest:
+        href: 'http://100.127.106.121:9898/'
+        description: Backups -- rafiki. Replacing Kopia; both run in parallel
+    - Database:
+        href: 'postgresql://100.127.106.121:5432/'
+        icon: /icons/postgresql.svg
+        description: memos, kitchenowl, score
+    - Traefik:
+        href: 'https://traefik.wvl.app'
+        icon: /icons/traefik.svg
+    - Portainer:
+        href: 'https://100.127.106.121:9443/'
+        icon: /icons/portainer-dark.svg
 
 - Samson:
-    - Portainer:
-        href: 'https://100.71.248.106:9443/'
-        icon: /icons/portainer-dark.svg
-    - Databasus:
-        href: 'http://100.71.248.106:4005/'
-        icon: /icons/databasus.svg
     - Plex:
         href: 'https://app.plex.tv/'
         icon: /icons/plex.svg
     - OpenMediaVault:
         href: 'http://100.71.248.106/'
         icon: /icons/openmediavault.svg
-
-- Bumba:
+    - Databasus:
+        href: 'http://100.71.248.106:4005/'
+        icon: /icons/databasus.svg
+        description: Database dumps
+    - Kopia:
+        href: 'https://100.71.248.106:51515/'
+        icon: /icons/kopia.svg
+        description: Backups -- the array. Self-signed cert, expect a warning
+    - Backrest:
+        href: 'http://100.71.248.106:9898/'
+        description: Backups -- the array. Replacing Kopia; both run in parallel
     - Portainer:
-        href: 'https://100.104.241.49:9443/'
+        href: 'https://100.71.248.106:9443/'
         icon: /icons/portainer-dark.svg
-    - Database:
-        href: 'postgresql://100.104.241.49:5432/'
-        icon: /icons/postgresql.svg
-    - Zitadel:
-        href: 'https://auth.wvl.app'
-        icon: /icons/zitadel-light.svg
-    - Score:
-        href: 'https://score.wvl.app'
-    - Traefik:
-        href: 'https://wvl.app'
-        icon: /icons/traefik.svg
 
-- Mindy:
+- Plop:
+    - HomeAssistant:
+        href: 'http://100.117.36.52:8123/'
+        icon: /icons/home-assistant.svg
     - Portainer:
-        href: 'https://100.127.106.121:9443/'
+        href: 'https://100.117.36.52:9443/'
         icon: /icons/portainer-dark.svg
-    - Database:
-        href: 'postgresql://100.127.106.121:5432/'
-        icon: /icons/postgresql.svg
-    - Drive:
-        href: 'https://drive.wvl.app'
-        icon: /icons/filebrowser-quantum.svg
-    - Photos:
-        href: 'https://photos.wvl.app'
-        icon: /icons/immich.svg
-    - Memo:
-        href: 'https://memo.wvl.app'
-        icon: /icons/memos.svg
-    - Keuken:
-        href: 'https://keuken.wvl.app'
-    - ItTools:
-        href: 'https://it-tools.wvl.app'
-        icon: /icons/it-tools-light.svg
-    - Traefik:
-        href: 'https://traefik.wvl.app'
-        icon: /icons/traefik.svg

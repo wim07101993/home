@@ -33,6 +33,16 @@ resource "random_password" "databasus_token" {
   special = false
 }
 
+# backrest's push token, separate from kopia's above because the two run in
+# PARALLEL during the migration and are meant to be believed independently.
+# Sharing a token would have been fine cryptographically and misleading
+# operationally: the question being asked is which of the two backup systems is
+# actually working.
+resource "random_password" "backrest_token" {
+  length  = 40
+  special = false
+}
+
 resource "docker_image" "this" {
   name         = "ghcr.io/twin/gatus:${var.image_tag}"
   keep_locally = true
@@ -62,6 +72,7 @@ resource "docker_container" "this" {
     "GATUS_SMTP_PASSWORD=${var.smtp_password}",
     "GATUS_KOPIA_TOKEN=${random_password.kopia_token.result}",
     "GATUS_DATABASUS_TOKEN=${random_password.databasus_token.result}",
+    "GATUS_BACKREST_TOKEN=${random_password.backrest_token.result}",
   ]
 
   # Reached by traefik over the shared network, and directly over tailscale so
@@ -110,6 +121,15 @@ output "kopia_push_url" {
 # from drifting: rotating it here restarts both containers.
 output "databasus_push_token" {
   value     = random_password.databasus_token.result
+  sensitive = true
+}
+
+# Consumed by ../backrest on both mindy and samson. One token for both
+# instances -- they are pushed by processes on different hosts, but anything
+# able to read one config.json is already on a host that holds a repository
+# password, so per-host tokens would divide nothing.
+output "backrest_push_token" {
+  value     = random_password.backrest_token.result
   sensitive = true
 }
 

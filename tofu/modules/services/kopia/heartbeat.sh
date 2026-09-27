@@ -34,7 +34,10 @@ set -u
 
 CONFIG=/app/repository.config
 TOKEN_FILE=/run/secrets/gatus_token
-ENDPOINT=backups_kopia-mindy
+# Per host: backups_kopia-mindy, backups_kopia-samson, ... Each instance has
+# its own gatus endpoint, because "a snapshot ran somewhere" is not the claim
+# worth checking.
+ENDPOINT="${HEARTBEAT_ENDPOINT:-backups_kopia-mindy}"
 
 push() { # push true|false
   curl -fsS -m 30 -X POST \

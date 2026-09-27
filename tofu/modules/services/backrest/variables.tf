@@ -1,0 +1,346 @@
+# renovate: datasource=docker depName=garethgeorge/backrest
+#
+# THE `v` IS PART OF THE TAG. "1.14.1" does not exist and fails at apply time
+# with `manifest unknown`, the same way the plex tag did on 2026-09-19.
+#
+# The BARE tag is the ALPINE build (goreleaser's `alpine` docker id publishes
+# both `{{ .Tag }}` and `{{ .Tag }}-alpine`), and that is load-bearing: this
+# module needs rclone for the repository transport, curl for the gatus hooks and
+# sh for start.sh. The `-scratch` variant has none of them and would fail at
+# runtime rather than at plan time.
+variable "image_tag" {
+  type    = string
+  default = "v1.14.1"
+}
+
+variable "config_version" {
+  type    = number
+  default = 6
+
+  description = <<-EOT
+    The config.json schema version, which is COUPLED TO var.image_tag and must
+    not be bumped independently.
+
+    Backrest computes its own CurrentVersion as the LENGTH OF ITS MIGRATION
+    LIST (internal/config/migrations). v1.14.1 ships six, so this is 6. The
+    coupling runs both ways and both directions fail:
+
+      too LOW    Backrest runs migrations on the file, rewrites it, and the
+                 running config stops matching what this module rendered
+      too HIGH   it refuses to start --
+
+                   config version 7 is greater than the latest known config
+                   format 6
+
+    Version 0 is also rejected for a non-empty config, so this cannot simply be
+    omitted:
+
+      config version 0 is invalid
+
+    When bumping var.image_tag, count the migration list at that tag.
+  EOT
+}
+
+variable "instance" {
+  type = string
+
+  description = <<-EOT
+    THE IDENTITY. Backrest's instance name, and also the container hostname --
+    restic tags every snapshot with the host it was taken on.
+
+    Set it per host and then leave it alone. Changing it makes this instance
+    stop recognising its own snapshot history, which is the kopia lesson from
+    the 2026-08 audit repeated in a different tool: 57 of 65 sources held
+    exactly one snapshot because the identity moved under them.
+
+    Unlike kopia, this is one value rather than three (container hostname,
+    repository hostname, repository username). That was never a feature.
+  EOT
+}
+
+variable "tailscale_ip" {
+  type        = string
+  description = "The host's tailnet address. The UI binds to THIS, not 0.0.0.0 -- see main.tf. There is no TLS here and none is needed: the transport is a WireGuard tunnel, the same reasoning providers.tf uses for postgres."
+}
+
+variable "port" {
+  type    = number
+  default = 9898
+}
+
+variable "mounts" {
+  type = map(string)
+
+  description = <<-EOT
+    What this container can SEE, as <path under /backup> => <host path>. Bind
+    mounts, read-only.
+
+    /backup, NOT /data. Backrest's own docker-entrypoint defaults BACKREST_DATA
+    to /data, which is where its SQLite operation log lives -- mounting backup
+    sources there would bury the thing that records whether backups happened.
+    kopia's convention was /data and it is not portable.
+
+    THE KEY IS PART OF THE SNAPSHOT PATH. restic identifies a snapshot by
+    host + paths, so `photos` here means /backup/photos in every snapshot
+    forever. Renaming a key starts that path's history over; it does not move
+    it.
+
+    Simpler than kopia's equivalent on purpose: there is no /data root bind and
+    no rslave propagation, because no source arrives as an NFS submount any
+    more. Each host now backs up its own local disk, which is what the
+    2026-09-24 split achieved and what removed the `nfs: server not
+    responding` stalls.
+  EOT
+}
+
+variable "paths" {
+  type    = list(string)
+  default = []
+
+  description = <<-EOT
+    What actually gets BACKED UP -- container paths under /backup. EMPTY means
+    "every mount in var.mounts", which is the common case.
+
+    Set it when what you MOUNT and what you BACK UP differ. samson mounts the
+    whole 8.4 TB media library and backs up 48 chosen paths beneath it: the
+    library does not fit in a 5.5 TB Storage Box, and the selection is a
+    deliberate decision about what is worth off-site.
+
+    THIS LIST IS AUTHORITATIVE IN BOTH DIRECTIONS, which is the whole reason
+    this module exists. restic snapshots record the paths they were given, so
+    removing an entry means the next snapshot simply does not contain it and
+    the old ones age out under var.retention. Nothing has to be reconciled and
+    no history is deleted to express "stop backing this up".
+
+    That is the gap that made kopia unworkable here: a path removed from its
+    config stayed a live source on the global schedule forever, which is how
+    /data/media survived its own deletion on 2026-09-25 and came within one
+    scheduled run of writing 8.4 TB into 4.5 TB of free space.
+  EOT
+}
+
+variable "excludes" {
+  type    = list(string)
+  default = []
+
+  description = "Glob patterns excluded from every path in var.paths. Case-sensitive; Backrest has a separate iexcludes for the other kind."
+}
+
+variable "config_path" {
+  type    = string
+  default = "/docker-volumes/backrest"
+
+  description = <<-EOT
+    Where this instance keeps its own state on the host. TWO directories must
+    exist beneath it before the first apply:
+
+      <config_path>/data     the SQLite operation log -- history and progress
+      <config_path>/cache    restic's cache, which makes the second run fast
+
+    There is deliberately no `config` directory. config.json is uploaded into
+    the container layer rather than bind-mounted, so a UI edit cannot outlive
+    the next apply -- see the upload block in main.tf.
+
+    They are `mounts`, not `volumes`, and docker does NOT create the source of
+    a bind mount -- it refuses to start the container:
+
+      invalid mount config for type "bind": bind source path does not exist
+
+    Which is the good failure. The same paths as `volumes` would be created
+    silently and empty.
+
+    Neither holds anything that is not reproducible, and losing `data` costs
+    the HISTORY VIEW, not a single backup -- the snapshots live in the
+    repository on the Storage Box. That is the test for whether state belongs
+    in code: nothing here does, so nothing here is declared.
+  EOT
+}
+
+# --- the repository ---------------------------------------------------------
+
+variable "repository_password" {
+  type        = string
+  sensitive   = true
+  description = <<-EOT
+    Encrypts the restic repository. NOT the Storage Box credential below, and
+    NOT the kopia repository password -- a third distinct secret, and the three
+    have been confused before.
+
+    Written into config.json, which Backrest requires in cleartext. Losing it
+    makes every snapshot unreadable.
+
+    GENERATED in the root -- random_password.backrest_repository -- and shared
+    by both instances. It can be generated because it configures nothing at
+    plan time; see the comment there for why that distinction matters and why
+    the resource carries prevent_destroy.
+  EOT
+}
+
+variable "repo_path" {
+  type        = string
+  default     = "restic"
+  description = "Path of the repository RELATIVE TO the sub-account's home_directory, which already scopes it to this host (backrest/<host>/). So the repository lands at backrest/<host>/restic."
+}
+
+variable "sftp_username" {
+  type        = string
+  description = "The Storage Box sub-account login, e.g. u643732-sub2. COMPUTED by Hetzner, so it comes from modules/hetzner rather than being written down."
+}
+
+variable "sftp_password" {
+  type        = string
+  sensitive   = true
+  description = "Password for that sub-account. Uploaded to a file, never passed as env -- `docker inspect` shows env."
+}
+
+variable "sftp_host" {
+  type    = string
+  default = "u643732.your-storagebox.de"
+}
+
+variable "sftp_port" {
+  type        = number
+  default     = 23
+  description = "Hetzner's extended SSH service."
+}
+
+variable "connect_host" {
+  type    = string
+  default = ""
+
+  description = <<-EOT
+    Where this instance CONNECTS, when that differs from the Storage Box
+    itself. Empty means connect directly, which is what mindy does from inside
+    Hetzner.
+
+    samson cannot authenticate to the box at all -- it is offered no auth
+    methods, see ../storage-box-proxy -- so it points at bumba's forwarder
+    instead. Credentials and path are identical; only the address changes.
+
+    Unlike kopia, there is no known_hosts rewriting to do here: rclone is
+    pointed at the forwarder and verifies nothing, because the payload is
+    already encrypted client-side by restic and the hop is inside the tailnet.
+  EOT
+}
+
+variable "connect_port" {
+  type        = number
+  default     = 0
+  description = "Port for var.connect_host. 0 means use var.sftp_port."
+}
+
+# --- schedules and retention ------------------------------------------------
+
+variable "backup_cron" {
+  type        = string
+  default     = "0 5 * * *"
+  description = "When the backup runs. 05:00 keeps the existing kopia window, which the Storage Box snapshot_plan at 07:00 UTC is sized around."
+}
+
+variable "retention" {
+  type = object({
+    daily   = number
+    weekly  = number
+    monthly = number
+  })
+  default = {
+    daily   = 7
+    weekly  = 4
+    monthly = 6
+  }
+
+  description = <<-EOT
+    Snapshot retention, applied by restic forget.
+
+    ONE POLICY FOR THE WHOLE PLAN, and that is the correction. kopia's
+    equivalent was 1061 lines of policies.json holding one meaningful entry and
+    fifty pins that existed only to stop sources nobody wanted -- because there
+    the policy was the only place a source could be disabled.
+
+    A path that should not be backed up comes out of var.paths instead.
+  EOT
+}
+
+variable "prune_cron" {
+  type        = string
+  default     = "0 4 * * 0"
+  description = "When restic prune reclaims space from forgotten snapshots. Weekly, and deliberately not on the daily path -- prune rewrites pack files and is the expensive one."
+}
+
+variable "check_cron" {
+  type        = string
+  default     = "0 3 1 * *"
+  description = "When restic check verifies repository integrity. Monthly. This is the thing kopia never did here: it reads structure and a sample of pack data, so a repository that has silently rotted says so before a restore needs it."
+}
+
+variable "check_read_percent" {
+  type        = number
+  default     = 2
+  description = "Percentage of pack data check actually reads. Structure-only checking finds a broken index; it does not find a corrupt blob. 2% a month over a 900 GB repository is ~18 GB read and covers the repository in about four years -- the point is a continuous sample, not a full verify."
+}
+
+# --- observability ----------------------------------------------------------
+
+variable "gatus_token" {
+  type        = string
+  sensitive   = true
+  description = "Bearer token for this instance's gatus external endpoint. From modules/services/gatus."
+}
+
+variable "gatus_base_url" {
+  type        = string
+  description = "e.g. https://status.wvl.app/api/v1/endpoints -- the hook appends the endpoint name."
+}
+
+variable "gatus_endpoint" {
+  type        = string
+  description = <<-EOT
+    This instance's gatus external endpoint, e.g. backups_backrest-mindy. Must
+    exist in ../gatus/config.yaml; a name that does not is a 404 on every push
+    and an endpoint permanently down.
+
+    Backrest's UI shows what happened when someone looks at it. This is what
+    reports when nobody is looking, and it is the half that caught neither of
+    kopia's two outages -- because it did not exist yet.
+  EOT
+}
+
+# --- UI ---------------------------------------------------------------------
+
+variable "ui_username" {
+  type    = string
+  default = "wim"
+}
+
+# --- resources --------------------------------------------------------------
+
+variable "memory" {
+  type        = number
+  default     = 2048
+  description = "Container memory in MB. memory_swap is set to twice this -- docker's default, stated explicitly because omitting it never settles. Lower than kopia's 4096: restic's index is smaller than kopia's cache budget, and ioNice/cpuNice below do the throttling kopia did with a hard cap."
+}
+
+variable "cpus" {
+  type    = string
+  default = "0.5"
+
+  description = <<-EOT
+    Note the format trap: "0.5" and "4.0", never "4". docker normalises it, and
+    `cpus = "4"` reads back as a change that FORCES REPLACEMENT -- rebuilding
+    the container on every apply. Cost samson and plop an afternoon.
+  EOT
+}
+
+variable "log_opts" {
+  type    = map(string)
+  default = {}
+
+  description = <<-EOT
+    json-file logging options, which must MATCH WHAT THE DAEMON ALREADY DOES.
+
+    Empty suits mindy. samson's dockerd sets max-file=3 and max-size=50m for
+    every container, so leaving this empty there is not "no opinion": the
+    provider reads the live values back, sees none configured, and plans a
+    REPLACEMENT on every apply. Same trap as ../databasus and ../kopia.
+  EOT
+}

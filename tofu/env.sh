@@ -238,6 +238,10 @@ _tofu_need TF_VAR_immich_pg_superuser_password "postgres SUPERUSER password on I
 # the Storage Box SUB-account password. Neither is TF_VAR_storage_box_password.
 _tofu_need TF_VAR_kopia_repository_password "kopia repository password" || return 1
 
+# Backrest's repository password is NOT here. tofu generates it -- see
+# random_password.backrest_repository in main.tf -- so there is nothing to type.
+# Copy it to the vault after the first apply; bw-seed.sh does that for you.
+
 # Zitadel's masterkey -- 32 bytes, and the one value in this estate that cannot
 # be regenerated. Prefer secrets.auto.tfvars over typing it; see
 # modules/services/zitadel/variables.tf.

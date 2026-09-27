@@ -196,6 +196,33 @@ endpoints:
     alerts:
       - type: email
 
+  # HOW TO TEST THAT ALERTING ACTUALLY WORKS -- verified 2026-09-25.
+  #
+  # gatus has no "send a test alert" button, and checking the SMTP credential
+  # with curl proves nothing about the path gatus uses. That distinction is not
+  # academic: on the same day, zitadel's console test mail passed while every
+  # real notification failed, because the two read different sources.
+  #
+  # Add an endpoint that cannot succeed, with a threshold of 1 so it mails on
+  # the first check instead of the third, apply, wait ~45s, then remove it:
+  #
+  #   - name: alerting-canary
+  #     group: meta
+  #     url: "https://status.wvl.app/__alerting_canary__"
+  #     interval: 30s
+  #     conditions: ["[STATUS] == 200"]
+  #     alerts:
+  #       - type: email
+  #         failure-threshold: 1
+  #         send-on-resolved: false
+  #
+  # `send-on-resolved: false` so removing it does not send a second mail.
+  #
+  # Until that test, gatus had never sent a single alert since it was built --
+  # so its Mailgun credential had never been exercised, and a wrong one would
+  # have been invisible. The service that tells you the backups stopped is the
+  # one whose own failure says nothing.
+
   # --------------------------------------------------------------- hosts ----
   # Over tailscale, which is how bumba reaches the home network at all.
   # Verified 2026-09-17 that a container on bumba's traefik network can ping
@@ -253,6 +280,56 @@ external-endpoints:
     token: "${GATUS_KOPIA_TOKEN}"
     heartbeat:
       # Daily snapshot plus room for a slow run over the home uplink.
+      interval: 26h
+    alerts:
+      - type: email
+
+  # samson's own kopia, snapshotting the array locally instead of mindy walking
+  # it over NFS. Separate from kopia-mindy on purpose: one instance being
+  # healthy says nothing about the other, and it was mindy's that spent five
+  # weeks crash-looping unnoticed.
+  - name: kopia-samson
+    group: backups
+    token: "${GATUS_KOPIA_TOKEN}"
+    heartbeat:
+      interval: 26h
+    alerts:
+      - type: email
+
+  # ---- backrest, which is replacing kopia ---------------------------------
+  #
+  # Run in PARALLEL with the kopia endpoints above during the cutover, and both
+  # are believed independently. The question during a backup migration is not
+  # "are backups working" but "which of these two is working", and one endpoint
+  # covering both would answer neither.
+  #
+  # PUSHED BY A HOOK IN THE CONFIG FILE, not by a script. kopia needed
+  # heartbeat.sh -- 79 lines polling the repository hourly for the age of the
+  # newest snapshot -- because nothing in kopia could report its own outcome.
+  # Backrest pushes when a run finishes, so the claim is "this run succeeded"
+  # rather than "something recent exists".
+  #
+  # A SKIPPED run pushes success, deliberately. skipIfUnchanged means a week of
+  # untouched documents produces no snapshot, and treating that as failure would
+  # page about a repository that is entirely up to date. See the hooks in
+  # ../backrest/main.tf.
+  #
+  # The heartbeat still does the work it always did: it is what catches a
+  # stopped container, a crash loop, and a host that is simply gone -- the three
+  # failures that ran for five weeks and four days respectively.
+  - name: backrest-mindy
+    group: backups
+    token: "${GATUS_BACKREST_TOKEN}"
+    heartbeat:
+      # Daily 05:00 run plus room for a slow night.
+      interval: 26h
+    alerts:
+      - type: email
+
+  - name: backrest-samson
+    group: backups
+    token: "${GATUS_BACKREST_TOKEN}"
+    heartbeat:
       interval: 26h
     alerts:
       - type: email

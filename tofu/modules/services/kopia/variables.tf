@@ -15,46 +15,57 @@ variable "tailscale_ip" {
   EOT
 }
 
-variable "photos_path" {
-  type        = string
+variable "mounts" {
+  type = map(string)
+
   description = <<-EOT
-    The photo library, on mindy's local `rafiki` volume since 2026-09-18.
+    What this container can SEE, as <path under /data> => <host path>. These
+    are bind mounts, not kopia sources -- what actually gets backed up is
+    var.sources below, which usually mirrors this and sometimes does not.
 
-    Mounted at /data/photos INSIDE the container -- the same path it had when
-    it arrived over NFS. That is deliberate and load-bearing: kopia keys every
-    source as <user>@<hostname>:<path>, so keeping /data/photos keeps the
-    source identity `root@1da0a4624124:/data/photos` and its entire snapshot
-    history. Point it anywhere else and the history is orphaned.
+    THE KEY IS LOAD-BEARING. kopia identifies every source as
+    <user>@<hostname>:<path>, so the container path IS the source's identity
+    and its entire snapshot history. mindy's photos are keyed
+    `photos` because they were `/data/photos` when they arrived over NFS from
+    samson; pointing them at /data/photo-library instead would orphan years of
+    snapshots and silently start over.
 
-    It nests INSIDE the /data bind below. Docker applies mounts in path-depth
-    order, so this one shadows /data/photos from the parent while the other
-    eight sources still come from samson over NFS.
+    So these keys are chosen to match history, not to be tidy.
 
-    WHY THIS EXISTS: immich moved to the local volume, so samson's
-    /export/photos became a stale copy. Without this, kopia would keep
-    faithfully backing up the OLD primary -- the same shape as the memos
-    incident in docs/data-architecture.md, where everything looked healthy
-    because nothing distinguishes "backing up the right data" from "backing up
-    data nobody writes to any more".
+    Each entry nests INSIDE var.data_path below where that is set. Docker
+    applies mounts in path-depth order, so a local entry shadows whatever the
+    parent bind carries at the same path -- which is how photos and audio moved
+    from samson's NFS to mindy's local volume without changing identity.
+
+    WHY THAT MATTERS: immich moved to the local volume and samson's
+    /export/photos became a stale copy. Without the shadowing entry, kopia
+    would have kept faithfully backing up the OLD primary -- the same shape as
+    the memos incident in docs/data-architecture.md, where everything looked
+    healthy because nothing distinguishes "backing up the right data" from
+    "backing up data nobody writes to any more".
   EOT
 }
 
 variable "config_path" {
-  type        = string
-  default     = "/docker-volumes/kopia"
+  type    = string
+  default = "/docker-volumes/kopia"
+
   description = <<-EOT
-    Host directory holding what tofu does not manage:
+    Where this instance keeps its own state on the host. THREE directories must
+    exist beneath it before the first apply:
 
-      kopia-config/     repository.config -- the SFTP target, plus the TLS
-                        cert and key the server presents
-      kopia-cache/      rebuildable
-      repository_password.txt  } the repository password and the server user
-      user_password.txt        } password. Read by the entrypoint, never env.
-      data/             nine NFS mounts from samson, read-only
+      <config_path>/kopia-config   TLS cert/key and kopia's own config
+      <config_path>/kopia-cache    content and metadata cache, up to 10 GB
+      <config_path>/data           the root the sources nest inside
 
-    The two password files are the reason this host is the only one that can
-    reach the Storage Box. Remote machines connect here as repository CLIENTS
-    with a per-machine server user and never learn the repository password.
+    They are `mounts`, not `volumes`, and docker does NOT create the source of
+    a bind mount -- it refuses to start the container:
+
+      invalid mount config for type "bind": bind source path does not exist
+
+    Which is the good failure. The same paths as `volumes` would be created
+    silently and empty, and kopia would come up with no config and no cache and
+    report itself healthy.
   EOT
 }
 
@@ -169,27 +180,8 @@ variable "repository_username" {
   default = "root"
 }
 
-# The document shares, local since 2026-09-18 -- same reasoning as
-# var.photos_path. Mounted at /data/<name>, unchanged from when they arrived
-# over NFS, so each source keeps its identity and snapshot history.
-variable "documents_path" {
-  type = string
-}
 
-variable "document_shares" {
-  type = list(string)
-}
 
-# The audio share, local since 2026-09-18 -- same reasoning as var.photos_path.
-# Mounted at /data/audio, unchanged from when it arrived over NFS, so the source
-# identity `root@1da0a4624124:/data/audio` and its history survive the move.
-#
-# `audio-archive` deliberately does NOT move: it is archival and stays on
-# samson. It reaches this container as an NFS submount under the /data bind,
-# which is why that bind's rslave propagation still matters.
-variable "audio_path" {
-  type = string
-}
 
 # --- heartbeat -------------------------------------------------------------
 
@@ -223,4 +215,145 @@ variable "heartbeat_interval_seconds" {
   type        = number
   default     = 3600
   description = "Seconds between checks. Hourly, so gatus's failure-threshold of 3 means mail within about three hours."
+}
+
+variable "gatus_endpoint" {
+  type        = string
+  description = "This instance's gatus external endpoint, e.g. backups_kopia-mindy. Must exist in ../gatus/config.yaml; a name that does not is a 404 on every push and an endpoint permanently down."
+}
+
+variable "import_policies" {
+  type    = bool
+  default = false
+
+  description = <<-EOT
+    Whether this instance imports ./policies.json into the repository.
+
+    EXACTLY ONE instance may do this, and mindy is it. The import runs with
+    `--delete-other-policies`, which makes the file authoritative for the WHOLE
+    repository -- so a second importer would delete every policy belonging to
+    the first, on a schedule, silently.
+
+    That also means policies.json must carry the policies for every host's
+    sources, not just mindy's. A source whose policy is missing falls back to
+    the global defaults rather than erroring.
+
+    Defaults to false so a new instance cannot quietly become a second writer.
+  EOT
+}
+
+variable "container_hostname" {
+  type = string
+
+  description = <<-EOT
+    The DOCKER container hostname. Distinct from var.repository_hostname, which
+    is kopia's identity in the repository -- they were the same string on mindy
+    and that made the difference invisible.
+
+    Set it per host. Left hardcoded it produces a container on samson that
+    calls itself mindy, which costs nothing until someone is reading logs at
+    2am.
+  EOT
+}
+
+variable "memory" {
+  type        = number
+  default     = 4096
+  description = "Container memory in MB. memory_swap is set to twice this -- docker's default, stated explicitly because omitting it never settles."
+}
+
+variable "cpus" {
+  type    = string
+  default = "0.25"
+
+  description = <<-EOT
+    A quarter core suits mindy, whose kopia reads over NFS and whose tree-walk
+    produced the `nfs: server not responding` stalls in the 2026-08 incident --
+    the cap is what stops a backup being the reason something else times out.
+
+    A host that hashes its OWN disk wants more: samson reads ~800 GB locally on
+    its first run, and at 0.25 that is bounded by CPU rather than by the array.
+  EOT
+}
+
+variable "bind_data_root" {
+  type    = bool
+  default = true
+
+  description = <<-EOT
+    Whether to bind <config_path>/data at /data as the root the sources nest
+    inside.
+
+    TRUE on mindy, and load-bearing there: samson's shares arrive as NFS
+    mounts UNDER that host path, after the container has started, and only a
+    bind with rslave propagation makes them visible inside. Without it kopia
+    backs up empty directories and reports success.
+
+    FALSE where the sources are local. samson has no submounts to propagate,
+    and the bind actively breaks it: the bind is read-only, so docker cannot
+    create the nested mount targets /data/media and friends inside it --
+
+      Unable to upload volume content: mkdirat data/audio-archive:
+      read-only file system
+
+    It works on mindy only because those directories already exist on the host
+    as NFS mountpoints. The alternative is to mkdir them on every new host,
+    which is host state for no benefit.
+  EOT
+}
+
+variable "log_opts" {
+  type    = map(string)
+  default = {}
+
+  description = <<-EOT
+    json-file logging options, which must MATCH WHAT THE DAEMON ALREADY DOES.
+
+    Empty suits mindy and bumba. samson's dockerd sets max-file=3 and
+    max-size=50m for every container, so leaving this empty there is not "no
+    opinion": the provider reads the live values back, sees none configured,
+    and plans a REPLACEMENT on every apply. Same trap as
+    ../databasus/main.tf, which has carried the note since 2026-09-19.
+  EOT
+}
+
+variable "sources" {
+  type    = list(string)
+  default = []
+
+  description = <<-EOT
+    What kopia BACKS UP -- container paths, each becoming a kopia source with
+    its own policy and history. EMPTY means "every mount in var.mounts", which
+    is the common case and why most instances never set this.
+
+    Set it when what you MOUNT and what you BACK UP differ. samson mounts the
+    whole 8.4 TB media library at /data/media but snapshots only 48 chosen
+    paths beneath it -- the library does not fit in the Storage Box, and the
+    selection is a deliberate decision about what is worth off-site rather than
+    a consequence of how the directories happen to be arranged.
+
+    Every path listed here must exist inside a mount from var.mounts.
+  EOT
+}
+
+variable "prune_sources" {
+  type    = bool
+  default = false
+
+  description = <<-EOT
+    Delete kopia sources belonging to this instance that var.sources no longer
+    declares -- and their snapshots with them.
+
+    This is what makes the model actually declarative. Without it, adding a
+    path creates a source and removing one leaves it in the repository
+    forever, still on the global schedule. The counterpart to
+    `--delete-other-policies`, which policies already have.
+
+    IT DELETES BACKUPS. Scoped to this instance's own <user>@<host>, so no host
+    can prune another's, and off by default so a new instance cannot prune
+    before anyone has seen what it would remove.
+
+    Turn it on once the source list is settled. During a migration -- where a
+    path is deliberately live on two hosts at once -- leave it off.
+  EOT
 }
