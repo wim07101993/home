@@ -4,10 +4,10 @@ resource "hcloud_server" "bumba" {
   location    = "fsn1"
   image       = "debian-12"
 
-  backups = false
-  delete_protection = true
+  backups            = false
+  delete_protection  = true
   rebuild_protection = true
-  firewall_ids = [hcloud_firewall.default.id]
+  firewall_ids       = [hcloud_firewall.default.id]
   lifecycle {
     prevent_destroy = true
     ignore_changes = [
@@ -24,10 +24,10 @@ resource "hcloud_server" "mindy" {
   location    = "fsn1"
   image       = "debian-13"
 
-  backups = true
-  delete_protection = true
+  backups            = true
+  delete_protection  = true
   rebuild_protection = true
-  firewall_ids = [hcloud_firewall.default.id]
+  firewall_ids       = [hcloud_firewall.default.id]
   lifecycle {
     prevent_destroy = true
     ignore_changes = [

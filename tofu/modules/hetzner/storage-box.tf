@@ -11,11 +11,6 @@ resource "hcloud_storage_box" "backups" {
     max_snapshots = 14
     hour          = 7
     minute        = 0
-
-    # null = every day. Both must be null for daily; setting either narrows it
-    # to that weekday or day-of-month.
-    day_of_week  = null
-    day_of_month = null
   }
 
   access_settings = {
@@ -28,47 +23,12 @@ resource "hcloud_storage_box" "backups" {
 
   lifecycle {
     prevent_destroy = true
-
-    ignore_changes = [
-      # ssh_keys is the dangerous one, and not theoretically: provider v1.58.0
-      # changed it from ignored to replacement-forcing. The Hetzner API has no
-      # update path for those keys, so the provider's only way to reconcile a
-      # difference is destroy-and-recreate -- which would take the off-site
-      # kopia repository with it.
+    ignore_changes  = [
       ssh_keys,
-
-      # `password` was here too, because the API never returns it and tofu could
-      # not tell a stale config value from the live one. That ended when tofu
-      # became the only writer -- see random_password.storage_box below.
     ]
   }
 }
 
-# GENERATED, and tofu is the only writer.
-#
-# It was adopted with ignore_changes = all while the real value lived in
-# Bitwarden. That is no longer needed: `password` carries no RequiresReplace
-# (unlike `ssh_keys` on the same resource) and Update calls the Storage Box
-# ResetPassword action, so a change is an in-place rotation and not a rebuild of
-# the box holding every backup.
-#
-# NOT the credential kopia uses. That is the sub-account below. This is the MAIN
-# account: Cloud Console login, SMB, and SSH as u643732.
-#
-# The API never returns it, so the output is the only way to read it back:
-#
-#   tofu output -raw storage_box_password
-#
-# The min_ values are REQUIRED, not defensive. Hetzner enforces a password
-# policy and rejects the whole apply otherwise:
-#
-#   invalid input in field password (invalid_input) 422
-#   The password must contain at least one upper case letter, one lower case
-#   letter, one number, and a special character
-#
-# random_password only guarantees a class is PRESENT if a min_ is set for it --
-# by default it merely permits them, so a generated value can legitimately
-# contain none and fail this intermittently, at apply time.
 resource "random_password" "storage_box" {
   length           = 32
   min_upper        = 1
@@ -78,25 +38,9 @@ resource "random_password" "storage_box" {
   override_special = "!@#%^*()-_=+"
 }
 
-# The sub-account kopia connects as. ADOPTED (created by hand in the Cloud
-# Console), with its password now generated.
-#
-# kopia reaches it as sftp://u643732-sub1@... with path "backup", which is
-# RELATIVE TO home_directory -- so the repository lives at backup/backup on the
-# box. home_directory is Required but NOT replace-forcing: a wrong value moves
-# the directory rather than destroying the sub-account, which is visible in the
-# plan and recoverable, but it would take kopia's repository with it.
-#
-# Imported as "<storage_box_id>/<subaccount_id>", e.g. 625908/281501.
 resource "hcloud_storage_box_subaccount" "kopia" {
   storage_box_id = hcloud_storage_box.backups.id
 
-  # A LABEL, not the login. `username` is computed and assigned by Hetzner
-  # (u643732-sub1); kopia authenticates with that and is unaffected by this.
-  # It defaulted to the username, which made the two look like one field.
-  #
-  # Pinned rather than omitted: `name` is Optional+Computed, so leaving it out
-  # shows "known after apply" on every plan.
   name           = "kopia"
   home_directory = "backup/"
   description    = "Repository target for the kopia server on mindy."
@@ -116,10 +60,6 @@ resource "hcloud_storage_box_subaccount" "kopia" {
   }
 }
 
-# GENERATED. Same policy minimums as the main account -- see above.
-#
-# Rotating this recreates the kopia container, because its repository.config is
-# generated from this value. Both happen in one apply.
 resource "random_password" "storage_box_sftp" {
   length           = 32
   min_upper        = 1
@@ -131,28 +71,11 @@ resource "random_password" "storage_box_sftp" {
 
 # --- backrest ---------------------------------------------------------------
 #
-# ONE SUB-ACCOUNT PER HOST, which is the point. kopia above shares a single
-# credential across mindy, samson and plop, and that credential can `rm -rf`
-# the entire backup/ tree -- the risk this file already names as "destruction,
-# accidental or otherwise". A sub-account is confined to its home_directory, so
-# samson holding its own credential can no longer reach mindy's repository, and
-# neither can reach kopia's.
-#
-# That confinement is the reason restic gets separate repositories per host
-# rather than the one shared repository kopia uses. Cross-host deduplication is
-# the thing given up, and it is worth nothing here: mindy backs up photos,
-# audio and documents, samson backs up the array. They share no bytes.
-#
-# home_directory is Required and NOT replace-forcing -- a wrong value moves the
-# directory rather than destroying the sub-account. Visible in the plan,
-# recoverable, but it would take the repository with it.
 resource "hcloud_storage_box_subaccount" "backrest" {
   for_each = toset(["mindy", "samson"])
 
   storage_box_id = hcloud_storage_box.backups.id
 
-  # A LABEL, not the login. `username` is computed and assigned by Hetzner
-  # (u643732-subN) -- see the note on the kopia sub-account above.
   name           = "backrest-${each.key}"
   home_directory = "backrest/${each.key}/"
   description    = "restic repository for the backrest instance on ${each.key}."
@@ -167,24 +90,11 @@ resource "hcloud_storage_box_subaccount" "backrest" {
     readonly             = false
   }
 
-  # ON FROM THE START, deliberately, even though these repositories are empty
-  # on the day they are created. The cost is that a rollback takes two applies;
-  # the benefit is that the accident worth preventing -- deleting the
-  # sub-account that holds a host's only off-site copy -- cannot happen in one.
-  #
-  # Turning it on "later, once there is data" is the version of this that gets
-  # forgotten.
   lifecycle {
     prevent_destroy = true
   }
 }
 
-# GENERATED. Same Hetzner password policy as the accounts above -- the min_
-# values are required, not defensive; see random_password.storage_box.
-#
-# Rotating one of these recreates that host's backrest container, because the
-# rclone credential is read from a file the container spec uploads. Both happen
-# in one apply.
 resource "random_password" "storage_box_backrest" {
   for_each = toset(["mindy", "samson"])
 
