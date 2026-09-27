@@ -31,7 +31,7 @@ Neither is created by tofu; both must already exist on bumba.
 
 | path | what |
 |---|---|
-| `/docker-volumes/db/data` | symlink to `/mnt/HC_Volume_103225027/db/data/` — the cluster |
+| `/docker-volumes/db/data` | the cluster. A real directory since 2026-09-18 — see below |
 | `/docker-volumes/db/db_password.txt` | one line: the postgres superuser password, no trailing newline issues |
 
 The compose stack declared the second as a `secret`; without swarm that is a
@@ -59,8 +59,11 @@ gone the refresh fails and the apply never reaches the resource that would fix
 it. `-target` is the way through — this is precisely the "exceptional
 situation" the targeting warning describes.
 
-**A wrong data path does not error.** `/docker-volumes/db/data` is a symlink to
-`/mnt/HC_Volume_103225027/db/data/`. Point it somewhere else and postgres
+**A wrong data path does not error.** `/docker-volumes/db/data` is a real
+directory on bumba's root disk. It was a symlink to
+`/mnt/HC_Volume_103225027/db/data/` until 2026-09-18, when that volume moved to
+mindy — so a stale note pointing at the volume is the wrong place to look.
+Point this somewhere else and postgres
 quietly runs initdb, builds an empty cluster beside the real one, and reports
 itself healthy. The log is the only check that catches it: crash recovery says
 `redo lsn=...`, a fresh cluster says `initdb`.

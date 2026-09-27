@@ -4,35 +4,28 @@
 # is immich's own postgres with vectorchord, entirely separate from the
 # estate's postgres, and its data is a bind mount.
 
+# NAMED FOR WHAT IT IS, since 2026-09-27. It was `immich_immich-network` with
+# four `com.docker.compose.*` labels, reproduced verbatim so the 2026-09-16
+# import planned clean -- a missing label forces replacement of the network all
+# four containers hang off.
+#
+# Those labels asserted ownership by a compose project that no longer exists,
+# and one of them was a config-hash of a compose file that is gone. Dropping
+# them and the prefix costs one replacement of the network and its four
+# containers, which is a restart: the library is a bind to /mnt/rafiki/photos,
+# PGDATA is a bind to /docker-volumes/immich/postgres, and the model cache is a
+# NAMED volume that survives container replacement. Verified 2026-09-27.
+#
+# prevent_destroy is gone with them. It was guarding against detaching the four
+# containers, but they are all managed here -- so tofu replacing the network
+# replaces them with it, which is the correct behaviour rather than an accident.
+# Keeping the guard only meant any future rename needed two applies.
 resource "docker_network" "internal" {
-  name       = "immich_immich-network"
+  name       = "immich"
   driver     = "bridge"
   attachable = false
   ingress    = false
   ipv6       = false
-
-  # Reproduced exactly so the import plans clean -- a missing label forces
-  # replacement, and all four containers hang off this.
-  labels {
-    label = "com.docker.compose.config-hash"
-    value = "06395b0762b0ec18b286d2cc1f73d65310c55db31fdd9b36ee164228ef5944f1"
-  }
-  labels {
-    label = "com.docker.compose.network"
-    value = "immich-network"
-  }
-  labels {
-    label = "com.docker.compose.project"
-    value = "immich"
-  }
-  labels {
-    label = "com.docker.compose.version"
-    value = ""
-  }
-
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 # Imported, not created: it holds the downloaded ML models. Recreating it means

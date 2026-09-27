@@ -22,9 +22,12 @@ server, a volume or a Storage Box, ever. It does create databases and roles.
 ```
 tofu/
   providers.tf   the ONLY place providers are configured
-  variables.tf   root variables, all fed by env.sh
-  main.tf        two module blocks
-  imports.tf     adoption record and outstanding imports
+  bumba.tf       \
+  mindy.tf        |  EVERYTHING for that host: modules, inputs, values, outputs
+  samson.tf       |
+  plop.tf        /
+  estate.tf      owned by no host: Hetzner, Mailgun, the secrets hosts share
+  imports.tf     adoption record
   modules/
     hetzner/        servers, volume, firewall, storage box -- adoption only
     network/        the traefik docker network, one per host
@@ -46,13 +49,43 @@ that service needs, in files named the same way everywhere:
 There is no `modules/databases` and no per-service file under `modules/zitadel`
 any more; both were shared modules listing every service, and both were emptied
 into the slices. What stayed in `modules/zitadel` is genuinely instance-level:
-the orgs, the SMTP provider, and home assistant, which has no service module
-because plop is not in tofu yet.
+the orgs and the SMTP provider. Home assistant moved out to
+`modules/services/home-assistant` on 2026-09-24, when plop came into tofu.
 
-One root module, two child modules: **one state, one `init`, one `apply`**.
+One root module, many child modules: **one state, one `init`, one `apply`**.
 The directories are for reading, not for isolation — `tofu` only loads `.tf`
 files from the root directory, so structure has to mean modules rather than
 folders.
+
+### Root file layout
+
+`tofu` concatenates every `.tf` here, so these splits are for reading and
+nothing else — moving a block between them is not a change to anything.
+`main.tf` grew to 1200 lines and was split on 2026-09-27, **by host**, because
+"what runs where" is the question that actually gets asked and because each file
+then uses exactly one `docker` provider alias:
+
+| file | holds |
+|---|---|
+| `bumba.tf` | the public front door, identity, monitoring — all `docker.bumba` |
+| `mindy.tf` | most services, the shared postgres, photos — all `docker.mindy` |
+| `samson.tf` | the media array and the database dumps — all `docker.samson` |
+| `plop.tf` | home assistant — `docker.plop` |
+| `estate.tf` | owned by no host: Hetzner, Mailgun, the secrets hosts share |
+| `providers.tf` | provider config, backend, state encryption |
+| `imports.tf` | the adoption record — see the header there |
+
+There is no `variables.tf`, `outputs.tf` or `locals.tf`. Each host file carries
+its own, under `--- inputs`, `--- values` and `--- outputs` rules, so
+`samson_addr`, `samson_backup_paths` and `backrest_samson_password` all sit in
+`samson.tf` beside the modules that use them. A value used by two hosts —
+`kopia_repository_password`, the restic repository password — lives in
+`estate.tf` instead, and `state_passphrase` sits in `providers.tf` next to the
+encryption block that is its only consumer.
+
+**The cost of that**, stated plainly: "what must I supply?" is no longer one
+file. `env.sh` is the answer — every required input has a `_tofu_need` line
+there, and it fails fast with the name and a description if one is missing.
 
 Neither child declares a `provider` block. They declare only which providers
 they *use*, and inherit the root's configuration, so there is exactly one place
@@ -105,6 +138,33 @@ So the rule this whole directory exists to enforce:
 > **After import, `tofu plan` must report "No changes".**
 >
 > Anything else is a bug in the config, not a change to apply.
+
+Adoption applies to resources that hold **data or an address**. A tofu-created
+`hcloud_volume` gets a Hetzner-assigned id exactly like an imported one does —
+recreating buys a different arbitrary number, not a cleaner one. What it costs is
+the data on it.
+
+That reasoning does **not** extend to docker networks, which hold nothing. Those
+were adopted for convenience, and several still carry compose's
+`<project>_<network>` naming for projects that no longer exist. See "Network
+names" below.
+
+## Not yet in tofu
+
+Three Hetzner resources are still managed by hand. This list was the commented
+"second pass" in `imports.tf` until that file was deleted on 2026-09-27; the
+resources do not exist in config, so they were a wishlist rather than an
+adoption record.
+
+| resource | how to find the id | note |
+|---|---|---|
+| `hcloud_ssh_key.wim` | `hcloud ssh-key list` | |
+| `hcloud_network.private` | `hcloud network list` | |
+| `hcloud_zone.wvl_app` | `hcloud zone list` | **13 wvl.app records still in a web console.** The official provider has carried `hcloud_zone` and `hcloud_zone_rrset` since v1.54 (GA in v1.56), so no third-party provider is needed. |
+
+Adopt one at a time, and keep the rule above: the plan must report "No changes"
+afterwards. A wrong id fails the **whole** plan, including the parts that were
+working, which is why these were never left in place as `id = "TODO"`.
 
 ## State holds secrets
 

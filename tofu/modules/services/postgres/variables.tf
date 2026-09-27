@@ -38,8 +38,12 @@ variable "data_path" {
   type        = string
   default     = "/docker-volumes/db/data"
   description = <<-EOT
-    PGDATA, as a bind mount. Same path on both hosts, but on bumba it is a
-    SYMLINK to /mnt/HC_Volume_103225027/db/data/ -- the Hetzner volume.
+    PGDATA, as a bind mount. A REAL DIRECTORY on both hosts.
+
+    It was a symlink on bumba, to /mnt/HC_Volume_103225027/db/data/ on the
+    Hetzner volume, until 2026-09-18. That volume is now attached to mindy as
+    /mnt/rafiki and bumba's cluster lives on its root disk (/dev/sda1) --
+    verified 2026-09-27. Do not go looking for the symlink.
 
     Getting this wrong does not error: postgres runs initdb, builds an empty
     cluster beside the real one, and reports itself healthy.

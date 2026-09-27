@@ -215,10 +215,18 @@ resource "docker_container" "this" {
     name = var.traefik_network
   }
 
-  # mindy's postgres.
-  networks_advanced {
-    name = var.db_network
-  }
+  # NOT on mindy's postgres network, and deliberately so since 2026-09-27.
+  #
+  # It was, inherited verbatim when this container was adopted from compose --
+  # the network is still named `db_db-network`, which is compose's
+  # <project>_<network>. Nothing ever used it: filebrowser keeps its state in a
+  # local BoltDB (FILEBROWSER_DATABASE=.../database.db, baked into the image),
+  # there is no database.tf here, no role was created, and no DSN existed in any
+  # env or config.
+  #
+  # Removing it costs nothing and takes the one service whose job is exposing
+  # directories to a browser off the network holding memos, kitchenowl and
+  # score. Credentials still guarded that; reachability with no purpose did not.
 
   # A share can be mounted and still be invisible: filebrowser only serves paths
   # that appear in server.sources. Mounting one without adding it to var.sources

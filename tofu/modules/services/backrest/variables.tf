@@ -344,3 +344,87 @@ variable "log_opts" {
     REPLACEMENT on every apply. Same trap as ../databasus and ../kopia.
   EOT
 }
+
+# --- multihost sync ---------------------------------------------------------
+
+variable "sync_identity" {
+  type = object({
+    keyid = string
+    priv  = string
+    pub   = string
+  })
+  default   = null
+  sensitive = true
+
+  description = <<-EOT
+    This instance's ed25519 sync identity. null disables sync entirely, which is
+    the default and what both hosts ran with until 2026-09-27.
+
+    SUPPLIED, and it has to be. Backrest generates an identity itself when this
+    is absent -- PopulateRequiredFields in internal/config/config.go -- and then
+    WRITES IT BACK into config.json. Since this module keeps config.json in the
+    container layer rather than a bind mount, that generated identity is
+    discarded on every container replacement and a fresh one minted on the next
+    start. A peer that declared the old keyid would break on every apply.
+
+    Pinning it here means `mutated` stays false, Backrest never rewrites the
+    file, and the keyids are stable. config.json stays entirely tofu-owned.
+
+    Generate a pair with ./backrest-identity.sh (in tofu/), which writes
+    straight into secrets.auto.tfvars. The fields map to v1.PrivateKey:
+
+      keyid -> keyId         "ed25519." + base64url(sha256(raw pubkey))
+      priv  -> ed25519priv   base64 of the raw 32-byte SEED, unpadded
+      pub   -> ed25519pub    base64 of the raw 32-byte public key, unpadded
+
+    A mismatched pair fails loudly rather than silently -- NewPrivateKey derives
+    the public key from the seed and rejects the config if it disagrees.
+  EOT
+}
+
+variable "sync_authorized_clients" {
+  type = list(object({
+    instance_id = string
+    keyid       = string
+  }))
+  default = []
+
+  description = <<-EOT
+    Peers allowed to connect to THIS instance and push their operations here.
+    Set on the host you actually open -- mindy.
+
+    NO PERMISSIONS FIELD, deliberately. The grant that matters lives on the
+    CLIENT's known-host entry, not here: PERMISSION_READ_OPERATIONS on an
+    authorizedClient is documented as having no effect, because the host never
+    pushes operations down. Backrest's own sync test declares these as
+    `{Keyid, InstanceId}` and nothing more.
+  EOT
+}
+
+variable "sync_known_hosts" {
+  type = list(object({
+    instance_id  = string
+    keyid        = string
+    instance_url = string
+    scopes       = list(string)
+  }))
+  default = []
+
+  description = <<-EOT
+    Hosts THIS instance pushes its operations up to. Set on the client --
+    samson.
+
+    scopes limits what is pushed: "*" for everything, or "repo:<id>" /
+    "plan:<id>". The permission is granted here because this is the side doing
+    the pushing -- see var.sync_authorized_clients.
+
+    instance_url is plain http over the tailnet. The handshake is signed with
+    the ed25519 identities above, so the transport is not what authenticates
+    it, and providers.tf makes the same argument for postgres.
+
+    NOTE: nothing is pushed while the host is down, so this is a convenience
+    layer over the dashboards and NOT a monitoring path. gatus stays the thing
+    that reports when nobody is looking, and it has no dependency between the
+    two hosts.
+  EOT
+}

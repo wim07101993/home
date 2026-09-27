@@ -31,8 +31,19 @@ resource "docker_network" "this" {
   }
 
   lifecycle {
-    # zitadel and score are still compose-managed and attach to this by name.
-    # Destroying it detaches them with no warning.
+    # WHY THIS IS STILL HERE, and what has changed.
+    #
+    # It said "zitadel and score are still compose-managed and attach to this by
+    # name. Destroying it detaches them with no warning." That is no longer true:
+    # on 2026-09-27 every container on all three shared networks reported
+    # `com.docker.compose.project=<none>`, so nothing outside tofu is attached.
+    # `database-db-1` merely kept its old name.
+    #
+    # It stays because replacing this network replaces EVERY container on the
+    # host that is attached to it -- on mindy that is nine, including traefik --
+    # so the guard turns "every site on this host blips" into a plan that stops
+    # and asks. Remove it deliberately, for one apply, when renaming the network
+    # off its compose-era name; see README.md, "Network names".
     prevent_destroy = true
   }
 }

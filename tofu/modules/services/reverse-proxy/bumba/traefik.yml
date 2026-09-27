@@ -37,6 +37,17 @@ entryPoints:
 providers:
   file:
     filename: /etc/traefik/dynamic.yml
+    # INERT, and kept anyway. dynamic.yml arrives through an `upload` block,
+    # which is part of the container spec -- so any routing change REPLACES this
+    # container and the file is never edited underneath a running traefik. The
+    # watch has nothing to fire on.
+    #
+    # Left in place because removing it invites someone to re-add it later
+    # expecting hot-reload. Getting real hot-reload means writing the file
+    # outside the container lifecycle, and tofu reaches these hosts only through
+    # the docker provider over SSH, where `upload` IS the file-writing
+    # primitive. The alternative is traefik's KV provider, which buys hot-reload
+    # and puts a stateful dependency in front of every site on the host.
     watch: true
 
 certificatesResolvers:

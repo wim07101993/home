@@ -1,63 +1,12 @@
-# `snow-white`, bx21, fsn1. kopia's off-site repository -- one of the three
-# copies of the family photos.
-#
-# This is the resource that could not be generated: the Cloud API never returns
-# the password, so `-generate-config-out` wrote `password = null` and the plan
-# refused. It has to be supplied.
-
 resource "hcloud_storage_box" "backups" {
   name             = "snow-white"
   storage_box_type = "bx21"
   location         = "fsn1"
   password         = random_password.storage_box.result
 
-  # Hetzner-side protection: blocks deletion from the API and the Cloud Console,
-  # not just from tofu. `prevent_destroy` below only stops tofu.
-  #
-  # Was false because import captured whatever the console had -- the volume
-  # happened to have it on and this did not. The asymmetry ran the wrong way:
-  # a storage box holding every backup was less protected than a 100 GB volume.
-  #
-  # Cost: a real teardown becomes two applies -- flip this, then destroy.
   delete_protection = true
   ssh_keys          = []
 
-  # THE ONLY THING AN SFTP CLIENT CANNOT DELETE.
-  #
-  # delete_protection above guards the Hetzner API. It does nothing about the
-  # SFTP credential, which can `rm -rf` the repository -- and from 2026-09-24
-  # that credential lives on samson and plop as well as mindy, because all
-  # three share one repository. kopia encrypts client-side, so the risk here
-  # was never disclosure; it is destruction, accidental or otherwise.
-  #
-  # Hetzner takes these at the box level, outside any SFTP session's reach.
-  # 14 daily copies is sized against how long a deletion could go unnoticed:
-  # kopia's heartbeat turns stale within 26h and gatus mails after three
-  # failed sweeps, so ~2 days to notice and twelve to act.
-  #
-  # 07:00 UTC, after the 05:00 kopia run and the 00:00-01:00 database dumps, so
-  # each snapshot contains that day's backups rather than catching them
-  # half-written.
-  #
-  # WILL 14 FIT? These are filesystem-level, so 14 is not 14 copies -- each
-  # costs only the blocks changed or deleted since it was taken. Baseline
-  # measured 2026-09-24, immediately before the first one:
-  #
-  #   capacity 5.5 TB   available 4.6 TB
-  #
-  # Daily churn is dominated by the database dumps, ~255 MB/day and poorly
-  # deduplicated because compressed dumps differ. Call it single-digit GB
-  # across the window.
-  #
-  # The subtle cost is kopia's own deletions: when GFS retention expires a
-  # snapshot, maintenance frees the blobs, but a Storage Box snapshot PINS
-  # them for up to 14 more days. That matters exactly once -- when retention
-  # finally drops mindy's ~800 GB of media sources after samson takes them
-  # over. Still comfortable at 4.6 TB free, but it is the case to watch.
-  #
-  # If `available` ever falls faster than the daily backup size, snapshots are
-  # why and max_snapshots is the dial. A full box means kopia cannot write, so
-  # this is monitored rather than assumed -- the heartbeat goes stale in 26h.
   snapshot_plan = {
     max_snapshots = 14
     hour          = 7

@@ -272,3 +272,13 @@ provider "zitadel" {
 provider "mailgun" {
   api_key = var.mailgun_api_key
 }
+
+# --- inputs ---------------------------------------------------------------
+
+# Read by the `encryption` block, which OpenTofu evaluates before the resource
+# graph exists -- hence an environment variable and not a tfvars file.
+variable "state_passphrase" {
+  type        = string
+  sensitive   = true
+  description = "State encryption passphrase, 16+ chars. TF_VAR_state_passphrase."
+}

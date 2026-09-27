@@ -8,10 +8,6 @@ variable "traefik_network" {
   type = string
 }
 
-variable "db_network" {
-  type = string
-}
-
 variable "config_path" {
   type        = string
   default     = "/docker-volumes/filebrowser/config"

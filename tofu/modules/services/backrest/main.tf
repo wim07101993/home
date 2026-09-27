@@ -45,6 +45,37 @@ locals {
   connect_host = var.connect_host == "" ? var.sftp_host : var.connect_host
   connect_port = var.connect_port == 0 ? var.sftp_port : var.connect_port
 
+  # The `sync` block, or nothing at all when no identity is supplied.
+  #
+  # NOTE THE KEY IS `sync`, not `multihost`. The proto field is
+  # `Multihost multihost = 7 [json_name="sync"]`, and protojson parses with
+  # DiscardUnknown, so spelling it `multihost` would be SILENTLY IGNORED -- the
+  # config would look configured and sync would simply never happen.
+  sync = var.sync_identity == null ? {} : {
+    sync = {
+      identity = {
+        keyId       = var.sync_identity.keyid
+        ed25519priv = var.sync_identity.priv
+        ed25519pub  = var.sync_identity.pub
+      }
+
+      authorizedClients = [for c in var.sync_authorized_clients : {
+        instanceId = c.instance_id
+        keyId      = c.keyid
+      }]
+
+      knownHosts = [for h in var.sync_known_hosts : {
+        instanceId  = h.instance_id
+        keyId       = h.keyid
+        instanceUrl = h.instance_url
+        permissions = [{
+          type   = "PERMISSION_READ_OPERATIONS"
+          scopes = h.scopes
+        }]
+      }]
+    }
+  }
+
   # Pushed to gatus when a run finishes. See var.gatus_endpoint for why this
   # exists alongside a UI that already shows the same thing.
   #
@@ -141,7 +172,7 @@ resource "docker_container" "this" {
   # this module's inputs.
   upload {
     file = "/config/config.json"
-    content = jsonencode({
+    content = jsonencode(merge(local.sync, {
       # Coupled to var.image_tag. See that variable -- wrong in either
       # direction and Backrest either migrates the file out from under this
       # module or refuses to start.
@@ -274,7 +305,7 @@ resource "docker_container" "this" {
           },
         ]
       }]
-    })
+    }))
   }
 
   # Read by start.sh. A file rather than env, because `docker inspect` shows

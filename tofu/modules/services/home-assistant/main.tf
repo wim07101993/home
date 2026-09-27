@@ -10,8 +10,17 @@
 # rescued out of an anonymous volume beforehand, and deleting the stack is what
 # can destroy it.
 
+# NAMED FOR WHAT IT IS, since 2026-09-27. It was
+# `homeassistant_home-assistant-network` -- compose's <project>_<network> -- for
+# a compose project this module had already deleted. tofu CREATED this network;
+# it was never imported, so the name was a convention copied from a system that
+# is not here. The container a few lines down was renamed off that same
+# convention at the time ("nothing depends on it"); the network was missed.
+#
+# Nothing outside this file refers to it: both references go through
+# docker_network.this.name.
 resource "docker_network" "this" {
-  name       = "homeassistant_home-assistant-network"
+  name       = "home-assistant"
   driver     = "bridge"
   attachable = false
   ingress    = false

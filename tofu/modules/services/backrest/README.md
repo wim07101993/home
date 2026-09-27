@@ -93,6 +93,25 @@ remote is declared in the container's `env`, where it shows up in a diff.
   without it the container ID becomes the identity and history restarts on every
   recreate. Reproduced in the preflight: a snapshot landed under
   `6e53772625d4`.
+- **Check for a running backup before applying.** Any change to `config.json`
+  replaces the container, and that KILLS AN IN-FLIGHT BACKUP -- docker stops the
+  old container, restic never writes its snapshot object, and the run is scrubbed
+  as incomplete on restart. Cost 6h41m of samson's first pass on 2026-09-27, to a
+  one-word `CLOCK_LOCAL` -> `CLOCK_UTC` change applied at 11:41 UTC while the
+  05:00 run was still going.
+
+  It is recoverable rather than wasted: restic flushes index files as it goes, so
+  the uploaded packs are indexed and the next run reuses them instead of
+  re-uploading. But `prune` collects unreferenced packs, so an apply-then-prune
+  before the next successful backup WOULD discard them.
+
+  Nothing in tofu can prevent this. Before applying a change that touches
+  `config.json`, check:
+
+      docker logs backrest --tail 5    # a "running task: backup for plan ..."
+                                       # with no completion is a live run
+
+  samson's full pass is ~800 GB off the array. mindy's is minutes.
 - **The repository password carries `prevent_destroy`, and must.** It is
   generated (`random_password.backrest_repository` in the root) and has no reset
   path. A `-replace`, or any `keepers` change, regenerates it; the next apply
@@ -101,7 +120,8 @@ remote is declared in the container's `env`, where it shows up in a diff.
   `tofu output -raw backrest_repository_password`.
 - **Never `replace(p, "/data/", "/backup/")`.** OpenTofu treats a slash-wrapped
   substring as a **regex**, so that pattern is `data` and the result is
-  `//backup//media/...`. See `samson-media-sources.txt`.
+  `//backup//media/...`. See `local.samson_backup_paths` in the root `main.tf`,
+  which is why that list is stored relative to the mount root.
 
 ## Observability
 
@@ -113,6 +133,38 @@ nothing pushed.
 A **skipped** run pushes success. `skipIfUnchanged` means a week of untouched
 documents produces no snapshot, and treating that as failure would page about a
 repository that is entirely up to date.
+
+## Multihost sync
+
+Optional, off unless `var.sync_identity` is set. mindy is the **host** (the
+dashboard you open); samson is a **client** that pushes its operations up, so
+one dashboard shows both. Each instance keeps its own repository and its own UI
+regardless.
+
+The asymmetry is easy to get backwards, and getting it wrong fails silently:
+
+| | declares | carries the permission |
+|---|---|---|
+| host (mindy) | `authorizedClients: [{instanceId, keyId}]` | no — has no effect there |
+| client (samson) | `knownHosts: [{instanceId, keyId, instanceUrl, permissions}]` | yes, `PERMISSION_READ_OPERATIONS` |
+
+**Identities are supplied, and must be.** Backrest generates one when the config
+omits it (`PopulateRequiredFields`) and then writes it back into `config.json`.
+Because this module keeps that file in the container layer, a generated identity
+is discarded on every replacement and a fresh keyid minted on the next start --
+so the peer's declared keyid would break on every apply. `./backrest-identity.sh`
+generates the pair into `secrets.auto.tfvars`; tofu cannot, because the identity
+is a raw 32-byte ed25519 seed and the keyid is `base64url(sha256(raw pubkey))`,
+neither of which HCL can produce.
+
+**It is not a monitoring path.** Nothing is pushed while mindy is down. gatus
+remains the thing that reports when nobody is looking, and it has no dependency
+between the two hosts.
+
+Verified locally 2026-09-27 with two containers and an SFTP server:
+`encrypted sync session established` both ways, the client reporting
+`sent initial state to server: 3 operations`, and the host's oplog then holding
+`operation_groups by instance_id: [('mindy', 2), ('samson', 2)]`.
 
 ## Verified before first apply (2026-09-26)
 
