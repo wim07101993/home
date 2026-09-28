@@ -33,13 +33,6 @@ variable "oidc_issuer_url" {
   default = "https://auth.wvl.app"
 }
 
-# NOT the client id from module.zitadel -- drive is still on the `home-old`
-# project, like photos and memo. Switch this to
-# module.zitadel.zitadel_application_oidc.drive.client_id as part of that
-# migration, not before: changing it early logs everyone out of a working app.
-variable "oidc_client_id" {
-  type = string
-}
 
 # Members of this group in the `groups` claim are made admin. Unlike scopes,
 # this IS re-applied on every login, for existing users too.

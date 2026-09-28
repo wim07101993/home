@@ -33,7 +33,7 @@ locals {
         oidc = {
           enabled        = true
           issuerUrl      = var.oidc_issuer_url
-          clientId       = var.oidc_client_id
+          clientId       = zitadel_application_oidc.this.client_id
           scopes         = "openid profile email groups"
           userIdentifier = "preferred_username"
           # TODO verify this works

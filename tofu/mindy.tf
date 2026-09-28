@@ -76,13 +76,6 @@ module "file_browser" {
     { path = "/files/sara", name = "Sara prive", default_enabled = false },
   ]
 
-  # BLOCKED, not an oversight. drive is still on the `home-old` zitadel project,
-  # like photos and memo. The module already creates its replacement app
-  # (zitadel_application_oidc.this) and exports it; switching to that id logs
-  # everyone out of a working app, so it moves with that migration and not
-  # before. See the module's var.oidc_client_id.
-  oidc_client_id = "367153386023354372"
-
   traefik_network = module.traefik_mindy.network_name
 
   zitadel_org_id = module.zitadel.org_home_id
@@ -271,7 +264,7 @@ variable "mindy_addr" {
   description = "mindy's TAILNET address."
 }
 
-variable "pg_superuser_password_mindy" {
+variable "mindy_pg_superuser_password" {
   type        = string
   sensitive   = true
   description = "postgres superuser password on MINDY, from /docker-volumes/db/db_password.txt there. Different file and different value from bumba's."
