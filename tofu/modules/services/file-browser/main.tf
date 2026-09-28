@@ -1,6 +1,6 @@
 locals {
   configPath = "/home/filebrowser/config.yaml"
-  config     = {
+  config = {
     server = {
       port = 80
 
@@ -27,7 +27,7 @@ locals {
       methods = {
         password = {
           enabled = true
-          signup = false
+          signup  = false
         }
 
         oidc = {
@@ -37,8 +37,8 @@ locals {
           scopes         = "openid profile email groups"
           userIdentifier = "preferred_username"
           # TODO verify this works
-          groupsClaim    = "groups"
-          adminGroup     = var.oidc_admin_group
+          groupsClaim = "groups"
+          adminGroup  = var.oidc_admin_group
         }
       }
     }

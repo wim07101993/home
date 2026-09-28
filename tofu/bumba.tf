@@ -103,17 +103,6 @@ module "postgres_bumba" {
   providers = {
     docker = docker.bumba
   }
-
-  container_name = "database-db-1"
-  network_name   = "database_db-network"
-
-  # From `docker network inspect database_db-network` on bumba, 2026-09-17.
-  network_labels = {
-    "com.docker.compose.config-hash" = "6723d56766a425ef676f8dc75eeff5a7178b8f4fb7298a50613bcf948efd9d78"
-    "com.docker.compose.network"     = "db-network"
-    "com.docker.compose.project"     = "database"
-    "com.docker.compose.version"     = ""
-  }
 }
 
 # The hop that lets samson and plop reach the Storage Box at all.
@@ -153,7 +142,7 @@ module "gatus" {
   traefik_network = module.network_bumba.name
   tailscale_ip    = var.bumba_addr
 
-  org_id = module.zitadel.org_home_id
+  zitadel_org_id = module.zitadel.org_home_id
 
   # The SMTP credential is not passed in: the module mints its own, in
   # modules/services/gatus/mail.tf, and the value never leaves the graph.

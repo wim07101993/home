@@ -6,6 +6,6 @@ variable "db_network" {
   type = string
 }
 
-variable "org_id" {
+variable "zitadel_org_id" {
   type = string
 }

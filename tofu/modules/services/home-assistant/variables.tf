@@ -12,7 +12,7 @@ variable "serial_device" {
   EOT
 }
 
-variable "org_id" {
+variable "zitadel_org_id" {
   type        = string
   description = "The zitadel org that owns the `home` project. From module.zitadel."
 }

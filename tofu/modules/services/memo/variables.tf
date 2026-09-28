@@ -19,6 +19,6 @@ variable "db_network" {
   EOT
 }
 
-variable "org_id" {
+variable "zitadel_org_id" {
   type = string
 }

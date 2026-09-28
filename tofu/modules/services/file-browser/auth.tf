@@ -1,6 +1,6 @@
 resource "zitadel_project" "this" {
   name   = "drive"
-  org_id = var.org_id
+  org_id = var.zitadel_org_id
 
   project_role_assertion = true
   project_role_check     = true
@@ -10,7 +10,7 @@ resource "zitadel_project" "this" {
 # TODO: verfiy this role works
 # TODO: this role needs to exist cross service, needs to be moved out.
 resource "zitadel_project_role" "family" {
-  org_id       = var.org_id
+  org_id       = var.zitadel_org_id
   project_id   = zitadel_project.this.id
   role_key     = "family"
   display_name = "family"
@@ -18,13 +18,13 @@ resource "zitadel_project_role" "family" {
 }
 
 resource "zitadel_application_oidc" "this" {
-  org_id     = var.org_id
+  org_id     = var.zitadel_org_id
   project_id = zitadel_project.this.id
   name       = "drive"
 
   redirect_uris = ["https://drive.wvl.app/api/auth/oidc/callback"]
 
-  post_logout_redirect_uris = ["https://drive.wvl.app.com/login"]
+  post_logout_redirect_uris = ["https://drive.wvl.app/login"]
 
   response_types   = ["OIDC_RESPONSE_TYPE_CODE"]
   grant_types      = ["OIDC_GRANT_TYPE_AUTHORIZATION_CODE"]

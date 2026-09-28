@@ -15,7 +15,7 @@ resource "docker_container" "this" {
   security_opts = ["no-new-privileges:true"]
 
   networks_advanced {
-    name    = var.traefik_network
+    name = var.traefik_network
   }
 
   healthcheck {

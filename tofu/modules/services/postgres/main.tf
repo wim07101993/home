@@ -43,7 +43,7 @@ resource "docker_container" "this" {
   }
 
   networks_advanced {
-    name = docker_network.this.name
+    name    = docker_network.this.name
     aliases = [var.network_alias]
   }
 

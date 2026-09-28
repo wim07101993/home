@@ -3,14 +3,6 @@ resource "docker_image" "this" {
   keep_locally = true
 }
 
-resource "docker_volume" "data" {
-  name = "memos_data"
-
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
 resource "docker_container" "this" {
   name    = "memos"
   image   = docker_image.this.image_id
@@ -42,12 +34,6 @@ resource "docker_container" "this" {
   ports {
     internal = 5230
     external = 5230
-  }
-
-  # TODO why is this here?
-  volumes {
-    volume_name    = docker_volume.data.name
-    container_path = "/var/opt/memos"
   }
 
   networks_advanced {

@@ -1,6 +1,6 @@
 resource "zitadel_project" "this" {
   name   = "home"
-  org_id = var.org_id
+  org_id = var.zitadel_org_id
 
   project_role_assertion = true
   project_role_check     = true
@@ -8,7 +8,7 @@ resource "zitadel_project" "this" {
 }
 
 resource "zitadel_project_role" "family" {
-  org_id       = var.org_id
+  org_id       = var.zitadel_org_id
   project_id   = zitadel_project.this.id
   role_key     = "family"
   display_name = "family"
@@ -16,7 +16,7 @@ resource "zitadel_project_role" "family" {
 }
 
 resource "zitadel_application_oidc" "this" {
-  org_id     = var.org_id
+  org_id     = var.zitadel_org_id
   project_id = zitadel_project.this.id
   name       = "home assistant"
 
@@ -24,7 +24,6 @@ resource "zitadel_application_oidc" "this" {
     "https://plop.home:8123/auth/openid/callback",
     "http://${var.tailscale_ip}:8123/auth/openid/callback",
     "http://plop.home:8123/auth/openid/callback",
-    # TODO add mobile callback
   ]
   response_types = ["OIDC_RESPONSE_TYPE_CODE"]
   grant_types    = ["OIDC_GRANT_TYPE_AUTHORIZATION_CODE"]

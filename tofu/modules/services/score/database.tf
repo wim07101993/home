@@ -7,7 +7,7 @@ resource "postgresql_role" "this" {
   name     = "score_api"
   login    = true
   password = random_password.db.result
-  inherit = false
+  inherit  = false
 }
 
 resource "postgresql_database" "this" {

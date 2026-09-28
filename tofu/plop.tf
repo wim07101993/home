@@ -6,8 +6,8 @@ module "home_assistant" {
     zitadel = zitadel
   }
 
-  org_id       = module.zitadel.org_home_id
-  tailscale_ip = var.plop_addr
+  zitadel_org_id = module.zitadel.org_home_id
+  tailscale_ip   = var.plop_addr
 }
 
 # --- inputs ---------------------------------------------------------------

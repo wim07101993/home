@@ -31,7 +31,7 @@ module "it_tools" {
 }
 
 module "postgres_mindy" {
-  source    = "./modules/services/postgres"
+  source = "./modules/services/postgres"
 
   providers = {
     docker = docker.mindy
@@ -50,7 +50,7 @@ module "memo" {
   traefik_network = module.traefik_mindy.network_name
   db_network      = module.postgres_mindy.network_name
 
-  org_id = module.zitadel.org_home_id
+  zitadel_org_id = module.zitadel.org_home_id
 
   depends_on = [module.postgres_mindy]
 }
@@ -76,12 +76,16 @@ module "file_browser" {
     { path = "/files/sara", name = "Sara prive", default_enabled = false },
   ]
 
-  # TODO this client_id should not be hardcoded
+  # BLOCKED, not an oversight. drive is still on the `home-old` zitadel project,
+  # like photos and memo. The module already creates its replacement app
+  # (zitadel_application_oidc.this) and exports it; switching to that id logs
+  # everyone out of a working app, so it moves with that migration and not
+  # before. See the module's var.oidc_client_id.
   oidc_client_id = "367153386023354372"
 
   traefik_network = module.traefik_mindy.network_name
 
-  org_id = module.zitadel.org_home_id
+  zitadel_org_id = module.zitadel.org_home_id
 }
 
 module "homepage" {
@@ -106,8 +110,7 @@ module "score" {
   traefik_network = module.traefik_mindy.network_name
   db_network      = module.postgres_mindy.network_name
 
-  # TODO rename org_id everywhere to zitadel_org_id
-  org_id = module.zitadel.org_home_id
+  zitadel_org_id = module.zitadel.org_home_id
 
   depends_on = [module.postgres_mindy]
 }
@@ -124,7 +127,7 @@ module "kitchen_owl" {
   traefik_network = module.traefik_mindy.network_name
   db_network      = module.postgres_mindy.network_name
 
-  org_id = module.zitadel.org_home_id
+  zitadel_org_id = module.zitadel.org_home_id
 
   depends_on = [module.postgres_mindy]
 }
@@ -135,14 +138,22 @@ module "immich" {
   providers = {
     docker  = docker.mindy
     zitadel = zitadel
-    # TODO: shouldn't this be in the immich module anyway? Why do we need to specify the pg
+    # It is passed in because PROVIDERS ARE CONFIGURED ONCE, in ../providers.tf,
+    # and inherited -- no child module declares a provider block, so there is
+    # exactly one place each credential is wired in. A module that configured
+    # its own provider could also not be used twice with different ones.
+    #
+    # The ALIAS is the load-bearing part: immich runs its own postgres on
+    # mindy:5434 with a different superuser, so `postgresql.immich` is a
+    # different cluster from `postgresql.mindy`. Passing the wrong one creates
+    # immich's role in the shared database.
     postgresql = postgresql.immich
   }
 
   library_path    = local.photos_path
   traefik_network = module.traefik_mindy.network_name
 
-  org_id = module.zitadel.org_home_id
+  zitadel_org_id = module.zitadel.org_home_id
 
   superuser_password = var.immich_pg_superuser_password
 }
@@ -242,9 +253,9 @@ module "backrest_mindy" {
 # --- values ---------------------------------------------------------------
 
 locals {
-  photos_path = "/mnt/rafiki/photos"
+  photos_path    = "/mnt/rafiki/photos"
   documents_path = "/mnt/rafiki/documents"
-  audio_path = "/mnt/rafiki/audio"
+  audio_path     = "/mnt/rafiki/audio"
   document_shares = [
     "gezin-officieel",
     "gezin-officieel-archive",

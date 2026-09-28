@@ -5,5 +5,5 @@ resource "postgresql_role" "this" {
   password  = random_password.db.result
 
   skip_reassign_owned = true
-  depends_on = [docker_container.postgres]
+  depends_on          = [docker_container.postgres]
 }
