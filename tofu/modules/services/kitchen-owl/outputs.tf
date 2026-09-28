@@ -1,6 +1,3 @@
-# Surfaced so the root can assemble the estate-wide zitadel outputs -- the
-# cutover needs every client id in one place even though the resources now live
-# with the service that uses them.
 output "zitadel_app" {
   sensitive = true
   value = {

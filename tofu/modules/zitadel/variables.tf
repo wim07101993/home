@@ -1,13 +1,15 @@
-# Zitadel's own outbound mail credential, minted by modules/mailgun.
+# Where this module's own SMTP credential is minted -- see ./mail.tf. The
+# credential is no longer passed in; this module owns it, because ./smtp.tf is
+# the thing that authenticates with it.
 #
-# Passed in rather than read from the instance because the password is not
-# retrievable: zitadel stores it encrypted with the masterkey and the API
-# returns only the ciphertext. Whoever owns the credential has to supply it.
-variable "smtp_user" {
-  type = string
+# Only the domain and region are inputs, so the credential's login and the
+# sender address in ./smtp.tf cannot drift apart.
+variable "mail_domain" {
+  type    = string
+  default = "mail.wvl.app"
 }
 
-variable "smtp_password" {
-  type      = string
-  sensitive = true
+variable "mail_region" {
+  type    = string
+  default = "eu"
 }

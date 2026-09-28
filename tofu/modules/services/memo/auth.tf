@@ -1,12 +1,3 @@
-# memo's zitadel project, role and OIDC client.
-#
-# Moved here from ../../zitadel on 2026-09-22. The ORG is not here -- orgs are
-# instance-level and stay in that module; this takes var.org_id.
-#
-# This is the app that proved the whole premise: memos stores the OIDC `sub` as
-# the account's username, so the 45 notes survive only because users are never
-# recreated. See ../../zitadel/orgs.tf.
-
 resource "zitadel_project" "this" {
   name   = "memo"
   org_id = var.org_id

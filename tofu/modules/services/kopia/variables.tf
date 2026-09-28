@@ -101,8 +101,8 @@ variable "sftp_password" {
 }
 
 variable "sftp_username" {
-  type    = string
-  default = "u643732-sub1"
+  type        = string
+  description = "The shared sub-account login. No default: it is computed by Hetzner and comes from modules/hetzner, so the account number is not written down twice."
 }
 
 variable "connect_host" {
@@ -127,8 +127,8 @@ variable "connect_port" {
 }
 
 variable "sftp_host" {
-  type    = string
-  default = "u643732.your-storagebox.de"
+  type        = string
+  description = "The Storage Box's own FQDN, from modules/hetzner. Still needed when connect_host is set: it is the pattern the known_hosts rewrite matches on."
 }
 
 variable "sftp_port" {
@@ -309,11 +309,17 @@ variable "log_opts" {
   description = <<-EOT
     json-file logging options, which must MATCH WHAT THE DAEMON ALREADY DOES.
 
-    Empty suits mindy and bumba. samson's dockerd sets max-file=3 and
-    max-size=50m for every container, so leaving this empty there is not "no
-    opinion": the provider reads the live values back, sees none configured,
-    and plans a REPLACEMENT on every apply. Same trap as
-    ../databasus/main.tf, which has carried the note since 2026-09-19.
+    Empty everywhere as of 2026-09-28, and that is the whole point: no host's
+    /etc/docker/daemon.json sets log-opts any more, so every container comes up
+    with an empty LogConfig and an omitted value here matches it.
+
+    IT IS NOT A FREE CHOICE. `log_opts` is Optional and ForceNew but NOT
+    Computed, so omitting it asserts "this must be empty" rather than "whatever
+    the daemon says". If a daemon ever stamps values again, every container on
+    that host must restate them here or the provider reads the live values back,
+    sees none configured, and REPLACES the container -- on every plan, forever,
+    because the replacement gets stamped again. samson ran that way until its
+    daemon.json was cleaned up.
   EOT
 }
 

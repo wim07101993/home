@@ -1,9 +1,3 @@
-# score.wvl.app, partituren.wvl.app and score-api.wvl.app. Moved out of
-# reverse-proxy/mindy/dynamic.yml on 2026-09-22.
-#
-# TWO HOSTNAMES, ONE BACKEND: `score` and `partituren` both point at
-# score-web-app. That is why the routers and the services are separate maps --
-# a router per hostname, a service per backend.
 output "traefik" {
   value = {
     routers = {

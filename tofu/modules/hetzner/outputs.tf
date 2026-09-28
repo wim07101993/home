@@ -1,3 +1,7 @@
+output "storage_box_sftp_username" {
+  value = hcloud_storage_box_subaccount.kopia.username
+}
+
 output "storage_box_sftp_password" {
   description = "Password for the u643732-sub1 sub-account kopia connects as."
   sensitive   = true
@@ -17,15 +21,4 @@ output "storage_box_id" {
 
 output "storage_box_host" {
   value = hcloud_storage_box.backups.server
-}
-
-output "backrest_sftp" {
-  description = "Per-host Storage Box sub-account credentials for backrest, keyed by host."
-  sensitive   = true
-  value = {
-    for host, sub in hcloud_storage_box_subaccount.backrest : host => {
-      username = sub.username
-      password = random_password.storage_box_backrest[host].result
-    }
-  }
 }

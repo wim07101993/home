@@ -19,18 +19,6 @@ variable "db_network" {
   EOT
 }
 
-# `dsn_file` is gone. The DSN was a bind mount from
-# /docker-volumes/memos/db_connection_string.txt on mindy -- a credential that
-# existed only on that disk. It is generated in main.tf now from the values
-# below. The old file can be deleted once this has applied.
-
-variable "host_port" {
-  type    = number
-  default = 3007
-}
-
-# The org every project here lives in. Passed from ../../zitadel, which owns the
-# org objects -- those are instance-level and not part of any one service.
 variable "org_id" {
   type = string
 }

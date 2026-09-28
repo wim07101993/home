@@ -1,12 +1,3 @@
-# drive's zitadel project, role and OIDC client.
-#
-# Moved here from ../../zitadel on 2026-09-22. The ORG stays there.
-#
-# NOT wired into config.yaml: filebrowser is still on the `home-old` client id
-# (var.oidc_client_id). Switching it to zitadel_application_oidc.this.client_id
-# is the cutover that variable's comment describes -- logging everyone out, so
-# it happens on purpose and not as a side effect of this move.
-
 resource "zitadel_project" "this" {
   name   = "drive"
   org_id = var.org_id
@@ -16,6 +7,8 @@ resource "zitadel_project" "this" {
   has_project_check      = true
 }
 
+# TODO: verfiy this role works
+# TODO: this role needs to exist cross service, needs to be moved out.
 resource "zitadel_project_role" "family" {
   org_id       = var.org_id
   project_id   = zitadel_project.this.id
@@ -31,9 +24,6 @@ resource "zitadel_application_oidc" "this" {
 
   redirect_uris = ["https://drive.wvl.app/api/auth/oidc/callback"]
 
-  # TYPO IN THE LIVE CONFIG, reproduced deliberately: `.wvl.app.com`. Fixing it
-  # here would bundle a silent behaviour change into a migration. Correct it
-  # afterwards, on purpose, once the rebuild is known good.
   post_logout_redirect_uris = ["https://drive.wvl.app.com/login"]
 
   response_types   = ["OIDC_RESPONSE_TYPE_CODE"]

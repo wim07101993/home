@@ -12,5 +12,9 @@ terraform {
       source  = "zitadel/zitadel"
       version = "~> 2.12"
     }
+    mailgun = {
+      source  = "wgebis/mailgun"
+      version = "~> 0.10"
+    }
   }
 }

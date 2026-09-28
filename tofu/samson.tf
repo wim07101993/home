@@ -1,36 +1,8 @@
-# samson -- the NAS at home. Where the media array and the database dumps
-# actually live, and so where they are backed up from.
-#
-# Every module here takes docker.samson.
-
-# databasus -- the database backup tool, on samson. First thing in tofu on that
-# host; plex is the other compose container still there.
-#
-# A CUTOVER. The portainer stack (id 6, project `bakup-server`) MUST be deleted
-# before this is applied, or the create fails on the container name and the two
-# systems fight over it daily afterwards. See the module README.
 module "databasus" {
   source = "./modules/services/databasus"
 
   providers = {
     docker = docker.samson
-  }
-
-  # The dumps are checked from here and reported to gatus on bumba -- the token
-  # crosses hosts through the graph rather than by hand. See
-  # modules/services/databasus/check-backups.sh.
-  gatus_token    = module.gatus.databasus_push_token
-  gatus_base_url = module.gatus.external_endpoint_base_url
-
-  # Floors are roughly half of what each database produced on 2026-09-22:
-  # 675 KB, 142 MB, 111 MB, 966 KB, 806 KB. Prefixes are databasus's DISPLAY
-  # names, which is why only zitadel is lower-case.
-  monitored = {
-    kitchenowl = { prefix = "KitchenOwl", min_bytes = 300000 }
-    immich     = { prefix = "Immich", min_bytes = 70000000 }
-    memos      = { prefix = "Memos", min_bytes = 55000000 }
-    score      = { prefix = "Score", min_bytes = 450000 }
-    zitadel    = { prefix = "zitadel", min_bytes = 400000 }
   }
 }
 
@@ -84,12 +56,6 @@ module "kopia_samson" {
   # change that FORCES REPLACEMENT, rebuilding this container on every apply.
   cpus = "4.0"
 
-  # samson's dockerd sets these daemon-wide; omitting them plans a replacement
-  # every time. See the module's var.log_opts.
-  log_opts = {
-    "max-file" = "3"
-    "max-size" = "50m"
-  }
 
   # MOUNTED: the whole library. SNAPSHOTTED: 48 chosen paths under it.
   #
@@ -128,6 +94,8 @@ module "kopia_samson" {
 
   repository_hostname = "samson"
   repository_password = var.kopia_repository_password
+  sftp_username       = module.hetzner.storage_box_sftp_username
+  sftp_host           = module.hetzner.storage_box_host
   sftp_password       = module.hetzner.storage_box_sftp_password
 
   # Through bumba. samson cannot authenticate to the Storage Box directly --
@@ -158,12 +126,6 @@ module "backrest_samson" {
   # "4.0", not "4" -- see the module's var.cpus.
   cpus = "4.0"
 
-  # samson's dockerd sets these daemon-wide; omitting them plans a replacement
-  # on every apply. See the module's var.log_opts.
-  log_opts = {
-    "max-file" = "3"
-    "max-size" = "50m"
-  }
 
   # MOUNTED: the whole library. BACKED UP: the 48 chosen paths below.
   mounts = {
@@ -180,8 +142,8 @@ module "backrest_samson" {
 
   repository_password = random_password.backrest_repository.result
   repo_path           = "restic"
-  sftp_username       = module.hetzner.backrest_sftp["samson"].username
-  sftp_password       = module.hetzner.backrest_sftp["samson"].password
+  storage_box_id      = module.hetzner.storage_box_id
+  sftp_host           = module.hetzner.storage_box_host
 
   # Through bumba. samson cannot authenticate to the Storage Box directly.
   connect_host = var.bumba_addr

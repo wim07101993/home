@@ -246,9 +246,10 @@ _tofu_need TF_VAR_kopia_repository_password "kopia repository password" || retur
 # be regenerated. Prefer secrets.auto.tfvars over typing it; see
 # modules/services/zitadel/variables.tf.
 
-# Mailgun. One key, not one password per service: tofu creates gatus's SMTP
-# credential itself (modules/mailgun), so there is no longer an SMTP password
-# to type. Scope the key in the Mailgun console -- it can manage the account.
+# Mailgun. One key, not one password per service: tofu creates the SMTP
+# credentials itself -- modules/services/gatus/mail.tf and
+# modules/zitadel/mail.tf -- so there is no SMTP password to type. Scope the key
+# in the Mailgun console; it can manage the whole account.
 _tofu_need TF_VAR_mailgun_api_key "Mailgun API key" || return 1
 
 if [ -z "${PG_CONN_STR:-}" ]; then

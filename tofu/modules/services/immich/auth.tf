@@ -1,11 +1,3 @@
-# immich's zitadel project, role and OIDC client.
-#
-# Moved here from ../../zitadel on 2026-09-22. The ORG stays there.
-#
-# NOT wired into the container: immich is still on the `home-old` client id,
-# configured inside immich itself. Pointing it at this app is a separate,
-# deliberate cutover -- see ../../../main.tf.
-
 resource "zitadel_project" "this" {
   name   = "photos"
   org_id = var.org_id

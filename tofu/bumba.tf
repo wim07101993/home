@@ -33,7 +33,6 @@ module "reverse_proxy_bumba" {
   host           = "bumba"
   container_name = "reverse-proxy"
   network_name   = module.network_bumba.name
-  image_tag      = "v3.7.10"
   dashboard_host = "wvl.app"
 
   routing = [
@@ -90,10 +89,8 @@ module "zitadel_server" {
 module "zitadel" {
   source = "./modules/zitadel"
 
-  # Zitadel's own outbound mail credential. Created by tofu, so there is no
-  # SMTP password to type and rotating it is an apply.
-  smtp_user     = module.mailgun.auth_smtp_username
-  smtp_password = module.mailgun.auth_smtp_password
+  # The SMTP credential is no longer passed in -- the module owns it, in
+  # modules/zitadel/mail.tf, beside the config that authenticates with it.
 
   depends_on = [module.reverse_proxy_bumba, module.zitadel_server]
 }
@@ -158,10 +155,8 @@ module "gatus" {
 
   org_id = module.zitadel.org_home_id
 
-  # Created by tofu rather than typed in: modules/mailgun mints this credential
-  # and the value never leaves the graph.
-  smtp_username = module.mailgun.gatus_smtp_username
-  smtp_password = module.mailgun.gatus_smtp_password
+  # The SMTP credential is not passed in: the module mints its own, in
+  # modules/services/gatus/mail.tf, and the value never leaves the graph.
 }
 
 # --- inputs ---------------------------------------------------------------

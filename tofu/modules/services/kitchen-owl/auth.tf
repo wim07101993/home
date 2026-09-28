@@ -1,8 +1,3 @@
-# keuken's zitadel project, role and client.
-#
-# Moved here from ../../zitadel on 2026-09-22. The ORG is not here -- orgs are
-# instance-level and stay in that module; this takes var.org_id.
-
 resource "zitadel_project" "this" {
   name   = "keuken"
   org_id = var.org_id

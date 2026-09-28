@@ -1,36 +1,3 @@
-# Backrest -- restic with a web UI, replacing kopia.
-#
-# WHY THE MIGRATION. kopia keeps its policies AND its source list inside the
-# encrypted repository, so a declarative model needs a reconcile loop in each
-# direction: `policy import --delete-other-policies` for policies, and a prune
-# pass for sources. The second one never existed, and the gap is not academic --
-# /data/media survived its own removal from the config on 2026-09-25, inherited
-# the global schedule, and was one scheduled run away from writing 8.4 TB into
-# 4.5 TB of free space. Caught by hand. Twice.
-#
-# Backrest keeps config in ONE JSON FILE and its history in SQLite. So config is
-# rendered here and the repository holds no opinions: a path removed from
-# var.paths is simply absent from the next snapshot, and the old ones age out
-# under var.retention. Nothing is reconciled and no history is deleted to
-# express "stop backing this up".
-#
-# WHAT THIS DELETED: policies.json (1061 lines), bootstrap-sources.sh (100),
-# heartbeat.sh (79), prune_sources, KOPIA_IDENTITY, import_policies, the
-# self-signed TLS pair, and the `server users add || set` dance.
-#
-# WHAT IT ADDED: start.sh, two lines, because restic cannot do SFTP passwords.
-#
-# The UI is HTTP on the tailnet, deliberately. kopia needed a generated
-# certificate because it served a repository protocol; this serves a dashboard
-# over WireGuard, and providers.tf already makes that argument for postgres.
-
-# The UI password. Generated per host -- each instance runs its own UI on its
-# own tailnet address, so there is no reason to share one.
-#
-# NOT the repository password (which encrypts the snapshots and is supplied) and
-# NOT the Storage Box password (which reaches the box and comes from
-# modules/hetzner). Three different secrets; kopia had the same three and they
-# were confused more than once.
 resource "random_password" "ui" {
   length  = 32
   special = false
@@ -126,7 +93,7 @@ resource "docker_container" "this" {
     "RCLONE_CONFIG_STORAGEBOX_TYPE=sftp",
     "RCLONE_CONFIG_STORAGEBOX_HOST=${local.connect_host}",
     "RCLONE_CONFIG_STORAGEBOX_PORT=${local.connect_port}",
-    "RCLONE_CONFIG_STORAGEBOX_USER=${var.sftp_username}",
+    "RCLONE_CONFIG_STORAGEBOX_USER=${hcloud_storage_box_subaccount.this.username}",
 
     # Hetzner's SFTP does not implement the extensions rclone uses to check free
     # space, and without this every operation logs a warning about it.
@@ -312,7 +279,7 @@ resource "docker_container" "this" {
   # env and this one can delete the repository.
   upload {
     file    = "/run/secrets/sftp_password"
-    content = var.sftp_password
+    content = random_password.sftp.result
   }
 
   # Read by the gatus hooks. Same reasoning, plus it keeps the token out of

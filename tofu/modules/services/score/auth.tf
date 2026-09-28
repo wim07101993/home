@@ -1,12 +1,3 @@
-# score's zitadel project, roles and two clients -- the API the backend
-# introspects tokens with, and the web app the frontend logs in through.
-#
-# Moved here from ../../zitadel on 2026-09-22. The ORG stays there.
-#
-# BOTH APPS MUST BE IN THIS PROJECT. The frontend obtains the token; the API
-# introspects it and looks for urn:zitadel:iam:org:project:roles. Split them
-# across projects and every request is authenticated and then refused.
-
 resource "zitadel_project" "this" {
   name   = "Score"
   org_id = var.org_id
@@ -35,7 +26,6 @@ resource "zitadel_application_api" "api" {
   project_id = zitadel_project.this.id
   name       = "score-api"
 
-  # No authMethodType on the live app, which is the BASIC default.
   auth_method_type = "API_AUTH_METHOD_TYPE_BASIC"
 }
 
@@ -52,8 +42,4 @@ resource "zitadel_application_oidc" "web" {
   auth_method_type          = "OIDC_AUTH_METHOD_TYPE_NONE"
 
   id_token_role_assertion = true
-
-  # The only app on loginV2 (the zitadel-login container); everything else is
-  # still loginV1. If the provider cannot express that, set it in the console
-  # after creation and note it here.
 }

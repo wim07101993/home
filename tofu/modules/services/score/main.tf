@@ -1,24 +1,6 @@
-# score.wvl.app, partituren.wvl.app, score-api.wvl.app
-#
-# Moved from bumba to mindy on 2026-09-17, and cut over to the rebuilt zitadel
-# applications in the same change.
-#
-# This is the module the whole workload layer was argued for. Everything below
-# is one dependency graph, and compose could express none of it:
-#
-#   ../../databases: random_password ─> postgresql_role ─┐
-#   zitadel client id + secret ──────────────────────────┴─> config ─> container
-#
-# No secret is typed by a human, and no client id is pasted into a file.
-#
-# The role and database live in ../../databases, which holds every database in
-# the estate, and arrive here as var.db_*.
-
 # --- the API ------------------------------------------------------------
 
 locals {
-  # host=db is the network ALIAS on mindy's postgres, the same name it had on
-  # bumba -- which is why the host move needs no change here.
   api_secrets = jsonencode({
     dbConnectionString = join(" ", [
       "user=${postgresql_role.this.name}",
@@ -36,8 +18,6 @@ locals {
     tokenIntrospectionClientSecret = zitadel_application_api.api.client_secret
   })
 
-  # Runtime config, not baked into the image -- which is the only reason the
-  # frontend could be cut over to the new zitadel app without rebuilding it.
   web_config = jsonencode({
     oidc = {
       clientId              = zitadel_application_oidc.web.client_id
@@ -55,7 +35,7 @@ locals {
 }
 
 resource "docker_image" "api" {
-  name         = "wim07101993/score:${var.api_image_tag}"
+  name         = "wim07101993/score:v0.6.0"
   keep_locally = true
 }
 
@@ -73,12 +53,9 @@ resource "docker_container" "api" {
 
   ports {
     internal = 7001
-    external = var.api_port
+    external = 7001
   }
 
-  # Was a compose `secret` read from /docker-volumes/score/ on bumba, edited by
-  # hand. Now generated: the DSN carries a password tofu invented, and the
-  # client id and secret come straight from the zitadel resources.
   upload {
     file    = "/run/secrets/score_api_secrets"
     content = local.api_secrets
@@ -93,15 +70,12 @@ resource "docker_container" "api" {
     name    = var.db_network
     aliases = ["score-api"]
   }
-
-  # No depends_on: the var.db_* values in api_secrets already order this
-  # module after ../../databases.
 }
 
 # --- the frontend -------------------------------------------------------
 
 resource "docker_image" "web" {
-  name         = "wim07101993/score-frontend:${var.web_image_tag}"
+  name         = "wim07101993/score-frontend:v0.6.0"
   keep_locally = true
 }
 
@@ -118,10 +92,9 @@ resource "docker_container" "web" {
 
   ports {
     internal = 80
-    external = var.web_port
+    external = 3006
   }
 
-  # Overwrites the config.json baked into the image.
   upload {
     file    = "/usr/share/nginx/html/config.json"
     content = local.web_config

@@ -182,20 +182,14 @@ variable "repo_path" {
   description = "Path of the repository RELATIVE TO the sub-account's home_directory, which already scopes it to this host (backrest/<host>/). So the repository lands at backrest/<host>/restic."
 }
 
-variable "sftp_username" {
-  type        = string
-  description = "The Storage Box sub-account login, e.g. u643732-sub2. COMPUTED by Hetzner, so it comes from modules/hetzner rather than being written down."
-}
-
-variable "sftp_password" {
-  type        = string
-  sensitive   = true
-  description = "Password for that sub-account. Uploaded to a file, never passed as env -- `docker inspect` shows env."
+variable "storage_box_id" {
+  type        = number
+  description = "The Storage Box this instance's sub-account is created on. From modules/hetzner -- the box is estate-level, the sub-account in ./storage-box.tf is not."
 }
 
 variable "sftp_host" {
-  type    = string
-  default = "u643732.your-storagebox.de"
+  type        = string
+  description = "The Storage Box's own FQDN. No default: it comes from modules/hetzner as a computed attribute, so the account number is not written down twice."
 }
 
 variable "sftp_port" {
@@ -338,10 +332,17 @@ variable "log_opts" {
   description = <<-EOT
     json-file logging options, which must MATCH WHAT THE DAEMON ALREADY DOES.
 
-    Empty suits mindy. samson's dockerd sets max-file=3 and max-size=50m for
-    every container, so leaving this empty there is not "no opinion": the
-    provider reads the live values back, sees none configured, and plans a
-    REPLACEMENT on every apply. Same trap as ../databasus and ../kopia.
+    Empty everywhere as of 2026-09-28, and that is the whole point: no host's
+    /etc/docker/daemon.json sets log-opts any more, so every container comes up
+    with an empty LogConfig and an omitted value here matches it.
+
+    IT IS NOT A FREE CHOICE. `log_opts` is Optional and ForceNew but NOT
+    Computed, so omitting it asserts "this must be empty" rather than "whatever
+    the daemon says". If a daemon ever stamps values again, every container on
+    that host must restate them here or the provider reads the live values back,
+    sees none configured, and REPLACES the container -- on every plan, forever,
+    because the replacement gets stamped again. samson ran that way until its
+    daemon.json was cleaned up.
   EOT
 }
 

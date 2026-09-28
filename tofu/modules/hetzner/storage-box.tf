@@ -23,7 +23,7 @@ resource "hcloud_storage_box" "backups" {
 
   lifecycle {
     prevent_destroy = true
-    ignore_changes  = [
+    ignore_changes = [
       ssh_keys,
     ]
   }
@@ -61,43 +61,6 @@ resource "hcloud_storage_box_subaccount" "kopia" {
 }
 
 resource "random_password" "storage_box_sftp" {
-  length           = 32
-  min_upper        = 1
-  min_lower        = 1
-  min_numeric      = 1
-  min_special      = 1
-  override_special = "!@#%^*()-_=+"
-}
-
-# --- backrest ---------------------------------------------------------------
-#
-resource "hcloud_storage_box_subaccount" "backrest" {
-  for_each = toset(["mindy", "samson"])
-
-  storage_box_id = hcloud_storage_box.backups.id
-
-  name           = "backrest-${each.key}"
-  home_directory = "backrest/${each.key}/"
-  description    = "restic repository for the backrest instance on ${each.key}."
-
-  password = random_password.storage_box_backrest[each.key].result
-
-  access_settings = {
-    reachable_externally = false
-    samba_enabled        = false
-    ssh_enabled          = true
-    webdav_enabled       = false
-    readonly             = false
-  }
-
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-resource "random_password" "storage_box_backrest" {
-  for_each = toset(["mindy", "samson"])
-
   length           = 32
   min_upper        = 1
   min_lower        = 1

@@ -267,8 +267,16 @@ provider "zitadel" {
   }
 }
 
-# Mailgun, for the SMTP credential gatus sends alerts with. Credentials only --
-# modules/mailgun/main.tf says why the sending domain is not managed here.
+# Mailgun. The API KEY only -- it configures this provider, which is why it
+# lives here rather than with a service.
+#
+# The CREDENTIALS it mints do not: each one sits in the module that
+# authenticates with it, modules/services/gatus/mail.tf and
+# modules/zitadel/mail.tf, since 2026-09-27. They shared a modules/mailgun
+# before that, which listed every consumer.
+#
+# The sending DOMAIN (mail.wvl.app) is not managed by tofu at all. The previous
+# note here pointed at modules/mailgun for the reason; that file never gave one.
 provider "mailgun" {
   api_key = var.mailgun_api_key
 }

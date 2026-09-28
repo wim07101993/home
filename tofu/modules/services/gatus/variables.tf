@@ -1,9 +1,3 @@
-# renovate: datasource=docker depName=ghcr.io/twin/gatus
-variable "image_tag" {
-  type    = string
-  default = "v5.36.0"
-}
-
 variable "traefik_network" {
   type = string
 }
@@ -46,17 +40,22 @@ variable "host_port" {
 # Sender and recipient are in config.yaml -- they are choices, and belong in
 # the file that documents this deployment.
 #
-# The USERNAME is not a choice: it is the identity of a credential tofu creates
-# in modules/mailgun. Duplicating it as a literal would let config.yaml and the
-# real credential disagree, and the symptom of that is a silent SMTP auth
-# failure -- alerts generated, never delivered, nothing on the dashboard wrong.
-variable "smtp_username" {
-  type = string
+# The USERNAME is not a choice, and is no longer passed in: it is derived from
+# the credential in ./mail.tf, which this module now owns. Duplicating it as a
+# literal would let config.yaml and the real credential disagree, and the
+# symptom of that is a silent SMTP auth failure -- alerts generated, never
+# delivered, nothing on the dashboard wrong.
+#
+# The domain and region are the two things that are still inputs, so the
+# credential and the sender address in config.yaml cannot drift apart.
+variable "mail_domain" {
+  type    = string
+  default = "mail.wvl.app"
 }
 
-variable "smtp_password" {
-  type      = string
-  sensitive = true
+variable "mail_region" {
+  type    = string
+  default = "eu"
 }
 
 # The org this project lives in. Passed from ../../zitadel, which owns the org

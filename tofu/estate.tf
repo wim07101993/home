@@ -1,17 +1,6 @@
-# Not owned by any one host: the Hetzner account, Mailgun, and the secrets two
-# hosts share.
-#
-# Split out of main.tf on 2026-09-27.
-
 module "hetzner" {
   source = "./modules/hetzner"
 
-}
-
-# SMTP credentials for outbound alerts. Credentials only -- the sending domain
-# is deliberately unmanaged, see the module.
-module "mailgun" {
-  source = "./modules/mailgun"
 }
 
 # --- backrest: replacing kopia --------------------------------------------
@@ -94,10 +83,12 @@ variable "kopia_repository_password" {
 
 # --- mailgun --------------------------------------------------------------
 #
-# Replaces the hand-typed gatus SMTP password: tofu now CREATES that credential
-# (modules/mailgun) and hands it straight to gatus, so the only mail secret
-# left is this key. One key mints as many credentials as services need, and
-# rotating one is `tofu taint` plus an apply.
+# Replaces the hand-typed SMTP passwords: tofu CREATES those credentials, so
+# this key is the only mail secret left. One key mints as many as services need.
+#
+# The credentials themselves are NOT here -- each lives with its consumer,
+# modules/services/gatus/mail.tf and modules/zitadel/mail.tf. Only the key,
+# which configures the provider, is estate-level.
 #
 # Scope it in the Mailgun console -- it can manage the whole account.
 variable "mailgun_api_key" {

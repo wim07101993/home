@@ -12,7 +12,7 @@
 #
 # The import id is `<id>:<password>`, and the password cannot be read back out
 # of zitadel -- it is encrypted with the instance masterkey. A placeholder was
-# correct there rather than lazy: modules/mailgun rotated the credential on the
+# correct there rather than lazy: ./mail.tf rotated the credential on the
 # same apply, so the seeded value was replaced immediately. Do not put a live
 # password on that command line.
 #
@@ -33,8 +33,13 @@ resource "zitadel_email_provider_smtp" "this" {
   host = "smtp.eu.mailgun.org:587"
   tls  = true
 
-  user     = var.smtp_user
-  password = var.smtp_password
+  # Both derived from ./mail.tf rather than passed in, since 2026-09-27. The
+  # RENDERED VALUES ARE UNCHANGED -- login `auth` plus var.mail_domain is the
+  # same `auth@mail.wvl.app` the old module output produced, and the password is
+  # the same object after the state move. That equality is the point: an update
+  # here does not converge, so the move had to be a pure rename.
+  user     = "${mailgun_domain_credential.smtp.login}@${var.mail_domain}"
+  password = random_password.smtp.result
 
   sender_address   = "auth@mail.wvl.app"
   sender_name      = "auth@mail.wvl.app"
@@ -121,7 +126,7 @@ resource "zitadel_email_provider_smtp" "this" {
 #
 # THE FIX, one command, because it rewrites both sides from one value:
 #
-#   tofu apply -replace='module.mailgun.random_password.auth'
+#   tofu apply -replace='module.zitadel.random_password.smtp'
 #
 # The failed projection above is a red herring here and cost an hour. It was
 # still stuck at 122/123 afterwards, and mail sends fine -- which CONFIRMS the
