@@ -67,56 +67,7 @@ variable "port" {
   type = number
 }
 
-variable "mounts" {
-  type = map(string)
 
-  description = <<-EOT
-    What this container can SEE, as <path under /backup> => <host path>. Bind
-    mounts, read-only.
-
-    /backup, NOT /data. Backrest's own docker-entrypoint defaults BACKREST_DATA
-    to /data, which is where its SQLite operation log lives -- mounting backup
-    sources there would bury the thing that records whether backups happened.
-    kopia's convention was /data and it is not portable.
-
-    THE KEY IS PART OF THE SNAPSHOT PATH. restic identifies a snapshot by
-    host + paths, so `photos` here means /backup/photos in every snapshot
-    forever. Renaming a key starts that path's history over; it does not move
-    it.
-
-    Simpler than kopia's equivalent on purpose: there is no /data root bind and
-    no rslave propagation, because no source arrives as an NFS submount any
-    more. Each host now backs up its own local disk, which is what the
-    2026-09-24 split achieved and what removed the `nfs: server not
-    responding` stalls.
-  EOT
-}
-
-variable "paths" {
-  type    = list(string)
-  default = []
-
-  description = <<-EOT
-    What actually gets BACKED UP -- container paths under /backup. EMPTY means
-    "every mount in var.mounts", which is the common case.
-
-    Set it when what you MOUNT and what you BACK UP differ. samson mounts the
-    whole 8.4 TB media library and backs up 48 chosen paths beneath it: the
-    library does not fit in a 5.5 TB Storage Box, and the selection is a
-    deliberate decision about what is worth off-site.
-
-    THIS LIST IS AUTHORITATIVE IN BOTH DIRECTIONS, which is the whole reason
-    this module exists. restic snapshots record the paths they were given, so
-    removing an entry means the next snapshot simply does not contain it and
-    the old ones age out under var.retention. Nothing has to be reconciled and
-    no history is deleted to express "stop backing this up".
-
-    That is the gap that made kopia unworkable here: a path removed from its
-    config stayed a live source on the global schedule forever, which is how
-    /data/media survived its own deletion on 2026-09-25 and came within one
-    scheduled run of writing 8.4 TB into 4.5 TB of free space.
-  EOT
-}
 
 variable "excludes" {
   type    = list(string)
@@ -426,5 +377,27 @@ variable "sync_known_hosts" {
     layer over the dashboards and NOT a monitoring path. gatus stays the thing
     that reports when nobody is looking, and it has no dependency between the
     two hosts.
+  EOT
+}
+
+variable "backup" {
+  type = list(object({
+    mounts = map(string)
+    paths  = optional(list(string), [])
+  }))
+
+  description = <<-EOT
+    What to back up, contributed by the services that own the data -- the same
+    shape as var.routing on the reverse proxy. Each entry is one service's
+    `backup` output.
+
+    mounts: <name under /backup> => <host path>. THE KEY IS THE SNAPSHOT
+    IDENTITY: restic records the path, so renaming a key starts that path's
+    history over rather than moving it.
+
+    paths: optional. Empty means "every mount in this entry". Set it where what
+    is MOUNTED and what is BACKED UP differ -- plex mounts the whole media
+    library and backs up a chosen subset, because the library does not fit in
+    the Storage Box.
   EOT
 }

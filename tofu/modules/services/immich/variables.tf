@@ -22,7 +22,7 @@ variable "traefik_network" {
 
 variable "library_path" {
   type        = string
-  default     = "/mnt/rafiki/photos"
+  default     = "/docker-volumes/immich/photos"
   description = <<-EOT
     LOCAL, on the `rafiki` volume attached to mindy. Moved off NFS 2026-09-18.
 
@@ -68,17 +68,19 @@ variable "superuser_password" {
   description = <<-EOT
     postgres superuser password on immich's own cluster.
 
-    Generated in the ROOT (random_password.immich_pg_superuser), because it
-    also configures the postgresql provider aliased at mindy:5434.
+    SUPPLIED at the root, as var.immich_pg_superuser_password. It cannot live in
+    this module and cannot be generated: ../../../providers.tf configures the
+    postgresql alias at mindy:5434 with it, provider config must resolve at plan
+    time, and reading it from this module would be a cycle -- the provider would
+    depend on the module that depends on the provider.
 
     It is written to a file in the container and re-applied on every start by
     assert-superuser-password.sh. That is what makes it a declared value rather
     than a fact about the day initdb ran -- POSTGRES_PASSWORD alone is read
     only when the data directory is empty, which on this cluster was years ago.
 
-    Rotating it is an ordinary apply:
-
-      tofu apply -replace=random_password.immich_pg_superuser
+    Rotating it is: change the value where it is supplied, then apply. The
+    wrapper re-applies it on the next start.
   EOT
 }
 

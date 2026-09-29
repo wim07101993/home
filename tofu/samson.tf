@@ -48,18 +48,14 @@ module "backrest_samson" {
   cpus = "4.0"
 
 
-  # MOUNTED: the whole library. BACKED UP: the 48 chosen paths below.
-  mounts = {
-    media         = "/export/media"
-    audio-archive = "/export/audio-archive"
-    backups       = "/export/backups"
-  }
+  backup = [
+    module.plex.backup,
+    module.databasus.backup,
 
-  # The curated media list. It was shared with kopia, mount root swapped, so the
-  # selection could not drift between the two systems while they ran in parallel --
-  # which is exactly the drift that put the whole 8.4 TB library in scope twice
-  # on 2026-09-25.
-  paths = [for p in local.samson_backup_paths : "/backup/${p}"]
+    # audio-archive has no owning module: it lives on samson but is served by
+    # filebrowser on mindy. Declared here rather than pretending otherwise.
+    { mounts = { "audio-archive" = "/export/audio-archive" } },
+  ]
 
   repository_password = random_password.backrest_repository.result
   repo_path           = "restic"
@@ -93,85 +89,6 @@ module "backrest_samson" {
 # --- values ---------------------------------------------------------------
 
 locals {
-  # What samson backs up, RELATIVE TO THE MOUNT ROOT -- `media/live`, not
-  # `/data/media/live`. backrest prepends its own root below; it is relative
-  # because kopia, which mounted at /data, read the same list until 2026-09-29.
-  #
-  # RELATIVE because the root differed per tool: kopia mounted at /data, backrest
-  # at /backup. Encoding one of them here meant the other had to rewrite the
-  # prefix, and the obvious way to do that is a trap --
-  #
-  #   replace(line, "/data/", "/backup/")
-  #
-  # OpenTofu treats a SLASH-WRAPPED substring as a REGEX, so that pattern is
-  # `data` and the result is `//backup//media/live`. Fifty paths that do not
-  # exist, and restic would have backed up nothing while reporting success.
-  # Caught in a render check on 2026-09-26.
-  #
-  # ONE LIST for both systems. The selection drifting between them is exactly
-  # how the whole 8.4 TB library came into scope twice on 2026-09-25.
-  #
-  # THE 8.4 TB IS THE REASON THIS IS A LIST AT ALL. /export/media does not fit
-  # in a 5.5 TB Storage Box, so the directory is mounted but never backed up
-  # wholesale -- only these paths. They are a deliberate choice about what is
-  # worth off-site, not a consequence of how the folders are arranged.
-  #
-  # Was ./modules/services/backrest/samson-media-sources.txt until 2026-09-27.
-  # Inlined because a 48-line data file next to 1000 lines of config read like
-  # boilerplate, and the paths are config like everything else here.
-  samson_backup_paths = concat(
-    ["audio-archive", "backups"],
-    [
-      "media/live",
-      "media/movies/animated/1990-1999/The Lion King (1994)",
-      "media/movies/animated/1990-1999/The Lion King II Simbas Pride (1998)",
-      "media/movies/animated/2000-2009/Bob De Bouwer - Hoe Bob Een Bouwer Werd (2008)",
-      "media/movies/animated/2000-2009/Bob de Bouwer - Molly geeft eerste hulp (2004)",
-      "media/movies/animated/2000-2009/Bob de Bouwer - Race naar de finish (2008)",
-      "media/movies/animated/2000-2009/Bob de Bouwer Werk in Uitvoering - Bob's Grote Plan (2005)",
-      "media/movies/animated/2000-2009/Bob de Bouwer werk in uitvoering- Ridder Muck (2007)",
-      "media/movies/animated/2000-2009/Bob de bouwer - Leve het wilde westen (2007)",
-      "media/movies/animated/2000-2009/Bob de bouwer - Wendy's drukke dag (2004)",
-      "media/movies/animated/2000-2009/Bob de bouwer Werk in uitvoering - Crossen met Scrambler (2006)",
-      "media/movies/animated/2000-2009/Bob de bouwer en de ridders van Makelot (2004)",
-      "media/movies/animated/2000-2009/Bob de bouwer werk in uitvoering - De oogst van Spud (2006)",
-      "media/movies/animated/2000-2009/Bob de bouwer werk in uitvoering ‐ Packers eerste dag (2008)",
-      "media/movies/animated/2000-2009/The Lion King 1½ (2004)",
-      "media/series/animated/Alfred J. Kwak",
-      "media/series/animated/Avatar - The Last Airbender (2005)/Season 01 - Water (2005)",
-      "media/series/animated/Buurman & Buurman (1976)",
-      "media/series/animated/Danny Phantom (2004)",
-      "media/series/animated/David de kabouter",
-      "media/series/animated/De fabeltjeskrant",
-      "media/series/animated/De smufen",
-      "media/series/animated/Dragonball (1986)",
-      "media/series/animated/Er Was Eens ... De aarde",
-      "media/series/animated/Er Was Eens ... De mens",
-      "media/series/animated/Er Was Eens ... De ruimte",
-      "media/series/animated/Er was eens ... Het Leven",
-      "media/series/animated/Lucky Luke",
-      "media/series/animated/Maya De Bij",
-      "media/series/animated/Nick Bruna's Nijntje (1984)",
-      "media/series/animated/Nijntje En Vriendjes (2003)",
-      "media/series/animated/Noahs Island (1997)",
-      "media/series/animated/Plonsters (1987)",
-      "media/series/animated/Plonsters (1987)/Season 01",
-      "media/series/animated/The Animals of Farthing Wood (1993)",
-      "media/series/animated/Tiktak",
-      "media/series/animated/Tiktak (2019-2020)",
-      "media/series/live-action/'Allo 'Allo! (1982)",
-      "media/series/live-action/Bumba",
-      "media/series/live-action/Dag Sinterklaas",
-      "media/series/live-action/Doctor Who (1963)",
-      "media/series/live-action/Drake & Josh (2004)",
-      "media/series/live-action/Kabouter Plop",
-      "media/series/live-action/Kulderzipken",
-      "media/series/live-action/Mythbusters (2003)",
-      "media/series/live-action/Spring",
-      "media/series/live-action/Teletubbies nl (1997)",
-      "media/series/live-action/W817",
-    ],
-  )
 }
 
 # --- inputs ---------------------------------------------------------------

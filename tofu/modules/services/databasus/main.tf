@@ -20,7 +20,7 @@ resource "docker_container" "this" {
   }
   mounts {
     type   = "bind"
-    source = "/export/backups/backup-server/databasus/data/backups"
+    source = "/docker-volumes/backup-server/databasus/data/backups"
     target = "/databasus-data/backups"
   }
 }

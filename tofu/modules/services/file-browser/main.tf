@@ -1,4 +1,13 @@
 locals {
+  shares = [
+    { dir = "gezin-officieel", name = "Gezin officieel", default_enabled = true, bind = true },
+    { dir = "gezin-officieel-archive", name = "Gezin officieel archive", default_enabled = true, bind = true },
+    { dir = "audio", name = "Audio", default_enabled = true, bind = true },
+    { dir = "audio-archive", name = "Audio archive", default_enabled = true, bind = false },
+    { dir = "wim", name = "Wim privé", default_enabled = false, bind = true },
+    { dir = "sara", name = "Sara prive", default_enabled = false, bind = true },
+  ]
+
   configPath = "/home/filebrowser/config.yaml"
   config = {
     server = {
@@ -10,8 +19,8 @@ locals {
       # abandoning the real one -- users, shares and all.
       database = "/home/filebrowser/data/database.db"
 
-      sources = [for s in var.sources : {
-        path = s.path
+      sources = [for s in local.shares : {
+        path = "/files/${s.dir}"
         name = s.name
         config = {
           defaultEnabled   = s.default_enabled
@@ -96,58 +105,18 @@ resource "docker_container" "this" {
     }
   }
 
-  # Audio, from rafiki. `audio-archive` is deliberately absent -- it is archival,
-  # stays on samson, and still arrives over NFS through the parent bind.
-  mounts {
-    type   = "bind"
-    source = var.audio_path
-    target = "/files/audio"
-  }
-
-  # The document shares, from the local volume rather than from samson.
-  # See var.documents_path. `audio`, `audio-archive`, `media` and `backups`
-  # still arrive over NFS through the parent bind above -- audio is 55.4 GB and
-  # does not fit on rafiki yet.
+  # Each is a SYMLINK on the host under /docker-volumes/filebrowser/files,
+  # pointing at the real directory on rafiki. Docker resolves it host-side.
   dynamic "mounts" {
-    for_each = var.document_shares
+    for_each = { for s in local.shares : s.dir => s if s.bind }
     content {
       type   = "bind"
-      source = "${var.documents_path}/${mounts.value}"
-      target = "/files/${mounts.value}"
+      source = "/docker-volumes/filebrowser/files/${mounts.key}"
+      target = "/files/${mounts.key}"
     }
   }
 
   networks_advanced {
     name = var.traefik_network
   }
-
-  # NOT on mindy's postgres network, and deliberately so since 2026-09-27.
-  #
-  # It was, inherited verbatim when this container was adopted from compose --
-  # the network is still named `db_db-network`, which is compose's
-  # <project>_<network>. Nothing ever used it: filebrowser keeps its state in a
-  # local BoltDB (FILEBROWSER_DATABASE=.../database.db, baked into the image),
-  # there is no database.tf here, no role was created, and no DSN existed in any
-  # env or config.
-  #
-  # Removing it costs nothing and takes the one service whose job is exposing
-  # directories to a browser off the network holding memos, kitchenowl and
-  # score. Credentials still guarded that; reachability with no purpose did not.
-
-  # A share can be mounted and still be invisible: filebrowser only serves paths
-  # that appear in server.sources. Mounting one without adding it to var.sources
-  # produces no error at any layer -- the directory is simply not there in the
-  # UI. Catch it at plan time instead.
-  lifecycle {
-    precondition {
-      condition = length(setsubtract(
-        toset([for s in var.document_shares : "/files/${s}"]),
-        toset([for s in var.sources : s.path]),
-      )) == 0
-      error_message = "Every document share must have a matching entry in var.sources, or it will be mounted but unreachable."
-    }
-  }
-
-  # Compose also made `filebrowser_filebrowser-network` -- one container, no
-  # peers. Not reproduced; left orphaned by the cutover and removable.
 }

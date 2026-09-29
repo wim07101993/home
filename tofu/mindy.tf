@@ -22,7 +22,7 @@ check "mindy_unique_ports" {
   }
 }
 
-module "network_mindy" {
+module "mindy_traefik_network" {
   source = "./modules/network"
 
   providers = { docker = docker.mindy }
@@ -30,7 +30,7 @@ module "network_mindy" {
   name = "traefik-network"
 }
 
-module "traefik_mindy" {
+module "mindy_traefik" {
   source = "./modules/services/reverse-proxy"
 
   providers = {
@@ -50,7 +50,7 @@ module "traefik_mindy" {
     module.memo.traefik,
     module.score.traefik,
   ]
-  network_name = module.network_mindy.name
+  network_name = module.mindy_traefik_network.name
 
   http_port  = local.mindy_ports.traefik_http
   https_port = local.mindy_ports.traefik_https
@@ -63,10 +63,10 @@ module "it_tools" {
     docker = docker.mindy
   }
 
-  traefik_network = module.network_mindy.name
+  traefik_network = module.mindy_traefik_network.name
 }
 
-module "postgres_mindy" {
+module "mindy_postgres" {
   source = "./modules/services/postgres"
 
   providers = {
@@ -85,12 +85,12 @@ module "memo" {
     zitadel    = zitadel
   }
 
-  traefik_network = module.network_mindy.name
-  db_network      = module.postgres_mindy.network_name
+  traefik_network = module.mindy_traefik_network.name
+  db_network      = module.mindy_postgres.network_name
 
   zitadel_org_id = module.zitadel.org_home_id
 
-  depends_on = [module.postgres_mindy]
+  depends_on = [module.mindy_postgres]
 
   host_port = local.mindy_ports.memos
 }
@@ -103,20 +103,7 @@ module "file_browser" {
     zitadel = zitadel
   }
 
-  audio_path      = local.audio_path
-  documents_path  = local.documents_path
-  document_shares = local.document_shares
-
-  sources = [
-    { path = "/files/gezin-officieel", name = "Gezin officieel", default_enabled = true },
-    { path = "/files/gezin-officieel-archive", name = "Gezin officieel archive", default_enabled = true },
-    { path = "/files/audio", name = "Audio", default_enabled = true },
-    { path = "/files/audio-archive", name = "Audio archive", default_enabled = true },
-    { path = "/files/wim", name = "Wim privé", default_enabled = false },
-    { path = "/files/sara", name = "Sara prive", default_enabled = false },
-  ]
-
-  traefik_network = module.network_mindy.name
+  traefik_network = module.mindy_traefik_network.name
 
   zitadel_org_id = module.zitadel.org_home_id
 
@@ -130,7 +117,7 @@ module "homepage" {
     docker = docker.mindy
   }
 
-  traefik_network = module.network_mindy.name
+  traefik_network = module.mindy_traefik_network.name
 
   host_port = local.mindy_ports.homepage
 }
@@ -144,12 +131,12 @@ module "score" {
     zitadel    = zitadel
   }
 
-  traefik_network = module.network_mindy.name
-  db_network      = module.postgres_mindy.network_name
+  traefik_network = module.mindy_traefik_network.name
+  db_network      = module.mindy_postgres.network_name
 
   zitadel_org_id = module.zitadel.org_home_id
 
-  depends_on = [module.postgres_mindy]
+  depends_on = [module.mindy_postgres]
 
   api_host_port = local.mindy_ports.score_api
   web_host_port = local.mindy_ports.score_web
@@ -164,12 +151,12 @@ module "kitchen_owl" {
     zitadel    = zitadel
   }
 
-  traefik_network = module.network_mindy.name
-  db_network      = module.postgres_mindy.network_name
+  traefik_network = module.mindy_traefik_network.name
+  db_network      = module.mindy_postgres.network_name
 
   zitadel_org_id = module.zitadel.org_home_id
 
-  depends_on = [module.postgres_mindy]
+  depends_on = [module.mindy_postgres]
 }
 
 module "immich" {
@@ -181,8 +168,7 @@ module "immich" {
     postgresql = postgresql.immich
   }
 
-  library_path    = local.photos_path
-  traefik_network = module.network_mindy.name
+  traefik_network = module.mindy_traefik_network.name
 
   zitadel_org_id = module.zitadel.org_home_id
 
@@ -208,13 +194,10 @@ module "backrest_mindy" {
   #
   # audio-archive, backups and media are absent on purpose: they live on samson
   # and are backed up there.
-  mounts = merge(
-    {
-      photos = local.photos_path
-      audio  = local.audio_path
-    },
-    { for share in local.document_shares : share => "${local.documents_path}/${share}" },
-  )
+  backup = [
+    module.immich.backup,
+    module.file_browser.backup,
+  ]
 
   # `paths` unset: nothing to exclude, so every mount is backed up.
 
@@ -240,20 +223,6 @@ module "backrest_mindy" {
   }]
 
   port = local.mindy_ports.backrest
-}
-
-# --- values ---------------------------------------------------------------
-
-locals {
-  photos_path    = "/mnt/rafiki/photos"
-  documents_path = "/mnt/rafiki/documents"
-  audio_path     = "/mnt/rafiki/audio"
-  document_shares = [
-    "gezin-officieel",
-    "gezin-officieel-archive",
-    "sara",
-    "wim",
-  ]
 }
 
 # --- inputs ---------------------------------------------------------------

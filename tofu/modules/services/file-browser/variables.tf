@@ -2,32 +2,6 @@ variable "traefik_network" {
   type = string
 }
 
-variable "documents_path" {
-  type = string
-}
-
-variable "document_shares" {
-  type = list(string)
-}
-
-# THE SOURCE LIST, and the access a NEW user gets to each.
-#
-# `default_enabled` IS retroactive, unlike the permissions below. On every
-# startup, cmd/user.go -> updateUserScopes grants each user a scope for any
-# default_enabled source they are missing. Flip one to true and the next
-# container start hands it to everyone who already has an account.
-#
-# Personal shares stay false. Setting one true would hand it to every user the
-# OIDC provider auto-creates, which for /files/wim and /files/sara is precisely
-# the wrong outcome.
-variable "sources" {
-  type = list(object({
-    path            = string
-    name            = string
-    default_enabled = bool
-  }))
-}
-
 variable "oidc_issuer_url" {
   type    = string
   default = "https://auth.wvl.app"
@@ -71,18 +45,6 @@ variable "user_permissions" {
   }
 }
 
-# The audio share, local on rafiki since 2026-09-18. Mounted at /files/audio --
-# the same container path it had over NFS, so config.yaml's source list and
-# filebrowser's index are unaffected by the move.
-#
-# `audio-archive` stays on samson: it is archival, and it still arrives as an
-# NFS submount through the /files bind.
-variable "audio_path" {
-  type = string
-}
-
-# The org this project lives in. Passed from ../../zitadel, which owns the org
-# objects -- those are instance-level and not part of any one service.
 variable "zitadel_org_id" {
   type = string
 }

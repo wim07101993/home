@@ -5,7 +5,12 @@ resource "random_password" "ui" {
 
 locals {
   # What gets backed up: the explicit list when given, otherwise every mount.
-  paths = length(var.paths) > 0 ? var.paths : [for k, v in var.mounts : "/backup/${k}"]
+  # Flattened once, used twice. Resolved PER ENTRY, not globally: a service that
+  # names explicit paths must not suppress another service's mounts.
+  mounts = merge([for b in var.backup : b.mounts]...)
+  paths = concat([for b in var.backup :
+    length(b.paths) > 0 ? b.paths : [for k, v in b.mounts : "/backup/${k}"]
+  ]...)
 
   # Direct to the Storage Box unless a forwarder is given. mindy is in Hetzner
   # and connects straight there; samson cannot.
@@ -229,7 +234,7 @@ resource "docker_container" "this" {
         id   = var.instance
         repo = "storagebox"
 
-        # THE LIST. Authoritative in both directions -- see var.paths.
+        # THE LIST. Authoritative in both directions -- see var.backup.
         paths    = local.paths
         excludes = var.excludes
 
@@ -337,13 +342,13 @@ resource "docker_container" "this" {
   # What this host backs up. One bind per entry, all read-only -- a backup
   # reader has no business writing to its sources.
   #
-  # /backup, not /data: /data is Backrest's own. See var.mounts.
+  # /backup, not /data: /data is Backrest's own. See var.backup.
   #
   # No parent bind and no rslave propagation, unlike kopia. Nothing arrives as
   # an NFS submount after start any more -- each host backs up its own local
   # disk, which is what the 2026-09-24 split was for.
   dynamic "mounts" {
-    for_each = var.mounts
+    for_each = local.mounts
     content {
       type      = "bind"
       source    = mounts.value

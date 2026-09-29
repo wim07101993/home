@@ -56,6 +56,7 @@ VARS=(
   IMMICH_DB_PASSWORD
   KOPIA_REPOSITORY_PASSWORD
   KOPIA_SFTP_PASSWORD
+  FILEBROWSER_ADMIN_PASSWORD
   BACKREST_MINDY_PASSWORD
   BACKREST_SAMSON_PASSWORD
 )
@@ -75,6 +76,7 @@ describe() {
     IMMICH_DB_PASSWORD)          echo "immich's APP role (generated, in state)" ;;
     KOPIA_REPOSITORY_PASSWORD)   echo "decrypts the RETIRED kopia repository -- lost = those backups unreadable" ;;
     KOPIA_SFTP_PASSWORD)         echo "Storage Box sub-account holding the RETIRED kopia repository" ;;
+    FILEBROWSER_ADMIN_PASSWORD)         echo "filebrowser local admin, the fallback when OIDC is down (generated, in state)" ;;
     BACKREST_MINDY_PASSWORD)            echo "backrest web UI on mindy, user wim (generated, in state)" ;;
     BACKREST_SAMSON_PASSWORD)           echo "backrest web UI on samson, user wim (generated, in state)" ;;
     *)                                  echo "" ;;
@@ -96,6 +98,7 @@ state_addr() {
     # the pipe and matches `.module // ""`. This is the one secret here that
     # tofu generates and cannot reset, so the vault copy is the whole point.
     BACKREST_REPOSITORY_PASSWORD) echo "|backrest_repository" ;;
+    FILEBROWSER_ADMIN_PASSWORD)  echo "module.file_browser|admin" ;;
     BACKREST_MINDY_PASSWORD)     echo "module.backrest_mindy|ui" ;;
     BACKREST_SAMSON_PASSWORD)    echo "module.backrest_samson|ui" ;;
     ZITADEL_MASTERKEY)    echo "module.zitadel_server|masterkey" ;;
@@ -222,6 +225,7 @@ done
 #
 # name | username | uri | <state module>|<random_password name>
 LOGIN_ITEMS=(
+  "filebrowser|admin|https://drive.wvl.app|module.file_browser|admin"
   "backrest (mindy)|wim|http://${MINDY_ADDR:-100.127.106.121}:9898|module.backrest_mindy|ui"
   "backrest (samson)|wim|http://${SAMSON_ADDR:-100.71.248.106}:9898|module.backrest_samson|ui"
 )
