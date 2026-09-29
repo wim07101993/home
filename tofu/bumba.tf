@@ -1,3 +1,31 @@
+# 9443 is portainer, which tofu does not manage.
+locals {
+  bumba_ports = {
+    traefik_http      = 80
+    traefik_https     = 443
+    storage_box_proxy = 2223
+    zitadel           = 3001
+    zitadel_login     = 3002
+    gatus             = 3009
+    postgres          = 5432
+  }
+}
+
+check "bumba_unique_ports" {
+  assert {
+    condition     = length(values(local.bumba_ports)) == length(distinct(values(local.bumba_ports)))
+    error_message = "two services in bumba.tf are published on the same host port"
+  }
+}
+
+module "network_bumba" {
+  source = "./modules/network"
+
+  providers = { docker = docker.bumba }
+
+  name = "traefik-network"
+}
+
 module "reverse_proxy_bumba" {
   source = "./modules/services/reverse-proxy"
 
@@ -14,27 +42,34 @@ module "reverse_proxy_bumba" {
     module.gatus.traefik,
   ]
 
+  network_name = module.network_bumba.name
+
+  http_port  = local.bumba_ports.traefik_http
+  https_port = local.bumba_ports.traefik_https
 }
 
 module "zitadel_server" {
   source = "./modules/services/zitadel"
 
-  # A VERTICAL SLICE: zitadel owns its own database and roles, on bumba.
   providers = {
     docker     = docker.bumba
-    postgresql = postgresql
+    postgresql = postgresql.bumba
   }
 
-  traefik_network = module.reverse_proxy_bumba.network_name
+  traefik_network = module.network_bumba.name
   db_network      = module.postgres_bumba.network_name
 
-  depends_on = [module.postgres_bumba, module.reverse_proxy_bumba]
+  depends_on = [module.postgres_bumba]
+
+  # published on the host
+  host_port       = local.bumba_ports.zitadel
+  login_host_port = local.bumba_ports.zitadel_login
 }
 
 module "zitadel" {
   source = "./modules/zitadel"
 
-  depends_on = [module.reverse_proxy_bumba, module.zitadel_server]
+  depends_on = [module.zitadel_server]
 }
 
 module "postgres_bumba" {
@@ -43,6 +78,8 @@ module "postgres_bumba" {
   providers = {
     docker = docker.bumba
   }
+
+  host_port = local.bumba_ports.postgres
 }
 
 module "storage_box_proxy" {
@@ -54,6 +91,8 @@ module "storage_box_proxy" {
 
   target_host  = module.hetzner.storage_box_host
   tailscale_ip = var.bumba_addr
+
+  listen_port = local.bumba_ports.storage_box_proxy
 }
 
 module "gatus" {
@@ -64,10 +103,12 @@ module "gatus" {
     zitadel = zitadel
   }
 
-  traefik_network = module.reverse_proxy_bumba.network_name
+  traefik_network = module.network_bumba.name
   tailscale_ip    = var.bumba_addr
 
   zitadel_org_id = module.zitadel.org_home_id
+
+  host_port = local.bumba_ports.gatus
 }
 
 # --- inputs ---------------------------------------------------------------
@@ -113,12 +154,4 @@ output "zitadel_project_ids" {
   }
 }
 
-output "gatus_kopia_push_token" {
-  description = "Bearer token for kopia's heartbeat push to gatus."
-  sensitive   = true
-  value       = module.gatus.kopia_push_token
-}
 
-output "gatus_kopia_push_url" {
-  value = module.gatus.kopia_push_url
-}

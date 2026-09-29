@@ -62,17 +62,6 @@ resource "docker_container" "this" {
   }
 }
 
-# For wiring kopia's post-snapshot push. Sensitive: it is a bearer token that
-# lets the holder report backup success.
-output "kopia_push_token" {
-  value     = random_password.kopia_token.result
-  sensitive = true
-}
-
-output "kopia_push_url" {
-  value = "https://status.wvl.app/api/v1/endpoints/backups_kopia-mindy/external?success=true"
-}
-
 # Consumed by ../databasus, which runs the checker on samson. Passing the token
 # through the graph rather than copying it by hand is what keeps the two sides
 # from drifting: rotating it here restarts both containers.

@@ -3,7 +3,7 @@ output "storage_box_sftp_username" {
 }
 
 output "storage_box_sftp_password" {
-  description = "Password for the u643732-sub1 sub-account kopia connects as."
+  description = "Password for the u643732-sub1 sub-account, which holds the RETIRED kopia repository. Nothing in tofu uses it; it is the way back into those backups."
   sensitive   = true
   value       = random_password.storage_box_sftp.result
 }

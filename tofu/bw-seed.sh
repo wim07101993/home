@@ -27,9 +27,17 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # The full set. Order is display order in Bitwarden.
 #
-# The first nine are read by env.sh. The last three are NOT -- they are held in
-# tofu state as random_password, and live here only as the out-of-band copy you
-# would need to rebuild state from nothing.
+# TWO KINDS, and the prefix says which:
+#
+#   TF_VAR_*   a real tofu INPUT. env.sh exports it and tofu reads it. The name
+#              must match a `variable` block in the root exactly -- rename one
+#              without the other and tofu silently falls back to prompting.
+#   BARE NAME  generated or adopted INTO tofu state. Nothing reads it as an
+#              env var; the vault copy is the out-of-band one you would need to
+#              rebuild state from nothing.
+#
+# Four entries carried a TF_VAR_ prefix without a matching root variable until
+# 2026-09-28 -- exporting them did nothing. They are bare names now.
 #
 # Each value is resolved in order: tofu state, the environment, a tfvars file,
 # the field already on the item, and only then a prompt. The tfvars step exists
@@ -38,18 +46,16 @@ VARS=(
   HCLOUD_TOKEN
   TOFU_STATE_DB_PASSWORD
   TF_VAR_state_passphrase
-  TF_VAR_pg_superuser_password
-  TF_VAR_pg_superuser_password_mindy
+  TF_VAR_bumba_pg_superuser_password
+  TF_VAR_mindy_pg_superuser_password
   TF_VAR_immich_pg_superuser_password
-  TF_VAR_zitadel_masterkey
-  TF_VAR_kopia_repository_password
+  ZITADEL_MASTERKEY
   BACKREST_REPOSITORY_PASSWORD
   TF_VAR_mailgun_api_key
-  TF_VAR_storage_box_password
-  TF_VAR_immich_db_password
-  TF_VAR_kopia_sftp_password
-  KOPIA_MINDY_PASSWORD
-  KOPIA_SAMSON_PASSWORD
+  STORAGE_BOX_PASSWORD
+  IMMICH_DB_PASSWORD
+  KOPIA_REPOSITORY_PASSWORD
+  KOPIA_SFTP_PASSWORD
   BACKREST_MINDY_PASSWORD
   BACKREST_SAMSON_PASSWORD
 )
@@ -59,18 +65,16 @@ describe() {
     HCLOUD_TOKEN)                       echo "Hetzner Cloud API token" ;;
     TOFU_STATE_DB_PASSWORD)             echo "postgres role tofu_state, the STATE BACKEND" ;;
     TF_VAR_state_passphrase)            echo "state encryption passphrase, 16+ chars" ;;
-    TF_VAR_pg_superuser_password)       echo "postgres superuser on bumba" ;;
-    TF_VAR_pg_superuser_password_mindy) echo "postgres superuser on mindy (different value)" ;;
+    TF_VAR_bumba_pg_superuser_password)       echo "postgres superuser on bumba" ;;
+    TF_VAR_mindy_pg_superuser_password) echo "postgres superuser on mindy (different value)" ;;
     TF_VAR_immich_pg_superuser_password) echo "postgres superuser on immich's own postgres, mindy:5434" ;;
-    TF_VAR_zitadel_masterkey)           echo "zitadel masterkey, 32 chars -- IRREPLACEABLE" ;;
-    TF_VAR_kopia_repository_password)   echo "encrypts the backups -- lost = unreadable" ;;
+    ZITADEL_MASTERKEY)           echo "zitadel masterkey, 32 chars -- IRREPLACEABLE" ;;
     BACKREST_REPOSITORY_PASSWORD)       echo "encrypts the RESTIC repositories (generated, in state) -- lost = unreadable" ;;
     TF_VAR_mailgun_api_key)             echo "Mailgun API key" ;;
-    TF_VAR_storage_box_password)        echo "Storage Box snow-white, MAIN account" ;;
-    TF_VAR_immich_db_password)          echo "immich's APP role (generated, in state)" ;;
-    TF_VAR_kopia_sftp_password)         echo "Storage Box sub-account (adopted into state)" ;;
-    KOPIA_MINDY_PASSWORD)               echo "kopia web UI on mindy, user wim (generated, in state)" ;;
-    KOPIA_SAMSON_PASSWORD)              echo "kopia web UI on samson, user wim (generated, in state)" ;;
+    STORAGE_BOX_PASSWORD)        echo "Storage Box snow-white, MAIN account" ;;
+    IMMICH_DB_PASSWORD)          echo "immich's APP role (generated, in state)" ;;
+    KOPIA_REPOSITORY_PASSWORD)   echo "decrypts the RETIRED kopia repository -- lost = those backups unreadable" ;;
+    KOPIA_SFTP_PASSWORD)         echo "Storage Box sub-account holding the RETIRED kopia repository" ;;
     BACKREST_MINDY_PASSWORD)            echo "backrest web UI on mindy, user wim (generated, in state)" ;;
     BACKREST_SAMSON_PASSWORD)           echo "backrest web UI on samson, user wim (generated, in state)" ;;
     *)                                  echo "" ;;
@@ -85,18 +89,16 @@ describe() {
 # and state never holds it.
 state_addr() {
   case "$1" in
-    TF_VAR_storage_box_password) echo "module.hetzner|storage_box" ;;
-    TF_VAR_kopia_sftp_password)  echo "module.hetzner|storage_box_sftp" ;;
-    TF_VAR_immich_db_password)   echo "module.immich|db" ;;
-    KOPIA_MINDY_PASSWORD)        echo "module.kopia|server_user" ;;
+    STORAGE_BOX_PASSWORD) echo "module.hetzner|storage_box" ;;
+    KOPIA_SFTP_PASSWORD)  echo "module.hetzner|storage_box_sftp" ;;
+    IMMICH_DB_PASSWORD)   echo "module.immich|db" ;;
     # ROOT-module resource, so the module half is empty -- from_state splits on
     # the pipe and matches `.module // ""`. This is the one secret here that
     # tofu generates and cannot reset, so the vault copy is the whole point.
     BACKREST_REPOSITORY_PASSWORD) echo "|backrest_repository" ;;
     BACKREST_MINDY_PASSWORD)     echo "module.backrest_mindy|ui" ;;
     BACKREST_SAMSON_PASSWORD)    echo "module.backrest_samson|ui" ;;
-    KOPIA_SAMSON_PASSWORD)       echo "module.kopia_samson|server_user" ;;
-    TF_VAR_zitadel_masterkey)    echo "module.zitadel_server|masterkey" ;;
+    ZITADEL_MASTERKEY)    echo "module.zitadel_server|masterkey" ;;
     *) echo "" ;;
   esac
 }
@@ -220,8 +222,6 @@ done
 #
 # name | username | uri | <state module>|<random_password name>
 LOGIN_ITEMS=(
-  "kopia (mindy)|wim@mindy|https://${MINDY_ADDR:-100.127.106.121}:51515|module.kopia|server_user"
-  "kopia (samson)|wim@samson|https://${SAMSON_ADDR:-100.71.248.106}:51515|module.kopia_samson|server_user"
   "backrest (mindy)|wim|http://${MINDY_ADDR:-100.127.106.121}:9898|module.backrest_mindy|ui"
   "backrest (samson)|wim|http://${SAMSON_ADDR:-100.71.248.106}:9898|module.backrest_samson|ui"
 )
@@ -229,8 +229,7 @@ LOGIN_ITEMS=(
 login_notes="Generated by tofu; state is authoritative.
 Re-run tofu/bw-seed.sh after a rotation -- editing this by hand will be
 overwritten, and the value here will not change what the server accepts.
-kopia is served over a self-signed certificate, so a browser warning on first
-visit is expected there. backrest is plain HTTP over the tailnet."
+backrest is plain HTTP over the tailnet -- the transport is WireGuard."
 
 for spec in "${LOGIN_ITEMS[@]}"; do
   IFS='|' read -r li_name li_user li_uri li_mod li_res <<<"$spec"

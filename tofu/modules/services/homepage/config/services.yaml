@@ -11,7 +11,6 @@
 #                                 nothing listening on 5432
 #   Status missing                gatus, the thing that watches everything else
 #   Partituren missing            routed since March
-#   Kopia missing                 on both hosts that run it
 #
 # Grouped by HOST, so this doubles as the answer to "what runs where". Three
 # containers are deliberately absent because they have no interface to link to:
@@ -67,13 +66,10 @@
     - ItTools:
         href: 'https://it-tools.wvl.app'
         icon: /icons/it-tools-light.svg
-    - Kopia:
-        href: 'https://100.127.106.121:51515/'
-        icon: /icons/kopia.svg
-        description: Backups -- rafiki. Self-signed cert, expect a warning
     - Backrest:
         href: 'http://100.127.106.121:9898/'
-        description: Backups -- rafiki. Replacing Kopia; both run in parallel
+        icon: /icons/backrest.svg
+        description: Backups -- rafiki (photos, audio, documents)
     - Database:
         href: 'postgresql://100.127.106.121:5432/'
         icon: /icons/postgresql.svg
@@ -96,13 +92,10 @@
         href: 'http://100.71.248.106:4005/'
         icon: /icons/databasus.svg
         description: Database dumps
-    - Kopia:
-        href: 'https://100.71.248.106:51515/'
-        icon: /icons/kopia.svg
-        description: Backups -- the array. Self-signed cert, expect a warning
     - Backrest:
         href: 'http://100.71.248.106:9898/'
-        description: Backups -- the array. Replacing Kopia; both run in parallel
+        icon: /icons/backrest.svg
+        description: Backups -- the array (selected media, dumps, archive)
     - Portainer:
         href: 'https://100.71.248.106:9443/'
         icon: /icons/portainer-dark.svg

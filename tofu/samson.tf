@@ -1,16 +1,30 @@
+# 9443 is portainer, which tofu does not manage. plex uses
+# network_mode = "host", so it publishes nothing through docker -- 32400 and
+# friends are taken but cannot appear here.
+locals {
+  samson_ports = {
+    databasus = 4005
+    backrest  = 9898
+  }
+}
+
+check "samson_unique_ports" {
+  assert {
+    condition     = length(values(local.samson_ports)) == length(distinct(values(local.samson_ports)))
+    error_message = "two services in samson.tf are published on the same host port"
+  }
+}
+
 module "databasus" {
   source = "./modules/services/databasus"
 
   providers = {
     docker = docker.samson
   }
+
+  host_port = local.samson_ports.databasus
 }
 
-# plex on samson. No reverse proxy, no zitadel client: Plex does its own auth
-# against plex.tv and is reached on the tailnet at 32400.
-#
-# CUT OVER FROM A PORTAINER STACK -- delete it there first. See the module
-# README; this is the same order databasus needed.
 module "plex" {
   source = "./modules/services/plex"
 
@@ -19,97 +33,6 @@ module "plex" {
   }
 }
 
-# samson's kopia. Snapshots the array LOCALLY, where mindy has been walking it
-# over NFS-over-Tailscale -- the scanning that produced the recurring
-# `nfs: server not responding` stalls and took filebrowser down on 2026-08-09.
-#
-# SAME repository as mindy, reached through the proxy on bumba because the
-# Storage Box offers samson no authentication methods directly. Sharing it is
-# what makes this cheap: ~800 GB of media and audio-archive is already stored,
-# so the first snapshot dedups rather than uploading.
-#
-# Its own identity (`samson`), so these become new sources rather than
-# continuing mindy's. History for the old `root@1da0a4624124:/data/media/...`
-# sources is not lost -- it ages out under the existing retention.
-#
-# PREREQUISITE, host state: /docker-volumes/kopia must exist on samson. A
-# missing bind source is not an error; docker creates an empty directory and
-# kopia starts with no config.
-#
-# mindy keeps snapshotting these three paths until samson demonstrably is --
-# see the module README. Removing them from mindy first leaves a window where
-# nothing covers the array.
-module "kopia_samson" {
-  source = "./modules/services/kopia"
-
-  providers = {
-    docker = docker.samson
-  }
-
-  tailscale_ip       = var.samson_addr
-  container_hostname = "samson"
-
-  # The array is local here, so hashing is bound by CPU rather than by a
-  # network walk. samson is a NAS with nothing else competing for cores.
-  #
-  # "4.0", not "4" -- docker normalises it and `cpus = "4"` reads back as a
-  # change that FORCES REPLACEMENT, rebuilding this container on every apply.
-  cpus = "4.0"
-
-
-  # MOUNTED: the whole library. SNAPSHOTTED: 48 chosen paths under it.
-  #
-  # That split is the point. /export/media is 8.4 TB against 4.5 TB free on the
-  # Storage Box, so backing up the directory is not an option -- it would fill
-  # the box and stop EVERY backup, database dumps and photos included. It was
-  # briefly configured that way on 2026-09-25 and caught mid-bootstrap.
-  #
-  # The 48 are a deliberate choice about what is worth off-site, made before
-  # this migration. They move here rather than staying on mindy because this is
-  # where the data lives; mindy was reading them over NFS across the home
-  # uplink, which is what produced the `nfs: server not responding` stalls.
-  mounts = {
-    media         = "/export/media"
-    audio-archive = "/export/audio-archive"
-    backups       = "/export/backups"
-  }
-
-  # MOVED to ../backrest, which is the module that outlives this one. Both read
-  # the same file during the parallel period so the selection cannot drift
-  # between the two systems.
-  #
-  # The 48 titles live in their own file, because they are a LIST. They were
-  # 48 empty entries in policies.json until 2026-09-25 -- policies that said
-  # nothing, existing only to be enumerated here. kopia inherits (global) with
-  # or without an empty policy, so they carried no meaning and made a file
-  # where every other line matters look like boilerplate.
-  sources = [for p in local.samson_backup_paths : "/data/${p}"]
-
-  # No NFS submounts to propagate here -- these are local btrfs subvolumes, so
-  # nothing arrives after the container starts. The /data bind is not just
-  # redundant but breaking: it is read-only, so docker cannot create the nested
-  # mount targets inside it. See the module's var.bind_data_root.
-  bind_data_root = false
-  config_path    = "/docker-volumes/kopia"
-
-  repository_hostname = "samson"
-  repository_password = var.kopia_repository_password
-  sftp_username       = module.hetzner.storage_box_sftp_username
-  sftp_host           = module.hetzner.storage_box_host
-  sftp_password       = module.hetzner.storage_box_sftp_password
-
-  # Through bumba. samson cannot authenticate to the Storage Box directly --
-  # it is offered no auth methods at all. See modules/services/storage-box-proxy.
-  connect_host = var.bumba_addr
-  connect_port = 2223
-
-  gatus_token    = module.gatus.kopia_push_token
-  gatus_base_url = module.gatus.external_endpoint_base_url
-  gatus_endpoint = "backups_kopia-samson"
-
-  # import_policies stays FALSE. mindy owns policies.json for the whole
-  # repository; a second importer would delete mindy's policies on a schedule.
-}
 
 module "backrest_samson" {
   source = "./modules/services/backrest"
@@ -122,8 +45,6 @@ module "backrest_samson" {
   tailscale_ip = var.samson_addr
   config_path  = "/docker-volumes/backrest"
 
-  # The array is local here, so hashing is CPU-bound rather than a network walk.
-  # "4.0", not "4" -- see the module's var.cpus.
   cpus = "4.0"
 
 
@@ -134,8 +55,8 @@ module "backrest_samson" {
     backups       = "/export/backups"
   }
 
-  # THE SAME FILE kopia reads, with the mount root swapped. One list, so the
-  # selection cannot drift between the two systems while they run in parallel --
+  # The curated media list. It was shared with kopia, mount root swapped, so the
+  # selection could not drift between the two systems while they ran in parallel --
   # which is exactly the drift that put the whole 8.4 TB library in scope twice
   # on 2026-09-25.
   paths = [for p in local.samson_backup_paths : "/backup/${p}"]
@@ -147,7 +68,7 @@ module "backrest_samson" {
 
   # Through bumba. samson cannot authenticate to the Storage Box directly.
   connect_host = var.bumba_addr
-  connect_port = 2223
+  connect_port = module.storage_box_proxy.listen_port
 
   gatus_token    = module.gatus.backrest_push_token
   gatus_base_url = module.gatus.external_endpoint_base_url
@@ -165,16 +86,18 @@ module "backrest_samson" {
     instance_url = "http://${var.mindy_addr}:9898"
     scopes       = ["*"]
   }]
+
+  port = local.samson_ports.backrest
 }
 
 # --- values ---------------------------------------------------------------
 
 locals {
   # What samson backs up, RELATIVE TO THE MOUNT ROOT -- `media/live`, not
-  # `/data/media/live`. Read by both kopia and backrest while they run in
-  # parallel, each prepending its own root below.
+  # `/data/media/live`. backrest prepends its own root below; it is relative
+  # because kopia, which mounted at /data, read the same list until 2026-09-29.
   #
-  # RELATIVE because the root differs per tool: kopia mounts at /data, backrest
+  # RELATIVE because the root differed per tool: kopia mounted at /data, backrest
   # at /backup. Encoding one of them here meant the other had to rewrite the
   # prefix, and the obvious way to do that is a trap --
   #
@@ -276,10 +199,6 @@ variable "backrest_identity_samson" {
 
 # --- outputs --------------------------------------------------------------
 
-output "kopia_samson_password" {
-  value     = module.kopia_samson.server_password
-  sensitive = true
-}
 
 output "backrest_samson_password" {
   value     = module.backrest_samson.ui_password

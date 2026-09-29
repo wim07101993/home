@@ -53,7 +53,7 @@ resource "docker_container" "api" {
 
   ports {
     internal = 7001
-    external = 7001
+    external = var.api_host_port
   }
 
   upload {
@@ -92,7 +92,7 @@ resource "docker_container" "web" {
 
   ports {
     internal = 80
-    external = 3006
+    external = var.web_host_port
   }
 
   upload {

@@ -72,11 +72,11 @@ provider "hcloud" {
 provider "postgresql" {
   alias    = "bumba"
   host     = var.bumba_addr
-  port     = 5432
+  port     = local.bumba_ports.postgres
   database = "postgres"
   username = "postgres"
   password = var.bumba_pg_superuser_password
-  sslmode = "disable"
+  sslmode  = "disable"
 
   max_connections = 4
 }
@@ -86,7 +86,7 @@ provider "postgresql" {
 provider "postgresql" {
   alias    = "mindy"
   host     = var.mindy_addr
-  port     = 5432
+  port     = local.mindy_ports.postgres
   database = "postgres"
   username = "postgres"
   password = var.mindy_pg_superuser_password
@@ -98,7 +98,7 @@ provider "postgresql" {
 provider "postgresql" {
   alias    = "immich"
   host     = var.mindy_addr
-  port     = 5434
+  port     = local.mindy_ports.immich_postgres
   database = "postgres"
   username = "postgres"
   password = var.immich_pg_superuser_password

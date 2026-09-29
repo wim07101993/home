@@ -19,8 +19,8 @@
 #
 #   HCLOUD_TOKEN                  Hetzner Cloud API token
 #   TF_VAR_state_passphrase       state encryption passphrase, 16+ chars
-#   TF_VAR_pg_superuser_password        postgres superuser password on bumba
-#   TF_VAR_pg_superuser_password_mindy  ... and on mindy (a different value)
+#   TF_VAR_bumba_pg_superuser_password        postgres superuser password on bumba
+#   TF_VAR_mindy_pg_superuser_password  ... and on mindy (a different value)
 #   TF_VAR_immich_pg_superuser_password ... and on immich's own postgres, :5434
 #   TF_VAR_mailgun_api_key        Mailgun API key (mints SMTP credentials)
 #   TOFU_STATE_DB_PASSWORD        the tofu_state role, for the BACKEND
@@ -225,18 +225,15 @@ _tofu_need TF_VAR_state_passphrase "OpenTofu state encryption passphrase" || ret
 # verify it. storage-box.tf ignores changes to it for that reason -- but it
 # still has to be set. Reset it in the Cloud Console if it is not to hand.
 
-_tofu_need TF_VAR_pg_superuser_password "postgres SUPERUSER password on bumba" || return 1
+_tofu_need TF_VAR_bumba_pg_superuser_password "postgres SUPERUSER password on bumba" || return 1
 
-_tofu_need TF_VAR_pg_superuser_password_mindy "postgres SUPERUSER password on MINDY" || return 1
+_tofu_need TF_VAR_mindy_pg_superuser_password "postgres SUPERUSER password on MINDY" || return 1
 
 # immich runs its OWN postgres on mindy:5434. Unlike the two above, this value
 # is ENFORCED: the container re-applies it on every start, so changing it here
 # and applying rotates it. See modules/services/immich/README.md.
 _tofu_need TF_VAR_immich_pg_superuser_password "postgres SUPERUSER password on IMMICH'S postgres (mindy:5434)" || return 1
 
-# Kopia. Two credentials: the repository password (encrypts the backups) and
-# the Storage Box SUB-account password. Neither is TF_VAR_storage_box_password.
-_tofu_need TF_VAR_kopia_repository_password "kopia repository password" || return 1
 
 # Backrest's repository password is NOT here. tofu generates it -- see
 # random_password.backrest_repository in estate.tf -- so there is nothing to type.

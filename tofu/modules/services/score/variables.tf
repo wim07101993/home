@@ -9,3 +9,11 @@ variable "db_network" {
 variable "zitadel_org_id" {
   type = string
 }
+
+variable "api_host_port" {
+  type = number
+}
+
+variable "web_host_port" {
+  type = number
+}

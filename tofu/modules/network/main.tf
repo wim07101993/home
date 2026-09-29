@@ -12,8 +12,4 @@ resource "docker_network" "this" {
       value = labels.value
     }
   }
-
-  lifecycle {
-    prevent_destroy = true
-  }
 }

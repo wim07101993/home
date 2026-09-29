@@ -64,8 +64,7 @@ variable "tailscale_ip" {
 }
 
 variable "port" {
-  type    = number
-  default = 9898
+  type = number
 }
 
 variable "mounts" {

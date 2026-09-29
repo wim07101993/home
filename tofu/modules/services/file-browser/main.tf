@@ -77,7 +77,7 @@ resource "docker_container" "this" {
 
   ports {
     internal = 80
-    external = 8900
+    external = var.host_port
   }
 
   mounts {

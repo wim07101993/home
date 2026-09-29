@@ -22,11 +22,11 @@ resource "docker_container" "this" {
 
   ports {
     internal = 80
-    external = 80
+    external = var.http_port
   }
   ports {
     internal = 443
-    external = 443
+    external = var.https_port
   }
 
   volumes {
@@ -35,7 +35,7 @@ resource "docker_container" "this" {
   }
 
   networks_advanced {
-    name = "traefik-network"
+    name = var.network_name
   }
 
   upload {
@@ -68,6 +68,3 @@ resource "docker_container" "this" {
   }
 }
 
-output "network_name" {
-  value = var.network_name
-}

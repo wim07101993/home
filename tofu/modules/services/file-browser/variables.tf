@@ -86,3 +86,7 @@ variable "audio_path" {
 variable "zitadel_org_id" {
   type = string
 }
+
+variable "host_port" {
+  type = number
+}

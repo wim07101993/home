@@ -4,10 +4,6 @@ resource "docker_network" "this" {
   attachable = false
   ingress    = false
   ipv6       = false
-
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 resource "docker_image" "postgres" {
@@ -28,7 +24,7 @@ resource "docker_container" "this" {
 
   ports {
     internal = 5432
-    external = 5432
+    external = var.host_port
   }
 
   volumes {

@@ -1,6 +1,5 @@
 
 locals {
-  listen_port = 2223
   target_port = 23
 }
 
@@ -15,7 +14,7 @@ resource "docker_container" "this" {
   restart = "unless-stopped"
 
   command = [
-    "TCP-LISTEN:${local.listen_port},fork,reuseaddr",
+    "TCP-LISTEN:${var.listen_port},fork,reuseaddr",
     "TCP:${var.target_host}:${local.target_port}",
   ]
 
@@ -25,8 +24,8 @@ resource "docker_container" "this" {
   memory_swap = 128
 
   ports {
-    internal = local.listen_port
-    external = local.listen_port
+    internal = var.listen_port
+    external = var.listen_port
     ip       = var.tailscale_ip
   }
 }

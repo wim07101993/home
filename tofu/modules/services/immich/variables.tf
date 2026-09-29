@@ -81,3 +81,11 @@ variable "superuser_password" {
       tofu apply -replace=random_password.immich_pg_superuser
   EOT
 }
+
+variable "host_port" {
+  type = number
+}
+
+variable "db_host_port" {
+  type = number
+}

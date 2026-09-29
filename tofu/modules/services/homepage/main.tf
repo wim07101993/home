@@ -22,7 +22,7 @@ resource "docker_container" "this" {
 
   ports {
     internal = 3000
-    external = 3001
+    external = var.host_port
   }
 
   dynamic "upload" {

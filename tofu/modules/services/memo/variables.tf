@@ -22,3 +22,7 @@ variable "db_network" {
 variable "zitadel_org_id" {
   type = string
 }
+
+variable "host_port" {
+  type = number
+}

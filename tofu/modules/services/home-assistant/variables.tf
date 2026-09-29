@@ -27,3 +27,7 @@ variable "tailscale_ip" {
     once is what stops those drifting.
   EOT
 }
+
+variable "host_port" {
+  type = number
+}

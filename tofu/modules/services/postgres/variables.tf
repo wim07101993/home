@@ -11,3 +11,7 @@ variable "network_alias" {
     dependent service loses its database.
   EOT
 }
+
+variable "host_port" {
+  type = number
+}

@@ -5,7 +5,7 @@ module "hetzner" {
 
 # --- backrest: replacing kopia --------------------------------------------
 #
-# Running in PARALLEL with both kopia instances above, deliberately. The repo
+# Ran in PARALLEL with kopia until 2026-09-29, deliberately. The repo
 # formats are unrelated, so this is a fresh upload rather than a conversion, and
 # a backup migration is not the place to trust a new tool before it has proven
 # it can read back what it wrote.
@@ -59,27 +59,6 @@ resource "random_password" "backrest_repository" {
 
 # --- inputs ---------------------------------------------------------------
 
-# --- kopia ----------------------------------------------------------------
-#
-# ONLY the repository password is supplied now. The SFTP sub-account password
-# moved into modules/hetzner as an adopted random_password (2026-09-19).
-#
-# This one DELIBERATELY did not move. It encrypts the repository: lose it and
-# every backup is unreadable, with no reset. Holding it only in tofu state --
-# which is itself encrypted with TF_VAR_state_passphrase -- would mean losing
-# that passphrase also loses the backups, which are exactly what you reach for
-# when something has gone badly wrong. An independent copy in the vault is what
-# keeps that recoverable. Same reasoning applies to TF_VAR_zitadel_masterkey.
-#
-# Extract it from mindy without displaying it:
-#
-#   printf 'kopia_repository_password = "%s"\n' \
-#     "$(ssh root@<mindy> cat /docker-volumes/kopia/repository_password.txt)" \
-#     >> secrets.auto.tfvars
-variable "kopia_repository_password" {
-  type      = string
-  sensitive = true
-}
 
 # --- mailgun --------------------------------------------------------------
 #

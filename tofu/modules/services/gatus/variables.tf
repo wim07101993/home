@@ -33,8 +33,7 @@ variable "tailscale_ip" {
 }
 
 variable "host_port" {
-  type    = number
-  default = 3009
+  type = number
 }
 
 # Sender and recipient are in config.yaml -- they are choices, and belong in

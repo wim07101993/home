@@ -33,7 +33,7 @@ resource "docker_container" "this" {
 
   ports {
     internal = 5230
-    external = 5230
+    external = var.host_port
   }
 
   networks_advanced {

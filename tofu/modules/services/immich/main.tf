@@ -135,7 +135,7 @@ resource "docker_container" "postgres" {
 
   ports {
     internal = 5432
-    external = 5434
+    external = var.db_host_port
   }
 
   volumes {
@@ -240,7 +240,7 @@ resource "docker_container" "server" {
 
   ports {
     internal = 2283
-    external = 2283
+    external = var.host_port
   }
 
   # The library. Local since 2026-09-18; see var.library_path. rslave is kept

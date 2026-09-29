@@ -1,3 +1,35 @@
+# 9443 is portainer, which tofu does not manage.
+locals {
+  mindy_ports = {
+    traefik_http    = 80
+    traefik_https   = 443
+    immich          = 2283
+    homepage        = 3001
+    score_web       = 3006
+    memos           = 5230
+    postgres        = 5432
+    immich_postgres = 5434
+    score_api       = 7001
+    filebrowser     = 8900
+    backrest        = 9898
+  }
+}
+
+check "mindy_unique_ports" {
+  assert {
+    condition     = length(values(local.mindy_ports)) == length(distinct(values(local.mindy_ports)))
+    error_message = "two services in mindy.tf are published on the same host port"
+  }
+}
+
+module "network_mindy" {
+  source = "./modules/network"
+
+  providers = { docker = docker.mindy }
+
+  name = "traefik-network"
+}
+
 module "traefik_mindy" {
   source = "./modules/services/reverse-proxy"
 
@@ -18,6 +50,10 @@ module "traefik_mindy" {
     module.memo.traefik,
     module.score.traefik,
   ]
+  network_name = module.network_mindy.name
+
+  http_port  = local.mindy_ports.traefik_http
+  https_port = local.mindy_ports.traefik_https
 }
 
 module "it_tools" {
@@ -27,7 +63,7 @@ module "it_tools" {
     docker = docker.mindy
   }
 
-  traefik_network = module.traefik_mindy.network_name
+  traefik_network = module.network_mindy.name
 }
 
 module "postgres_mindy" {
@@ -36,6 +72,8 @@ module "postgres_mindy" {
   providers = {
     docker = docker.mindy
   }
+
+  host_port = local.mindy_ports.postgres
 }
 
 module "memo" {
@@ -47,12 +85,14 @@ module "memo" {
     zitadel    = zitadel
   }
 
-  traefik_network = module.traefik_mindy.network_name
+  traefik_network = module.network_mindy.name
   db_network      = module.postgres_mindy.network_name
 
   zitadel_org_id = module.zitadel.org_home_id
 
   depends_on = [module.postgres_mindy]
+
+  host_port = local.mindy_ports.memos
 }
 
 module "file_browser" {
@@ -76,9 +116,11 @@ module "file_browser" {
     { path = "/files/sara", name = "Sara prive", default_enabled = false },
   ]
 
-  traefik_network = module.traefik_mindy.network_name
+  traefik_network = module.network_mindy.name
 
   zitadel_org_id = module.zitadel.org_home_id
+
+  host_port = local.mindy_ports.filebrowser
 }
 
 module "homepage" {
@@ -88,7 +130,9 @@ module "homepage" {
     docker = docker.mindy
   }
 
-  traefik_network = module.traefik_mindy.network_name
+  traefik_network = module.network_mindy.name
+
+  host_port = local.mindy_ports.homepage
 }
 
 module "score" {
@@ -100,12 +144,15 @@ module "score" {
     zitadel    = zitadel
   }
 
-  traefik_network = module.traefik_mindy.network_name
+  traefik_network = module.network_mindy.name
   db_network      = module.postgres_mindy.network_name
 
   zitadel_org_id = module.zitadel.org_home_id
 
   depends_on = [module.postgres_mindy]
+
+  api_host_port = local.mindy_ports.score_api
+  web_host_port = local.mindy_ports.score_web
 }
 
 module "kitchen_owl" {
@@ -117,7 +164,7 @@ module "kitchen_owl" {
     zitadel    = zitadel
   }
 
-  traefik_network = module.traefik_mindy.network_name
+  traefik_network = module.network_mindy.name
   db_network      = module.postgres_mindy.network_name
 
   zitadel_org_id = module.zitadel.org_home_id
@@ -129,72 +176,22 @@ module "immich" {
   source = "./modules/services/immich"
 
   providers = {
-    docker  = docker.mindy
-    zitadel = zitadel
-    # It is passed in because PROVIDERS ARE CONFIGURED ONCE, in ../providers.tf,
-    # and inherited -- no child module declares a provider block, so there is
-    # exactly one place each credential is wired in. A module that configured
-    # its own provider could also not be used twice with different ones.
-    #
-    # The ALIAS is the load-bearing part: immich runs its own postgres on
-    # mindy:5434 with a different superuser, so `postgresql.immich` is a
-    # different cluster from `postgresql.mindy`. Passing the wrong one creates
-    # immich's role in the shared database.
+    docker     = docker.mindy
+    zitadel    = zitadel
     postgresql = postgresql.immich
   }
 
   library_path    = local.photos_path
-  traefik_network = module.traefik_mindy.network_name
+  traefik_network = module.network_mindy.name
 
   zitadel_org_id = module.zitadel.org_home_id
 
   superuser_password = var.immich_pg_superuser_password
+
+  host_port    = local.mindy_ports.immich
+  db_host_port = local.mindy_ports.immich_postgres
 }
 
-module "kopia" {
-  source = "./modules/services/kopia"
-
-  providers = {
-    docker = docker.mindy
-  }
-
-  tailscale_ip       = var.mindy_addr
-  container_hostname = "mindy"
-
-  # Keys are container paths under /data, and they ARE the snapshot identity --
-  # `photos` because that is what it was when it came over NFS from samson, not
-  # because it reads well. See the module's var.sources.
-  #
-  # audio-archive, backups and media are absent on purpose: they stay on samson
-  # and arrive as NFS submounts through the /data bind. They move to samson's
-  # own kopia instance, not here.
-  mounts = merge(
-    {
-      photos = local.photos_path
-      audio  = local.audio_path
-    },
-    { for share in local.document_shares : share => "${local.documents_path}/${share}" },
-  )
-
-  # `sources` unset: nothing to exclude, so kopia backs up every mount.
-
-  repository_password = var.kopia_repository_password
-  sftp_username       = module.hetzner.storage_box_sftp_username
-  sftp_host           = module.hetzner.storage_box_host
-  sftp_password       = module.hetzner.storage_box_sftp_password
-
-  # The heartbeat. kopia reports snapshot freshness to gatus on bumba, which is
-  # the only thing that would have caught either of the two outages this
-  # service has had -- five weeks crash-looping, and four days cleanly stopped.
-  gatus_token    = module.gatus.kopia_push_token
-  gatus_base_url = module.gatus.external_endpoint_base_url
-  gatus_endpoint = "backups_kopia-mindy"
-
-  # mindy is the ONE instance that writes policies.json into the repository.
-  # See the module's var.import_policies -- a second importer would delete
-  # this one's policies on a schedule.
-  import_policies = true
-}
 
 module "backrest_mindy" {
   source = "./modules/services/backrest"
@@ -206,7 +203,7 @@ module "backrest_mindy" {
   instance     = "mindy"
   tailscale_ip = var.mindy_addr
 
-  # The same data kopia backs up here, at /backup instead of /data -- see the
+  # What kopia used to back up, at /backup instead of its old /data -- see the
   # module's var.mounts for why that path moved.
   #
   # audio-archive, backups and media are absent on purpose: they live on samson
@@ -241,6 +238,8 @@ module "backrest_mindy" {
     instance_id = "samson"
     keyid       = var.backrest_identity_samson.keyid
   }]
+
+  port = local.mindy_ports.backrest
 }
 
 # --- values ---------------------------------------------------------------
@@ -306,10 +305,6 @@ output "filebrowser_admin_password" {
   sensitive = true
 }
 
-output "kopia_mindy_password" {
-  value     = module.kopia.server_password
-  sensitive = true
-}
 
 output "backrest_mindy_password" {
   value     = module.backrest_mindy.ui_password

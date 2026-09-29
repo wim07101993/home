@@ -36,7 +36,7 @@ resource "docker_container" "zitadel" {
 
   ports {
     internal = 8080
-    external = 3001
+    external = var.host_port
   }
 
   upload {
@@ -128,7 +128,7 @@ resource "docker_container" "login" {
 
   ports {
     internal = 3000
-    external = 3002
+    external = var.login_host_port
   }
 
   volumes {

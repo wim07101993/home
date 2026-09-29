@@ -10,7 +10,7 @@ resource "docker_container" "this" {
 
   ports {
     internal = 4005
-    external = 4005
+    external = var.host_port
   }
 
   mounts {

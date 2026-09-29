@@ -29,3 +29,11 @@ variable "config_path" {
     unversioned host file holding the original admin password.
   EOT
 }
+
+variable "host_port" {
+  type = number
+}
+
+variable "login_host_port" {
+  type = number
+}

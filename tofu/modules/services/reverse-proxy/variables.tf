@@ -34,3 +34,15 @@ variable "routing" {
 variable "dashboard_host" {
   type = string
 }
+
+variable "http_port" {
+  type = number
+}
+
+variable "https_port" {
+  type = number
+}
+
+variable "network_name" {
+  type = string
+}

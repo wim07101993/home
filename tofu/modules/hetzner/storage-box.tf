@@ -38,6 +38,13 @@ resource "random_password" "storage_box" {
   override_special = "!@#%^*()-_=+"
 }
 
+# RETAINED AFTER KOPIA WAS REMOVED on 2026-09-29. The kopia containers and the
+# module are gone; this sub-account is not, because its home_directory IS the
+# repository -- deleting it deletes the backups it holds.
+#
+# Nothing in tofu reads it any more. Keep it until the restic repositories have
+# a full retention window and a restore has actually been tested, then delete it
+# deliberately and reclaim the space on the box.
 resource "hcloud_storage_box_subaccount" "kopia" {
   storage_box_id = hcloud_storage_box.backups.id
 

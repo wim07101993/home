@@ -28,7 +28,7 @@ resource "docker_container" "this" {
 
   ports {
     internal = 8123
-    external = 8123
+    external = var.host_port
   }
 
   volumes {
