@@ -275,27 +275,6 @@ variable "cpus" {
   EOT
 }
 
-variable "log_opts" {
-  type    = map(string)
-  default = {}
-
-  description = <<-EOT
-    json-file logging options, which must MATCH WHAT THE DAEMON ALREADY DOES.
-
-    Empty everywhere as of 2026-09-28, and that is the whole point: no host's
-    /etc/docker/daemon.json sets log-opts any more, so every container comes up
-    with an empty LogConfig and an omitted value here matches it.
-
-    IT IS NOT A FREE CHOICE. `log_opts` is Optional and ForceNew but NOT
-    Computed, so omitting it asserts "this must be empty" rather than "whatever
-    the daemon says". If a daemon ever stamps values again, every container on
-    that host must restate them here or the provider reads the live values back,
-    sees none configured, and REPLACES the container -- on every plan, forever,
-    because the replacement gets stamped again. samson ran that way until its
-    daemon.json was cleaned up.
-  EOT
-}
-
 # --- multihost sync ---------------------------------------------------------
 
 variable "sync_identity" {

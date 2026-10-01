@@ -43,6 +43,11 @@ resource "docker_container" "this" {
     aliases = [var.network_alias]
   }
 
+  # Block until pg_isready passes. Without it tofu returns as soon as the
+  # container is created, and the zitadel roles try to connect to a postgres
+  # that is still starting.
+  wait = true
+
   healthcheck {
     test         = ["CMD-SHELL", "pg_isready"]
     interval     = "10s"

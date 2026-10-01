@@ -178,6 +178,18 @@ endpoints:
 
   # ---- backups ---------------------------------
 
+  - name: databasus
+    group: backups
+    url: "http://100.71.248.106:4005/healthz"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+    heartbeat:
+      interval: 26h
+    alerts:
+      - type: email
+
+external-endpoints:
   - name: backrest-mindy
     group: backups
     token: "${GATUS_BACKREST_TOKEN}"
@@ -189,15 +201,6 @@ endpoints:
   - name: backrest-samson
     group: backups
     token: "${GATUS_BACKREST_TOKEN}"
-    heartbeat:
-      interval: 26h
-    alerts:
-      - type: email
-
-  - name: databasus
-    group: backups
-    url: "http://100.71.248.106:4005/healthz"
-    interval: 5m
     heartbeat:
       interval: 26h
     alerts:

@@ -119,7 +119,6 @@ resource "docker_container" "this" {
   memory      = var.memory
   memory_swap = var.memory * 2
   cpus        = var.cpus
-  log_opts    = var.log_opts
 
   security_opts = ["no-new-privileges:true"]
 
