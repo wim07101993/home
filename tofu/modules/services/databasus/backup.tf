@@ -1,5 +1,5 @@
 output "backup" {
   value = {
-    mounts = { backups = "/docker-volumes/backup-server/databasus/data/backups" }
+    mounts = { databasus = "/docker-volumes/backup-server/databasus/data" }
   }
 }

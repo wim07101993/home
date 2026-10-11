@@ -57,6 +57,8 @@ module "backrest_samson" {
     { mounts = { "audio-archive" = "/export/audio-archive" } },
   ]
 
+  excludes = ["pgdata", "temp"]
+
   repository_password = random_password.backrest_repository.result
   repo_path           = "restic"
   storage_box_id      = module.hetzner.storage_box_id
