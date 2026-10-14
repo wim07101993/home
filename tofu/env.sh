@@ -157,73 +157,37 @@ _tofu_need() {   # _tofu_need VARNAME "human description"
   export "$_var=$_val"
 }
 
-# bumba's tailnet address -- used by the postgresql provider AND the backend.
-# Never the public IP: both connections are unencrypted at the postgres layer
-# and rely on WireGuard for transport security.
-if [ -z "${BUMBA_ADDR:-}" ]; then
-  : "${BUMBA_TS_HOST:=bumba}"   # `tailscale status` lists the device names
-  command -v tailscale >/dev/null 2>&1 || {
-    echo "env.sh: no 'tailscale' command. Set BUMBA_ADDR." >&2
-    return 1
-  }
-  BUMBA_ADDR="$(tailscale ip -4 "$BUMBA_TS_HOST" 2>/dev/null)" || BUMBA_ADDR=""
-  [ -n "$BUMBA_ADDR" ] || {
-    echo "env.sh: cannot resolve '$BUMBA_TS_HOST' on the tailnet." >&2
-    echo "        Check 'tailscale status', or set BUMBA_TS_HOST / BUMBA_ADDR." >&2
-    return 1
-  }
-fi
-export BUMBA_ADDR
-export TF_VAR_bumba_addr="$BUMBA_ADDR"
+# Tailnet addresses -- used by the providers, and bumba's by the backend too.
+# Never the public IPs: the postgres connections are unencrypted and rely on
+# WireGuard for transport security. Set <HOST>_ADDR to skip the lookup, or
+# <HOST>_TS_HOST if the device name differs.
+_tofu_addr() {   # _tofu_addr bumba
+  local _up _addr _ts
+  _up=$(printf '%s' "$1" | tr '[:lower:]' '[:upper:]')
+  _addr="${_up}_ADDR" _ts="${_up}_TS_HOST"
+  if [ -z "${!_addr:-}" ]; then
+    command -v tailscale >/dev/null 2>&1 || {
+      echo "env.sh: no 'tailscale' command. Set $_addr." >&2
+      return 1
+    }
+    printf -v "$_addr" '%s' "$(tailscale ip -4 "${!_ts:-$1}" 2>/dev/null)"
+    [ -n "${!_addr}" ] || {
+      echo "env.sh: cannot resolve '${!_ts:-$1}' on the tailnet." >&2
+      echo "        Check 'tailscale status', or set $_ts / $_addr." >&2
+      return 1
+    }
+  fi
+  export "$_addr" "TF_VAR_$1_addr=${!_addr}"
+}
 
-if [ -z "${MINDY_ADDR:-}" ]; then
-  : "${MINDY_TS_HOST:=mindy}"
-  MINDY_ADDR="$(tailscale ip -4 "$MINDY_TS_HOST" 2>/dev/null)" || MINDY_ADDR=""
-  [ -n "$MINDY_ADDR" ] || {
-    echo "env.sh: cannot resolve '$MINDY_TS_HOST' on the tailnet." >&2
-    echo "        Check 'tailscale status', or set MINDY_TS_HOST / MINDY_ADDR." >&2
-    return 1
-  }
-fi
-export MINDY_ADDR
-export TF_VAR_mindy_addr="$MINDY_ADDR"
+# plop is the house: Home Assistant and the Matter server.
+for _h in bumba mindy samson plop; do
+  _tofu_addr "$_h" || return 1
+done
+unset _h
 
-if [ -z "${SAMSON_ADDR:-}" ]; then
-  : "${SAMSON_TS_HOST:=samson}"
-  SAMSON_ADDR="$(tailscale ip -4 "$SAMSON_TS_HOST" 2>/dev/null)" || SAMSON_ADDR=""
-  [ -n "$SAMSON_ADDR" ] || {
-    echo "env.sh: cannot resolve '$SAMSON_TS_HOST' on the tailnet." >&2
-    echo "        Check 'tailscale status', or set SAMSON_TS_HOST / SAMSON_ADDR." >&2
-    return 1
-  }
-fi
-export SAMSON_ADDR
-export TF_VAR_samson_addr="$SAMSON_ADDR"
-
-# plop -- the house. Home Assistant and the Matter server.
-if [ -z "${PLOP_ADDR:-}" ]; then
-  : "${PLOP_TS_HOST:=plop}"
-  PLOP_ADDR="$(tailscale ip -4 "$PLOP_TS_HOST" 2>/dev/null)" || PLOP_ADDR=""
-  [ -n "$PLOP_ADDR" ] || {
-    echo "env.sh: cannot resolve '$PLOP_TS_HOST' on the tailnet." >&2
-    echo "        Check 'tailscale status', or set PLOP_TS_HOST / PLOP_ADDR." >&2
-    return 1
-  }
-fi
-export PLOP_ADDR
-export TF_VAR_plop_addr="$PLOP_ADDR"
-
-
-# A read-only token cannot create a database, so this module can no longer run
-# read-only indefinitely -- see the note in providers.tf. Use one anyway for
-# anything that is pure adoption or a plan.
 _tofu_need HCLOUD_TOKEN "Hetzner Cloud API token" || return 1
 _tofu_need TF_VAR_state_passphrase "OpenTofu state encryption passphrase" || return 1
-
-# hcloud_storage_box takes `password` as a REQUIRED argument and the Cloud API
-# never returns it, so config generation cannot fill it in and tofu cannot
-# verify it. storage-box.tf ignores changes to it for that reason -- but it
-# still has to be set. Reset it in the Cloud Console if it is not to hand.
 
 _tofu_need TF_VAR_bumba_pg_superuser_password "postgres SUPERUSER password on bumba" || return 1
 
@@ -234,14 +198,9 @@ _tofu_need TF_VAR_mindy_pg_superuser_password "postgres SUPERUSER password on MI
 # and applying rotates it. See modules/services/immich/README.md.
 _tofu_need TF_VAR_immich_pg_superuser_password "postgres SUPERUSER password on IMMICH'S postgres (mindy:5434)" || return 1
 
-
 # Backrest's repository password is NOT here. tofu generates it -- see
 # random_password.backrest_repository in estate.tf -- so there is nothing to type.
 # Copy it to the vault after the first apply; bw-seed.sh does that for you.
-
-# Zitadel's masterkey -- 32 bytes, and the one value in this estate that cannot
-# be regenerated. Prefer secrets.auto.tfvars over typing it; see
-# modules/services/zitadel/variables.tf.
 
 # Mailgun. One key, not one password per service: tofu creates the SMTP
 # credentials itself -- modules/services/gatus/mail.tf and
@@ -265,7 +224,7 @@ fi
 [ "${_tofu_bw_hits:-0}" -gt 0 ] && \
   echo "env.sh: ${_tofu_bw_hits} secret(s) read from bitwarden." >&2
 
-unset -f _tofu_need _tofu_has_tfvar _tofu_bw_init _tofu_bw_get
+unset -f _tofu_need _tofu_has_tfvar _tofu_bw_init _tofu_bw_get _tofu_addr
 unset _tofu_bw_state _tofu_bw_hits _tofu_bw_json
 unset _tofu_dir
 echo "env.sh: environment set (bumba ${BUMBA_ADDR}, mindy ${MINDY_ADDR}, samson ${SAMSON_ADDR}, plop ${PLOP_ADDR})"

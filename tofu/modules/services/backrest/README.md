@@ -152,8 +152,8 @@ The asymmetry is easy to get backwards, and getting it wrong fails silently:
 omits it (`PopulateRequiredFields`) and then writes it back into `config.json`.
 Because this module keeps that file in the container layer, a generated identity
 is discarded on every replacement and a fresh keyid minted on the next start --
-so the peer's declared keyid would break on every apply. `./backrest-identity.sh`
-generates the pair into `secrets.auto.tfvars`; tofu cannot, because the identity
+so the peer's declared keyid would break on every apply. `backrest-identity.sh`
+(removed; `git show 867387a^:tofu/backrest-identity.sh`) generates the pair into `secrets.auto.tfvars`; tofu cannot, because the identity
 is a raw 32-byte ed25519 seed and the keyid is `base64url(sha256(raw pubkey))`,
 neither of which HCL can produce.
 

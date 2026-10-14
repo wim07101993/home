@@ -36,9 +36,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 #              env var; the vault copy is the out-of-band one you would need to
 #              rebuild state from nothing.
 #
-# Four entries carried a TF_VAR_ prefix without a matching root variable until
-# 2026-09-28 -- exporting them did nothing. They are bare names now.
-#
 # Each value is resolved in order: tofu state, the environment, a tfvars file,
 # the field already on the item, and only then a prompt. The tfvars step exists
 # because env.sh deliberately does not export those -- see from_tfvars below.
@@ -122,16 +119,9 @@ from_state_addr() {
 }
 
 from_state() {   # from_state VARNAME
-  local a m n
+  local a
   a="$(state_addr "$1")"; [ -n "$a" ] || return 1
-  m="${a%|*}"; n="${a#*|}"
-  if [ -z "$_state_json" ]; then
-    _state_json="$(tofu state pull 2>/dev/null)" || return 1
-  fi
-  printf '%s' "$_state_json" \
-    | jq -r --arg m "$m" --arg n "$n" \
-        '.resources[]? | select((.module // "")==$m and .type=="random_password" and .name==$n)
-         | .instances[0].attributes.result // empty' 2>/dev/null | grep . || return 1
+  from_state_addr "${a%|*}" "${a#*|}"
 }
 
 # VARNAME -> the value a tfvars file already defines, if any.

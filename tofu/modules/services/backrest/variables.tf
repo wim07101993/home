@@ -300,7 +300,8 @@ variable "sync_identity" {
     Pinning it here means `mutated` stays false, Backrest never rewrites the
     file, and the keyids are stable. config.json stays entirely tofu-owned.
 
-    Generate a pair with ./backrest-identity.sh (in tofu/), which writes
+    Generate a pair with tofu/backrest-identity.sh, removed from the tree --
+    `git show 867387a^:tofu/backrest-identity.sh` -- which writes
     straight into secrets.auto.tfvars. The fields map to v1.PrivateKey:
 
       keyid -> keyId         "ed25519." + base64url(sha256(raw pubkey))

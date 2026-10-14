@@ -14,7 +14,7 @@
 
   "packageRules": [
     {
-      "matchManagers": ["docker-compose", "dockerfile", "terraform", "custom.regex"],
+      "matchManagers": ["docker-compose", "terraform", "custom.regex"],
       "matchUpdateTypes": ["patch"],
       "groupName": "patch updates"
     },
@@ -46,13 +46,13 @@
 
   "customManagers": [
     {
-      "description": "Image tags held in OpenTofu variables. The built-in terraform manager tracks provider versions in required_providers; it does not reliably see an image string in a variable default, so it is annotated explicitly.",
+      "description": "Image tags in OpenTofu variables that are interpolated into the image name, which the terraform manager cannot resolve.",
       "customType": "regex",
       "managerFilePatterns": ["/^tofu/.+\\.tf$/"],
       "matchStrings": [
-        "#\\s*renovate:\\s*datasource=(?<datasource>[a-z-]+?)\\s+depName=(?<depName>[^\\s]+?)(\\s+versioning=(?<versioning>[^\\s]+?))?\\s*\\n[\\s\\S]*?default\\s*=\\s*\"(?<currentValue>[^\"]+)\""
+        "#\\s*renovate:\\s*datasource=(?<datasource>[a-z-]+?)\\s+depName=(?<depName>[^\\s]+?)\\s*\\n[\\s\\S]*?default\\s*=\\s*\"(?<currentValue>[^\"]+)\""
       ],
-      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}docker{{/if}}"
+      "versioningTemplate": "docker"
     }
   ]
 }
