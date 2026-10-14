@@ -1,9 +1,3 @@
-# renovate: datasource=docker depName=neosmemo/memos
-variable "image_tag" {
-  type    = string
-  default = "0.26.2"
-}
-
 variable "traefik_network" {
   type        = string
   description = "traefik's network on mindy, passed from the reverse-proxy module."
