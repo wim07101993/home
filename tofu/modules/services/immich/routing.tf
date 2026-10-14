@@ -1,4 +1,4 @@
-# photos.wvl.app. Moved out of reverse-proxy/mindy/dynamic.yml on 2026-09-22.
+# photos.wvl.app.
 #
 # The backend is the CONTAINER port, not the host-published one.
 output "traefik" {

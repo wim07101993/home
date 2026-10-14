@@ -196,12 +196,8 @@ variable "retention" {
   description = <<-EOT
     Snapshot retention, applied by restic forget.
 
-    ONE POLICY FOR THE WHOLE PLAN, and that is the correction. kopia's
-    equivalent was 1061 lines of policies.json holding one meaningful entry and
-    fifty pins that existed only to stop sources nobody wanted -- because there
-    the policy was the only place a source could be disabled.
-
-    A path that should not be backed up comes out of var.paths instead.
+    ONE POLICY FOR THE WHOLE PLAN. A path that should not be backed up comes
+    out of var.paths instead.
   EOT
 }
 

@@ -33,7 +33,7 @@ entryPoints:
     # that changes.
 
 # File only. No docker provider, which is what lets the docker socket stay
-# unmounted -- see main.tf.
+# unmounted -- see ../main.tf.
 providers:
   file:
     filename: /etc/traefik/dynamic.yml

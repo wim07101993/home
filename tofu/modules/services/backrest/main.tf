@@ -184,11 +184,6 @@ resource "docker_container" "this" {
         #
         #   auto_initialize set with guid but guid implies that repo is
         #   already initialized
-        #
-        # It also replaces bootstrap-sources.sh outright. kopia needed 100 lines
-        # of shell because a source did not exist until something snapshotted
-        # it, so a correctly configured instance could sit backing up nothing --
-        # which samson did, silently, on 2026-09-24.
         autoInitialize = true
 
         # Throttling, declared. kopia's equivalent was a blunt 4 GB memory cap,

@@ -1,4 +1,4 @@
-# it-tools.wvl.app. Moved out of reverse-proxy/mindy/dynamic.yml on 2026-09-22.
+# it-tools.wvl.app.
 output "traefik" {
   value = {
     routers = {

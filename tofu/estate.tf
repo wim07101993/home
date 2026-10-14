@@ -3,25 +3,9 @@ module "hetzner" {
 
 }
 
-# --- backrest: replacing kopia --------------------------------------------
+# --- backrest -------------------------------------------------------------
 #
-# Ran in PARALLEL with kopia until 2026-09-29, deliberately. The repo
-# formats are unrelated, so this is a fresh upload rather than a conversion, and
-# a backup migration is not the place to trust a new tool before it has proven
-# it can read back what it wrote.
-#
-# SPACE. The Storage Box is 5.5 TB with 4.6 TB available as of 2026-09-24. The
-# two restic repositories duplicate roughly what kopia already holds -- samson's
-# ~800 GB of selected media plus mindy's photos, audio and documents -- so the
-# parallel period costs about another 0.9 TB and lands near 3.7 TB free, before
-# the 14 Storage Box snapshots pin anything. Comfortable, and the number to
-# watch: modules/hetzner/storage-box.tf explains why `available` falling faster
-# than the daily backup size means snapshots rather than backups.
-#
-# kopia comes out once these two have a full retention window and one restore
-# has actually been tested from the UI.
-# Encrypts BOTH restic repositories. GENERATED, unlike the kopia equivalent it
-# replaces.
+# Encrypts BOTH restic repositories. GENERATED.
 #
 # It can be generated because it configures nothing at plan time -- it is a
 # string written into an uploaded config.json. That is the distinction immich's

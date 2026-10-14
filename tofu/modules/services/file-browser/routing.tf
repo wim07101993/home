@@ -1,4 +1,4 @@
-# drive.wvl.app. Moved out of reverse-proxy/mindy/dynamic.yml on 2026-09-22.
+# drive.wvl.app.
 #
 # ROUTER AND MIDDLEWARE SHARE A STEM so they cannot disagree. Under compose they
 # were `drive` and `fb-size-limit`, and the middleware was attached to a router

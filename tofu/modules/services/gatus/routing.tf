@@ -1,5 +1,4 @@
-# status.wvl.app, on BUMBA. Moved out of reverse-proxy/bumba/dynamic.yml on
-# 2026-09-22.
+# status.wvl.app, on BUMBA.
 output "traefik" {
   value = {
     routers = {
