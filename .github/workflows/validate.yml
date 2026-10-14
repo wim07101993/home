@@ -1,0 +1,37 @@
+name: validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  renovate-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - run: npx --yes --package renovate renovate-config-validator renovate.json
+
+  tofu:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tofu
+    steps:
+      - uses: actions/checkout@v4
+      - uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: 1.12.1
+          tofu_wrapper: false
+      - run: tofu fmt -check -recursive -diff
+      # -backend=false: the pg backend is only reachable over Tailscale.
+      # validate checks syntax, types and module wiring without it.
+      - run: tofu init -backend=false -input=false
+      - run: tofu validate
