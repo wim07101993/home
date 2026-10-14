@@ -52,11 +52,6 @@ variable "mail_domain" {
   default = "mail.wvl.app"
 }
 
-variable "mail_region" {
-  type    = string
-  default = "eu"
-}
-
 # The org this project lives in. Passed from ../../zitadel, which owns the org
 # objects -- those are instance-level and not part of any one service.
 variable "zitadel_org_id" {

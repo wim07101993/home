@@ -11,5 +11,5 @@ resource "mailgun_domain_credential" "smtp" {
   domain   = var.mail_domain
   login    = "gatus"
   password = random_password.smtp.result
-  region   = var.mail_region
+  region   = "eu" # must match the SMTP host in config.yaml
 }

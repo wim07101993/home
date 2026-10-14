@@ -8,8 +8,3 @@ variable "mail_domain" {
   type    = string
   default = "mail.wvl.app"
 }
-
-variable "mail_region" {
-  type    = string
-  default = "eu"
-}

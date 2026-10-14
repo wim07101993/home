@@ -36,5 +36,5 @@ resource "mailgun_domain_credential" "smtp" {
   # -- an update that the defect in that file makes effectively unappliable.
   login    = "auth"
   password = random_password.smtp.result
-  region   = var.mail_region
+  region   = "eu" # must match the SMTP host in ./smtp.tf
 }
