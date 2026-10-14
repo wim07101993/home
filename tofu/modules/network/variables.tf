@@ -6,5 +6,5 @@ variable "name" {
 variable "labels" {
   type        = map(string)
   default     = {}
-  description = "Compose-era labels. See the note in main.tf -- dropping one forces replacement."
+  description = "Compose-era labels. Dropping one forces replacement."
 }

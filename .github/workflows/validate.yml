@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: npx --yes --package renovate renovate-config-validator --no-global renovate.json
+      - run: npx --yes --package renovate@44 renovate-config-validator --no-global renovate.json
 
   tofu:
     runs-on: ubuntu-latest

@@ -14,7 +14,7 @@
 
   "packageRules": [
     {
-      "matchManagers": ["docker-compose", "terraform", "custom.regex"],
+      "matchManagers": ["terraform", "custom.regex"],
       "matchUpdateTypes": ["patch"],
       "groupName": "patch updates"
     },
