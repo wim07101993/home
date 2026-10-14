@@ -8,10 +8,6 @@ output "ui_password" {
   sensitive = true
 }
 
-output "ui_username" {
-  value = var.ui_username
-}
-
 output "url" {
   description = "Tailnet-only. Plain HTTP over WireGuard -- see var.tailscale_ip."
   value       = "http://${var.tailscale_ip}:${var.port}/"

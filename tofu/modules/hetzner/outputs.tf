@@ -1,13 +1,3 @@
-output "storage_box_sftp_username" {
-  value = hcloud_storage_box_subaccount.kopia.username
-}
-
-output "storage_box_sftp_password" {
-  description = "Password for the u643732-sub1 sub-account, which holds the RETIRED kopia repository. Nothing in tofu uses it; it is the way back into those backups."
-  sensitive   = true
-  value       = random_password.storage_box_sftp.result
-}
-
 output "storage_box_password" {
   description = "Password for the snow-white Storage Box main account (u643732)."
   sensitive   = true
