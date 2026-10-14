@@ -1,7 +1,7 @@
 # renovate: datasource=docker depName=ghcr.io/immich-app/immich-server
 variable "image_tag" {
   type        = string
-  default     = "v3.1.0"
+  default     = "v3.3.1"
   description = "Server and machine-learning share a tag; they are released together."
 }
 
