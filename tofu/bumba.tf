@@ -138,6 +138,7 @@ output "zitadel_apps" {
       "status/gatus"               = module.gatus.zitadel_app
       "photos/immich"              = module.immich.zitadel_app
       "drive/drive"                = module.file_browser.zitadel_app
+      "portal/home portal (dev)"   = module.portal.zitadel_app_dev
     },
   )
 }
@@ -151,6 +152,7 @@ output "zitadel_project_ids" {
     "photos" = module.immich.zitadel_project_id
     "drive"  = module.file_browser.zitadel_project_id
     "Score"  = module.score.zitadel_project_id
+    "portal" = module.portal.zitadel_project_id
   }
 }
 

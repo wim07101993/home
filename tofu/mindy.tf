@@ -122,6 +122,18 @@ module "homepage" {
   host_port = local.mindy_ports.homepage
 }
 
+# Only the portal's zitadel client for now; the portal itself replaces
+# homepage above later.
+module "portal" {
+  source = "./modules/services/portal"
+
+  providers = {
+    zitadel = zitadel
+  }
+
+  zitadel_org_id = module.zitadel.org_home_id
+}
+
 module "score" {
   source = "./modules/services/score"
 
