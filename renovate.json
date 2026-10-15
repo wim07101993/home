@@ -41,6 +41,12 @@
       "description": "Own images, built elsewhere -- the PR here is only the deploy.",
       "matchPackageNames": ["wim07101993/score", "wim07101993/score-frontend"],
       "groupName": "score"
+    },
+    {
+      "description": "Tags end in a per-release commit hash, which docker versioning reads as an incompatible variant -- so no update is ever found.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["plexinc/pms-docker", "corentinth/it-tools"],
+      "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)(?:\\.(?<build>\\d+))?-[0-9a-f]+$"
     }
   ],
 

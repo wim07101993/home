@@ -16,7 +16,7 @@ terraform {
     }
     zitadel = {
       source  = "zitadel/zitadel"
-      version = "~> 2.0"
+      version = "~> 2.12"
     }
     random = {
       source  = "hashicorp/random"
@@ -25,6 +25,10 @@ terraform {
     mailgun = {
       source  = "wgebis/mailgun"
       version = "~> 0.10"
+    }
+    tls = {
+      source  = "hashicorp/tls"
+      version = "~> 4.0"
     }
   }
 

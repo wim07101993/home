@@ -1,16 +1,13 @@
 terraform {
   required_providers {
     docker = {
-      source  = "kreuzwerker/docker"
-      version = "~> 3.0"
+      source = "kreuzwerker/docker"
     }
     random = {
-      source  = "hashicorp/random"
-      version = "~> 3.0"
+      source = "hashicorp/random"
     }
     zitadel = {
-      source  = "zitadel/zitadel"
-      version = "~> 2.12"
+      source = "zitadel/zitadel"
     }
   }
 }

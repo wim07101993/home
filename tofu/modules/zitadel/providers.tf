@@ -1,16 +1,13 @@
 terraform {
   required_providers {
     zitadel = {
-      source  = "zitadel/zitadel"
-      version = "~> 2.0"
+      source = "zitadel/zitadel"
     }
     mailgun = {
-      source  = "wgebis/mailgun"
-      version = "~> 0.10"
+      source = "wgebis/mailgun"
     }
     random = {
-      source  = "hashicorp/random"
-      version = "~> 3.6"
+      source = "hashicorp/random"
     }
   }
 }

@@ -1,12 +1,3 @@
-# The media library is MOUNTED whole and BACKED UP in part. /export/media is
-# 8.4 TB against 4.5 TB free on the Storage Box, so backing up the directory
-# would fill the box and stop every other backup with it.
-#
-# The 48 below are a deliberate choice about what is worth off-site. They were
-# in samson.tf until 2026-09-29; they are plex's library, so they live here.
-#
-# /export/media is a bind of the same directory plex itself mounts -- same
-# device and inode, verified 2026-09-29.
 output "backup" {
   value = {
     mounts = { media = "/export/media" }

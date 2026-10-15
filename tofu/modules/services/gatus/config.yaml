@@ -32,7 +32,6 @@ security:
 
 alerting:
   email:
-    # TODO user variable from mailgun
     host: "smtp.eu.mailgun.org"
     port: 587
     from: "status@mail.wvl.app"
