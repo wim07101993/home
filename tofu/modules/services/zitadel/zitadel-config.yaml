@@ -1,0 +1,16 @@
+# All possible options and their defaults: https://github.com/zitadel/zitadel/blob/main/cmd/defaults.yaml
+Log:
+  Level: 'Info'
+
+ExternalDomain: auth.wvl.app
+ExternalPort: 443
+ExternalSecure: true
+
+TLS:
+  Enabled: false
+
+Database:
+  postgres:
+    Host: 'db'
+    Port: 5432
+    Database: zitadel

@@ -1,0 +1,22 @@
+variable "traefik_network" {
+  type        = string
+  description = "traefik's network on mindy, passed from the reverse-proxy module."
+}
+
+variable "db_network" {
+  type        = string
+  default     = "db_db-network"
+  description = <<-EOT
+    mindy's postgres network. A plain string, not a reference: that stack is
+    still compose-managed, so tofu does not own the network and must not try
+    to. Becomes a module reference when mindy's postgres moves.
+  EOT
+}
+
+variable "zitadel_org_id" {
+  type = string
+}
+
+variable "host_port" {
+  type = number
+}

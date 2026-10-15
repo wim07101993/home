@@ -1,0 +1,204 @@
+concurrency: 5
+skip-invalid-config-update: false
+
+web:
+  port: 8080
+
+storage:
+  type: sqlite
+  path: /data/data.db
+  caching: true
+  maximum-number-of-results: 200
+  maximum-number-of-events: 50
+
+ui:
+  title: "status ǀ wvl.app"
+  header: "wvl.app"
+  dashboard-heading: "Health"
+  default-sort-by: health
+  login-subtitle: "Sign in with wvl.app"
+
+security:
+  oidc:
+    # TODO use variable from zitadel
+    issuer-url: "https://auth.wvl.app"
+    redirect-url: "https://status.wvl.app/authorization-code/callback"
+    client-id: "${GATUS_OIDC_CLIENT_ID}"
+    client-secret: "${GATUS_OIDC_CLIENT_SECRET}"
+    scopes: ["openid"]
+    session-ttl: 8h
+    # Empty = anyone who authenticates
+    allowed-subjects: []
+
+alerting:
+  email:
+    host: "smtp.eu.mailgun.org"
+    port: 587
+    from: "status@mail.wvl.app"
+    to: "status@wvl.app"
+    username: "${GATUS_SMTP_USERNAME}"
+    password: "${GATUS_SMTP_PASSWORD}"
+    default-alert:
+      description: "healthcheck failed"
+      send-on-resolved: true
+      failure-threshold: 3
+      success-threshold: 2
+
+endpoints:
+  - name: zitadel
+    group: auth
+    url: "https://auth.wvl.app/debug/ready"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
+    alerts:
+      - type: email
+
+  - name: keuken
+    group: apps
+    url: "https://keuken.wvl.app/"
+    interval: 65m
+    conditions:
+      - "[STATUS] == 200"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
+    alerts:
+      - type: email
+
+  - name: memo
+    group: apps
+    url: "https://memo.wvl.app/healthz"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
+    alerts:
+      - type: email
+
+  - name: drive
+    group: apps
+    url: "https://drive.wvl.app/health"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].message == ok"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
+    alerts:
+      - type: email
+
+  - name: photos
+    group: apps
+    url: "https://photos.wvl.app/api/server/ping"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].res == pong"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
+    alerts:
+      - type: email
+
+  - name: score
+    group: apps
+    url: "https://score.wvl.app/"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
+    alerts:
+      - type: email
+
+  - name: score-api
+    group: apps
+    url: "https://score-api.wvl.app/healthz"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
+    alerts:
+      - type: email
+
+  - name: partituren
+    group: apps
+    url: "https://partituren.wvl.app/"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
+    alerts:
+      - type: email
+
+  - name: homepage
+    group: apps
+    url: "https://homepage.wvl.app/"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
+    alerts:
+      - type: email
+
+  - name: it-tools
+    group: apps
+    url: "https://it-tools.wvl.app/"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
+    alerts:
+      - type: email
+
+  # ---- hosts ----------------------------------
+  - name: mindy
+    group: hosts
+    url: "icmp://100.127.106.121"
+    interval: 5m
+    conditions:
+      - "[CONNECTED] == true"
+    alerts:
+      - type: email
+
+  - name: samson
+    group: hosts
+    url: "icmp://100.71.248.106"
+    interval: 5m
+    conditions:
+      - "[CONNECTED] == true"
+    alerts:
+      - type: email
+
+  - name: plop
+    group: hosts
+    url: "icmp://100.117.36.52"
+    interval: 5m
+    conditions:
+      - "[CONNECTED] == true"
+    alerts:
+      - type: email
+
+  # ---- backups ---------------------------------
+
+  - name: databasus
+    group: backups
+    url: "http://100.71.248.106:4005/healthz"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: email
+
+external-endpoints:
+  - name: backrest-mindy
+    group: backups
+    token: "${GATUS_BACKREST_TOKEN}"
+    heartbeat:
+      interval: 26h
+    alerts:
+      - type: email
+
+  - name: backrest-samson
+    group: backups
+    token: "${GATUS_BACKREST_TOKEN}"
+    heartbeat:
+      interval: 26h
+    alerts:
+      - type: email

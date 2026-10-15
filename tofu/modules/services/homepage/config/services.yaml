@@ -1,0 +1,86 @@
+- Bumba:
+    - Zitadel:
+        href: 'https://auth.wvl.app'
+        icon: /icons/zitadel-light.svg
+        description: Identity provider
+    - Status:
+        href: 'https://status.wvl.app'
+        icon: /icons/gatus.svg
+        description: gatus -- uptime and backup heartbeats
+    - Traefik:
+        href: 'https://wvl.app'
+        icon: /icons/traefik.svg
+        description: Reverse proxy
+    - Database:
+        href: 'postgresql://100.104.241.49:5432/'
+        icon: /icons/postgresql.svg
+        description: zitadel, and this layer's tofu state
+    - Portainer:
+        href: 'https://100.104.241.49:9443/'
+        icon: /icons/portainer-dark.svg
+
+- Mindy:
+    - Photos:
+        href: 'https://photos.wvl.app'
+        icon: /icons/immich.svg
+        description: immich
+    - Drive:
+        href: 'https://drive.wvl.app'
+        icon: /icons/filebrowser-quantum.svg
+    - Memo:
+        href: 'https://memo.wvl.app'
+        icon: /icons/memos.svg
+    - Keuken:
+        href: 'https://keuken.wvl.app'
+        icon: /icons/kitchenowl.svg
+        description: KitchenOwl
+    - Score:
+        href: 'https://score.wvl.app'
+        description: Moved here from bumba on 2026-09-17
+    - Partituren:
+        href: 'https://partituren.wvl.app'
+        description: Same backend as Score, second hostname
+    - ItTools:
+        href: 'https://it-tools.wvl.app'
+        icon: /icons/it-tools-light.svg
+    - Backrest:
+        href: 'http://100.127.106.121:9898/'
+        icon: /icons/backrest.svg
+        description: Backups -- rafiki (photos, audio, documents)
+    - Database:
+        href: 'postgresql://100.127.106.121:5432/'
+        icon: /icons/postgresql.svg
+        description: memos, kitchenowl, score
+    - Traefik:
+        href: 'https://traefik.wvl.app'
+        icon: /icons/traefik.svg
+    - Portainer:
+        href: 'https://100.127.106.121:9443/'
+        icon: /icons/portainer-dark.svg
+
+- Samson:
+    - Plex:
+        href: 'https://app.plex.tv/'
+        icon: /icons/plex.svg
+    - OpenMediaVault:
+        href: 'http://100.71.248.106/'
+        icon: /icons/openmediavault.svg
+    - Databasus:
+        href: 'http://100.71.248.106:4005/'
+        icon: /icons/databasus.svg
+        description: Database dumps
+    - Backrest:
+        href: 'http://100.71.248.106:9898/'
+        icon: /icons/backrest.svg
+        description: Backups -- the array (selected media, dumps, archive)
+    - Portainer:
+        href: 'https://100.71.248.106:9443/'
+        icon: /icons/portainer-dark.svg
+
+- Plop:
+    - HomeAssistant:
+        href: 'http://100.117.36.52:8123/'
+        icon: /icons/home-assistant.svg
+    - Portainer:
+        href: 'https://100.117.36.52:9443/'
+        icon: /icons/portainer-dark.svg

@@ -1,0 +1,14 @@
+# The UI password. Read it with
+#
+#   tofu output -raw backrest_mindy_password
+#
+# after the root re-exports it -- see mindy.tf and samson.tf.
+output "ui_password" {
+  value     = random_password.ui.result
+  sensitive = true
+}
+
+output "url" {
+  description = "Tailnet-only. Plain HTTP over WireGuard -- see var.tailscale_ip."
+  value       = "http://${var.tailscale_ip}:${var.port}/"
+}

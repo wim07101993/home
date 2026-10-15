@@ -1,0 +1,230 @@
+#!/usr/bin/env bash
+#
+# Source this, do not execute it:   . ./env.sh
+#
+# Sets everything tofu needs. Each value is taken, in order, from the
+# environment, from a tofu-loaded tfvars file, or -- failing both -- by
+# prompting. Nothing here depends on a particular secret manager, and no secret
+# is stored in this file, which is why it is safe in a public repo.
+#
+# TO STOP BEING PROMPTED: copy secrets.auto.tfvars.example to
+# secrets.auto.tfvars and fill it in. That file is gitignored (`*.tfvars`), tofu
+# loads it with no flag, and this script then skips those prompts. Two values
+# cannot live there and must stay environment variables: TF_VAR_state_passphrase
+# (read by the `encryption` block, evaluated before variables are loaded) and
+# TOFU_STATE_DB_PASSWORD / PG_CONN_STR (backend config, not a tofu variable at
+# all). HCLOUD_TOKEN is read by the provider from the environment.
+#
+# Non-interactive (CI, a wrapper, a systemd unit) -- export them beforehand:
+#
+#   HCLOUD_TOKEN                  Hetzner Cloud API token
+#   TF_VAR_state_passphrase       state encryption passphrase, 16+ chars
+#   TF_VAR_bumba_pg_superuser_password        postgres superuser password on bumba
+#   TF_VAR_mindy_pg_superuser_password  ... and on mindy (a different value)
+#   TF_VAR_immich_pg_superuser_password ... and on immich's own postgres, :5434
+#   TF_VAR_mailgun_api_key        Mailgun API key (mints SMTP credentials)
+#   TOFU_STATE_DB_PASSWORD        the tofu_state role, for the BACKEND
+#   PG_CONN_STR                   overrides the last one entirely
+#   BUMBA_ADDR                    skips the `tailscale ip` lookup
+#
+# Note there are TWO postgres credentials and they are not the same:
+#
+#   backend   connects as tofu_state -- owns nothing but its own database
+#   provider  connects as postgres   -- superuser, creates roles and databases
+#
+# Keeping them apart is what stops an apply that goes wrong from also
+# destroying the record of what it did.
+#
+# If you keep these in a vault, that is a line in your own shell rc, not a
+# dependency of this repo. For example:
+#
+#   export TF_VAR_state_passphrase="$(rbw get 'OpenTofu state')"   # or bw, pass, ...
+#
+# BITWARDEN (optional). Every secret lives as a hidden custom FIELD on ONE item
+# (default name "tofu home", override with TOFU_BW_ITEM). Field names are the
+# exact variable names below. Create or refresh it with:
+#
+#   export BW_SESSION="$(bw unlock --raw)"
+#   bash bw-seed.sh
+#
+# One item rather than one per secret because twelve separate lookups meant
+# twelve chances for a name to not match -- which is exactly what happened on
+# 2026-09-19, silently, since `bw get` prints "Not found." and exits 0.
+#
+# This stays OPTIONAL by construction: the repo is public and not everyone who
+# runs it uses Bitwarden. A missing `bw`, a locked vault, a missing item or a
+# missing field each fall back to the prompt. TOFU_NO_BW=1 skips it entirely.
+
+# Where this script lives, so the *.auto.tfvars lookup below does not depend on
+# the caller's working directory.
+_tofu_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# True if a tfvars file tofu loads automatically already defines this variable.
+#
+# `*.auto.tfvars` and `terraform.tfvars` are read by tofu with no flag, so a
+# value there makes prompting for it pointless -- and worse than pointless,
+# because tfvars takes precedence over TF_VAR_ and the typed answer would be
+# silently discarded.
+#
+# Deliberately NOT applied to TF_VAR_state_passphrase: it feeds the `encryption`
+# block, which is evaluated earlier than ordinary variable loading. Treating it
+# as satisfiable from a file risks an init that cannot decrypt, so it stays an
+# environment variable regardless of what is in tfvars.
+_tofu_has_tfvar() {   # _tofu_has_tfvar TF_VAR_foo
+  local _n=${1#TF_VAR_}
+  [ "$_n" = "$1" ] && return 1                  # not a TF_VAR_, not from tfvars
+  [ "$1" = "TF_VAR_state_passphrase" ] && return 1
+  # The value must be non-empty. Matching the NAME alone would treat a
+  # half-filled `secrets.auto.tfvars` -- copied from the .example and not yet
+  # completed -- as answered, and hand tofu an empty password with no prompt
+  # and no error. Accepts "something" or a bare token; rejects "".
+  grep -qsE "^[[:space:]]*${_n}[[:space:]]*=[[:space:]]*(\"[^\"]+\"|[^\"[:space:]]+)" \
+    "$_tofu_dir"/*.auto.tfvars "$_tofu_dir"/terraform.tfvars 2>/dev/null
+}
+
+# Fetches the item ONCE per sourcing and caches it -- `bw get` is a slow call
+# and there are a dozen fields to read out of it.
+_tofu_bw_state=""
+_tofu_bw_json=""
+_tofu_bw_init() {
+  [ -n "$_tofu_bw_state" ] && return 0
+  _tofu_bw_state=off
+  [ "${TOFU_NO_BW:-}" = "1" ] && return 0
+  command -v bw >/dev/null 2>&1 || return 0
+  command -v jq >/dev/null 2>&1 || {
+    echo "env.sh: bitwarden lookup needs jq -- prompting instead." >&2; return 0; }
+  case "$(bw status 2>/dev/null)" in
+    *'"status":"unlocked"'*) ;;
+    *'"status":"locked"'*)
+      echo "env.sh: bitwarden is locked -- prompting instead." >&2
+      echo '        export BW_SESSION="$(bw unlock --raw)" to use it.' >&2
+      return 0 ;;
+    *'"status":"unauthenticated"'*)
+      echo "env.sh: bitwarden is not logged in -- prompting instead." >&2
+      return 0 ;;
+    *) return 0 ;;
+  esac
+  _tofu_bw_json="$(bw get item "${TOFU_BW_ITEM:-tofu home}" 2>/dev/null)" || _tofu_bw_json=""
+  if [ -z "$_tofu_bw_json" ]; then
+    echo "env.sh: no bitwarden item '${TOFU_BW_ITEM:-tofu home}' -- prompting instead." >&2
+    echo "        create it with: bash bw-seed.sh" >&2
+    return 0
+  fi
+  _tofu_bw_state=on
+  return 0
+}
+
+# VARNAME -> the value of the hidden field with that exact name.
+#
+# Prints nothing and returns non-zero when the field is absent, so the caller
+# falls through to the prompt.
+_tofu_bw_get() {   # _tofu_bw_get VARNAME
+  local _v
+  _v="$(printf '%s' "$_tofu_bw_json" | jq -r --arg n "$1" '.fields[]? | select(.name==$n) | .value // empty' 2>/dev/null)"
+  [ -n "$_v" ] || return 1
+  printf '%s' "$_v"
+}
+
+_tofu_need() {   # _tofu_need VARNAME "human description"
+  local _var="$1" _desc="$2" _val=""
+  [ -n "${!_var:-}" ] && return 0
+  _tofu_has_tfvar "$_var" && return 0
+
+  # Bitwarden, if it is available and unlocked. Anything less falls through.
+  _tofu_bw_init
+  if [ "$_tofu_bw_state" = on ]; then
+    _val="$(_tofu_bw_get "$_var" || true)"
+    if [ -n "$_val" ]; then
+      export "$_var=$_val"
+      _tofu_bw_hits=$(( ${_tofu_bw_hits:-0} + 1 ))
+      return 0
+    fi
+    _val=""
+  fi
+
+  # -r /dev/tty is not enough: the file can exist and still fail to open when
+  # there is no controlling terminal. Try it for real.
+  if ! { exec 3<>/dev/tty; } 2>/dev/null; then
+    echo "env.sh: $_var is unset and there is no terminal to prompt on." >&2
+    echo "        export $_var=... before sourcing this." >&2
+    return 1
+  fi
+  printf '%s (%s): ' "$_desc" "$_var" >&3
+  IFS= read -rs _val < /dev/tty
+  printf '\n' >&3
+  exec 3>&-
+  [ -n "$_val" ] || { echo "env.sh: empty value for $_var" >&2; return 1; }
+  export "$_var=$_val"
+}
+
+# Tailnet addresses -- used by the providers, and bumba's by the backend too.
+# Never the public IPs: the postgres connections are unencrypted and rely on
+# WireGuard for transport security. Set <HOST>_ADDR to skip the lookup, or
+# <HOST>_TS_HOST if the device name differs.
+_tofu_addr() {   # _tofu_addr bumba
+  local _up _addr _ts
+  _up=$(printf '%s' "$1" | tr '[:lower:]' '[:upper:]')
+  _addr="${_up}_ADDR" _ts="${_up}_TS_HOST"
+  if [ -z "${!_addr:-}" ]; then
+    command -v tailscale >/dev/null 2>&1 || {
+      echo "env.sh: no 'tailscale' command. Set $_addr." >&2
+      return 1
+    }
+    printf -v "$_addr" '%s' "$(tailscale ip -4 "${!_ts:-$1}" 2>/dev/null)"
+    [ -n "${!_addr}" ] || {
+      echo "env.sh: cannot resolve '${!_ts:-$1}' on the tailnet." >&2
+      echo "        Check 'tailscale status', or set $_ts / $_addr." >&2
+      return 1
+    }
+  fi
+  export "$_addr" "TF_VAR_$1_addr=${!_addr}"
+}
+
+# plop is the house: Home Assistant and the Matter server.
+for _h in bumba mindy samson plop; do
+  _tofu_addr "$_h" || return 1
+done
+unset _h
+
+_tofu_need HCLOUD_TOKEN "Hetzner Cloud API token" || return 1
+_tofu_need TF_VAR_state_passphrase "OpenTofu state encryption passphrase" || return 1
+
+_tofu_need TF_VAR_bumba_pg_superuser_password "postgres SUPERUSER password on bumba" || return 1
+
+_tofu_need TF_VAR_mindy_pg_superuser_password "postgres SUPERUSER password on MINDY" || return 1
+
+# immich runs its OWN postgres on mindy:5434. Unlike the two above, this value
+# is ENFORCED: the container re-applies it on every start. Rotating it takes two
+# applies -- see immich_pg_superuser_password in mindy.tf.
+_tofu_need TF_VAR_immich_pg_superuser_password "postgres SUPERUSER password on IMMICH'S postgres (mindy:5434)" || return 1
+
+# Backrest's repository password is NOT here. tofu generates it -- see
+# random_password.backrest_repository in estate.tf -- so there is nothing to type.
+# Copy it to the vault after the first apply; bw-seed.sh does that for you.
+
+# Mailgun. One key, not one password per service: tofu creates the SMTP
+# credentials itself -- modules/services/gatus/mail.tf and
+# modules/zitadel/mail.tf -- so there is no SMTP password to type. Scope the key
+# in the Mailgun console; it can manage the whole account.
+_tofu_need TF_VAR_mailgun_api_key "Mailgun API key" || return 1
+
+if [ -z "${PG_CONN_STR:-}" ]; then
+  _tofu_need TOFU_STATE_DB_PASSWORD "postgres password for role tofu_state (backend)" || return 1
+
+  # libpq keyword/value form, not a postgres:// URI. A URI would need the
+  # password percent-encoded, and an unescaped '@' or '/' in it silently
+  # produces a connection string that points somewhere else. Both psql and the
+  # pg backend accept this form.
+  _pw=${TOFU_STATE_DB_PASSWORD//\\/\\\\}   # \ -> \\
+  _pw=${_pw//\'/\\\'}                      # ' -> \'
+  export PG_CONN_STR="host=${BUMBA_ADDR} port=5432 dbname=tofu_state user=tofu_state password='${_pw}' sslmode=disable"
+  unset _pw
+fi
+
+[ "${_tofu_bw_hits:-0}" -gt 0 ] && \
+  echo "env.sh: ${_tofu_bw_hits} secret(s) read from bitwarden." >&2
+
+unset -f _tofu_need _tofu_has_tfvar _tofu_bw_init _tofu_bw_get _tofu_addr
+unset _tofu_bw_state _tofu_bw_hits _tofu_bw_json
+unset _tofu_dir
+echo "env.sh: environment set (bumba ${BUMBA_ADDR}, mindy ${MINDY_ADDR}, samson ${SAMSON_ADDR}, plop ${PLOP_ADDR})"

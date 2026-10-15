@@ -1,0 +1,64 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "timezone": "Europe/Brussels",
+
+  "automerge": false,
+  "schedule": ["before 9am on monday"],
+  "prConcurrentLimit": 5,
+
+  "nix": {
+    "enabled": true,
+    "lockFileMaintenance": { "enabled": true }
+  },
+
+  "packageRules": [
+    {
+      "matchManagers": ["terraform", "custom.regex"],
+      "matchUpdateTypes": ["patch"],
+      "groupName": "patch updates"
+    },
+    {
+      "description": "Traefik terminates TLS for everything. Keep it visible and on its own.",
+      "matchPackageNames": ["traefik"],
+      "groupName": null,
+      "labels": ["front-door"]
+    },
+    {
+      "description": "Zitadel is auth for every service. Never batch it with anything.",
+      "matchPackageNames": ["ghcr.io/zitadel/zitadel", "ghcr.io/zitadel/zitadel-login"],
+      "groupName": null,
+      "labels": ["auth"]
+    },
+    {
+      "description": "Postgres majors need a dump/restore, not a tag bump.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["postgres"],
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Own images, built elsewhere -- the PR here is only the deploy.",
+      "matchPackageNames": ["wim07101993/score", "wim07101993/score-frontend"],
+      "groupName": "score"
+    },
+    {
+      "description": "Tags end in a per-release commit hash, which docker versioning reads as an incompatible variant -- so no update is ever found.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["plexinc/pms-docker", "corentinth/it-tools"],
+      "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)(?:\\.(?<build>\\d+))?-[0-9a-f]+$"
+    }
+  ],
+
+  "customManagers": [
+    {
+      "description": "Image tags in OpenTofu variables that are interpolated into the image name, which the terraform manager cannot resolve.",
+      "customType": "regex",
+      "managerFilePatterns": ["/^tofu/.+\\.tf$/"],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>[a-z-]+?)\\s+depName=(?<depName>[^\\s]+?)\\s*\\n[\\s\\S]*?default\\s*=\\s*\"(?<currentValue>[^\"]+)\""
+      ],
+      "versioningTemplate": "docker"
+    }
+  ]
+}

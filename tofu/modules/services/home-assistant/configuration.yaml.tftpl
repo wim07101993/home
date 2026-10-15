@@ -1,0 +1,35 @@
+# Home Assistant configuration. GENERATED -- uploaded by tofu on every
+# container create. Editing it on plop works until the next apply.
+#
+# Source: tofu/modules/services/home-assistant/configuration.yaml.tftpl
+#
+# This file is TEMPLATED rather than copied because it carries the OIDC client
+# id and secret. This repo is public, so the previous copy at
+# plop/homeassistant/configuration.yaml had placeholders and the real values
+# were typed in by hand on the host -- which meant the file in git described
+# something that did not exist, and the one that ran was nobody's
+# responsibility.
+
+# Loads default set of integrations. Do not remove.
+default_config:
+
+# Load frontend themes from the themes folder
+frontend:
+  themes: !include_dir_merge_named themes
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+openid:
+  client_id: "${client_id}"
+  client_secret: "${client_secret}"
+  configure_url: "https://auth.wvl.app/.well-known/openid-configuration"
+  username_field: "preferred_username"
+  scope: "openid profile email"
+  block_login: true
+  trusted_ips: # List of CIDR blocks that are not affected by block_login
+    - "${tailscale_ip}/24"
+    - "10.0.0.0/8"
+  openid_text: "Login with Home"  # Text to display on the login page
+  create_user: true  # Automatically create users on first login

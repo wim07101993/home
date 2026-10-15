@@ -1,0 +1,59 @@
+variable "traefik_network" {
+  type = string
+}
+
+variable "data_path" {
+  type        = string
+  default     = "/docker-volumes/gatus/data"
+  description = <<-EOT
+    Holds the SQLite database: check results, uptime and past events.
+
+    Create it before the first apply:
+
+      ssh root@<bumba> mkdir -p /docker-volumes/gatus/data
+
+    Less load-bearing than the same note on other modules: the gatus image is
+    FROM scratch with no USER, so it runs as root and can write the root-owned
+    directory docker would create for a missing bind source. Created explicitly
+    anyway, so the path is deliberate rather than a side effect.
+  EOT
+}
+
+variable "tailscale_ip" {
+  type        = string
+  description = <<-EOT
+    Host address to publish the dashboard on, as an out-of-band route.
+
+    Bound to bumba's tailscale address rather than 0.0.0.0 on purpose. A status
+    page reachable only through traefik tells you nothing when traefik is what
+    broke -- and that is not hypothetical, since every route on this host is in
+    one file that replaces the container when it changes. Binding it publicly
+    instead would put a second, unauthenticated front door on the box.
+  EOT
+}
+
+variable "host_port" {
+  type = number
+}
+
+# Sender and recipient are in config.yaml -- they are choices, and belong in
+# the file that documents this deployment.
+#
+# The USERNAME is not a choice, and is no longer passed in: it is derived from
+# the credential in ./mail.tf, which this module now owns. Duplicating it as a
+# literal would let config.yaml and the real credential disagree, and the
+# symptom of that is a silent SMTP auth failure -- alerts generated, never
+# delivered, nothing on the dashboard wrong.
+#
+# The domain and region are the two things that are still inputs, so the
+# credential and the sender address in config.yaml cannot drift apart.
+variable "mail_domain" {
+  type    = string
+  default = "mail.wvl.app"
+}
+
+# The org this project lives in. Passed from ../../zitadel, which owns the org
+# objects -- those are instance-level and not part of any one service.
+variable "zitadel_org_id" {
+  type = string
+}
