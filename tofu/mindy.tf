@@ -241,20 +241,6 @@ variable "mindy_pg_superuser_password" {
 variable "immich_pg_superuser_password" {
   type      = string
   sensitive = true
-
-  description = <<-EOT
-    postgres superuser password on IMMICH'S OWN postgres (mindy:5434), a
-    different cluster from the shared one above.
-
-    Supplied rather than generated: it configures the postgresql.immich
-    provider, and a provider is configured at PLAN time, where a generated
-    value is still unknown. Tried on 2026-09-23 and the plan failed with
-    `password authentication failed for user "postgres"`.
-
-    Unlike the other two, this one is ENFORCED. The container re-applies it on
-    every start -- modules/services/immich/assert-superuser-password.sh -- so
-    changing it here and applying is the whole rotation. No manual ALTER.
-  EOT
 }
 
 variable "backrest_identity_mindy" {

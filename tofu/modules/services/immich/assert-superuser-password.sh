@@ -52,9 +52,9 @@ assert() {
     sleep 1
   done
 
-  # Passed via a psql variable, not interpolated into the SQL text, so a
+  # psql reads the file itself (`\set` with backticks), so the password never
+  # appears in an argv, and :'v' expands it as a correctly quoted literal -- a
   # password containing a quote cannot end the string early or run anything.
-  # :'v' expands to a correctly quoted literal.
   #
   # On STDIN, not -c. psql does not perform variable interpolation on -c: the
   # server receives the literal ":'v'" and fails with `syntax error at or near
@@ -62,9 +62,8 @@ assert() {
   # real cluster -- the ALTER failed silently apart from one line in the log,
   # which is exactly how a password rotation would have quietly stopped
   # happening.
-  if psql -v ON_ERROR_STOP=1 -U postgres -d postgres --no-psqlrc \
-       -v v="$(cat "$PASSWORD_FILE")" \
-       >/dev/null 2>&1 <<<"ALTER USER postgres PASSWORD :'v';"; then
+  if printf '%s\n' "\\set v \`cat $PASSWORD_FILE\`" "ALTER USER postgres PASSWORD :'v';" \
+       | psql -v ON_ERROR_STOP=1 -U postgres -d postgres --no-psqlrc >/dev/null 2>&1; then
     touch "$MARKER"
     echo "assert-superuser-password: superuser password asserted"
     return 0

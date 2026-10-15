@@ -160,6 +160,7 @@ resource "random_password" "masterkey" {
   special = false
 
   lifecycle {
-    ignore_changes = all
+    ignore_changes  = all
+    prevent_destroy = true
   }
 }

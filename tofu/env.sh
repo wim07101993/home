@@ -194,8 +194,8 @@ _tofu_need TF_VAR_bumba_pg_superuser_password "postgres SUPERUSER password on bu
 _tofu_need TF_VAR_mindy_pg_superuser_password "postgres SUPERUSER password on MINDY" || return 1
 
 # immich runs its OWN postgres on mindy:5434. Unlike the two above, this value
-# is ENFORCED: the container re-applies it on every start, so changing it here
-# and applying rotates it. See modules/services/immich/assert-superuser-password.sh.
+# is ENFORCED: the container re-applies it on every start. Rotating it takes two
+# applies -- see immich_pg_superuser_password in mindy.tf.
 _tofu_need TF_VAR_immich_pg_superuser_password "postgres SUPERUSER password on IMMICH'S postgres (mindy:5434)" || return 1
 
 # Backrest's repository password is NOT here. tofu generates it -- see
