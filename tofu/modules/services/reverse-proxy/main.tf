@@ -6,6 +6,11 @@ locals {
   config_path = "/etc/traefik/traefik.yml"
 }
 
+resource "random_password" "dashboard" {
+  length  = 32
+  special = false
+}
+
 resource "docker_image" "traefik" {
   name         = "traefik:v3.7.10"
   keep_locally = true
@@ -46,12 +51,20 @@ resource "docker_container" "this" {
   upload {
     file = "/etc/traefik/dynamic.yml"
     content = yamlencode({
-      http = merge(length(local.middlewares) > 0 ? { middlewares = local.middlewares } : {}, {
+      http = {
+        # nonsensitive: a bcrypt hash of a 32-character random password is safe
+        # to show, and keeping it visible keeps routing changes readable in plans.
+        middlewares = merge(local.middlewares, {
+          "dashboard-auth" = {
+            basicAuth = { users = ["admin:${nonsensitive(random_password.dashboard.bcrypt_hash)}"] }
+          }
+        })
         routers = merge(
           {
             dashboard = {
-              rule    = "Host(`${var.dashboard_host}`)"
-              service = "api@internal"
+              rule        = "Host(`${var.dashboard_host}`)"
+              service     = "api@internal"
+              middlewares = ["dashboard-auth"]
             }
           },
           {
@@ -63,7 +76,7 @@ resource "docker_container" "this" {
           },
         )
         services = local.services
-      })
+      }
     })
   }
 }

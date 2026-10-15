@@ -45,6 +45,7 @@ locals {
           clientId       = zitadel_application_oidc.this.client_id
           scopes         = "openid profile email groups"
           userIdentifier = "preferred_username"
+          createUser     = true
           # TODO verify this works
           groupsClaim = "groups"
           adminGroup  = var.oidc_admin_group

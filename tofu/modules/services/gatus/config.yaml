@@ -183,8 +183,6 @@ endpoints:
     interval: 5m
     conditions:
       - "[STATUS] == 200"
-    heartbeat:
-      interval: 26h
     alerts:
       - type: email
 

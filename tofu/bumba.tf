@@ -154,4 +154,9 @@ output "zitadel_project_ids" {
   }
 }
 
+output "traefik_bumba_password" {
+  value     = module.reverse_proxy_bumba.dashboard_password
+  sensitive = true
+}
+
 

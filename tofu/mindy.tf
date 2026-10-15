@@ -265,3 +265,8 @@ output "backrest_mindy_password" {
   value     = module.backrest_mindy.ui_password
   sensitive = true
 }
+
+output "traefik_mindy_password" {
+  value     = module.mindy_traefik.dashboard_password
+  sensitive = true
+}

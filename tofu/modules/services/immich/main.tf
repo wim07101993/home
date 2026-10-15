@@ -243,10 +243,6 @@ resource "docker_container" "server" {
     external = var.host_port
   }
 
-  # The library. Local since 2026-09-18; see var.library_path. rslave is kept
-  # but no longer load-bearing -- it mattered when this was NFS. Unlike
-  # file-browser's nine automounts, this one is mounted at boot, before docker
-  # starts -- but it costs nothing and removes the dependency on that ordering.
   mounts {
     type   = "bind"
     source = var.library_path
@@ -277,27 +273,11 @@ resource "docker_container" "server" {
   depends_on = [
     docker_container.postgres,
     docker_container.redis,
+    postgresql_role.this,
   ]
 }
 
-# GENERATED. The password for the `immich` role in database.tf -- an ordinary
-# rotatable credential since 2026-09-23.
-#
-# It used to be the postgres SUPERUSER's password, adopted with
-# `ignore_changes = all` because `POSTGRES_PASSWORD` is only read by initdb on
-# an EMPTY data directory, so tofu could set the container env and nothing
-# else. That value now lives in var.superuser_password.
-#
-# Rotating is one command, and the provider issues the ALTER ROLE itself:
-#
-#   tofu apply -replace='module.immich.random_password.db'
-#
 resource "random_password" "db" {
-  length = 32
-
-  # No `ignore_changes` any more. It was there to suppress the replacement an
-  # imported random_password plans when the config's generation attributes do
-  # not match the adopted value -- which was correct while a replacement would
-  # have changed the container env and NOT the database. Now a replacement
-  # changes both, in one apply, which is the whole point.
+  length  = 32
+  special = false # immich asks for A-Za-z0-9 only
 }
