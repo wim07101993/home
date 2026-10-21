@@ -132,7 +132,7 @@ provider "docker" {
 
 provider "docker" {
   alias = "plop"
-  host  = "ssh://root@${var.plop_addr}"
+  host  = "ssh://wim@${var.plop_addr}"
 }
 
 provider "zitadel" {

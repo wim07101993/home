@@ -20,6 +20,8 @@ resource "docker_container" "this" {
 
   env = ["TZ=Europe/Brussels"]
 
+  userns_mode = "host"
+
   security_opts = ["no-new-privileges:true"]
 
   capabilities {
@@ -83,6 +85,7 @@ resource "docker_container" "matter" {
   restart = "unless-stopped"
 
   network_mode = "host"
+  userns_mode  = "host"
 
   read_only     = true
   security_opts = ["no-new-privileges:true"]

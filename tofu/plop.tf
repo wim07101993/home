@@ -31,5 +31,5 @@ module "home_assistant" {
 
 variable "plop_addr" {
   type        = string
-  description = "plop's TAILNET address. Home Assistant and the Matter server; reached as root over SSH for the docker provider."
+  description = "plop's TAILNET address. Home Assistant and the Matter server; reached as wim over SSH for the docker provider."
 }

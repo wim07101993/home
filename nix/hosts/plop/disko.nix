@@ -1,6 +1,4 @@
 {
-  # Dell OptiPlex 7010, one 233 GB SATA disk, legacy BIOS. Nothing else is
-  # attached, so this is the whole machine.
   disko.devices.disk.os = {
     device = "/dev/disk/by-id/ata-Samsung_SSD_860_EVO_250GB_S3YJNF0K254436A";
     type = "disk";

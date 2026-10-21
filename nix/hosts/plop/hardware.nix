@@ -1,16 +1,15 @@
 {
-  # APPROXIMATED, NOT GENERATED -- run `nixos-generate-config` on plop and
-  # reconcile. An Ivy Bridge OptiPlex is about as standard as SATA gets, but
-  # this is physical hardware and a wrong initrd does not boot.
+  # From `nixos-generate-config --show-hardware-config` on plop, 2026-10-21.
   boot.initrd.availableKernelModules = [
-    "ahci"
-    "sd_mod"
     "xhci_pci"
     "ehci_pci"
-    "usbhid"
+    "ahci"
     "usb_storage"
+    "sd_mod"
+    "sr_mod"
   ];
   boot.kernelModules = [ "kvm-intel" ];
 
   hardware.enableRedistributableFirmware = true;
+  hardware.cpu.intel.updateMicrocode = true;
 }
