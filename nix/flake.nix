@@ -9,13 +9,15 @@
     };
   };
 
-  outputs = { nixpkgs, disko, ... }:
+  outputs = { self, nixpkgs, disko, ... }:
     let
       host = name: nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         modules = [
           disko.nixosModules.disko
           ./hosts/${name}
+
+          { system.configurationRevision = self.rev or self.dirtyRev or null; }
         ];
       };
     in
