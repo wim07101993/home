@@ -20,8 +20,6 @@ resource "docker_container" "this" {
 
   env = ["TZ=Europe/Brussels"]
 
-  userns_mode = "host"
-
   security_opts = ["no-new-privileges:true"]
 
   capabilities {
