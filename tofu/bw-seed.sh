@@ -219,6 +219,7 @@ done
 # name | username | uri | <state module>|<random_password name>
 LOGIN_ITEMS=(
   "filebrowser|admin|https://drive.wvl.app|module.file_browser|admin"
+  "navidrome|admin|https://music.wvl.app|module.navidrome|admin"
   "backrest (mindy)|wim|http://${MINDY_ADDR:-100.127.106.121}:9898|module.backrest_mindy|ui"
   "backrest (samson)|wim|http://${SAMSON_ADDR:-100.71.248.106}:9898|module.backrest_samson|ui"
   "traefik (bumba)|admin|https://wvl.app/dashboard/|module.reverse_proxy_bumba|dashboard"

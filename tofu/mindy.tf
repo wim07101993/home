@@ -49,6 +49,9 @@ module "mindy_traefik" {
     module.kitchen_owl.traefik,
     module.memo.traefik,
     module.score.traefik,
+
+    # Runs on samson; this route is the only way in from the internet.
+    module.navidrome.traefik,
   ]
   network_name = module.mindy_traefik_network.name
 

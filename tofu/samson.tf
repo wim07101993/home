@@ -4,6 +4,7 @@
 locals {
   samson_ports = {
     databasus = 4005
+    navidrome = 4533
     backrest  = 9898
   }
 }
@@ -33,6 +34,19 @@ module "plex" {
   }
 }
 
+# Public at music.wvl.app through mindy
+module "navidrome" {
+  source = "./modules/services/navidrome"
+
+  providers = {
+    docker = docker.samson
+  }
+
+  tailscale_ip = var.samson_addr
+
+  host_port = local.samson_ports.navidrome
+}
+
 
 module "backrest_samson" {
   source = "./modules/services/backrest"
@@ -51,6 +65,7 @@ module "backrest_samson" {
   backup = [
     module.plex.backup,
     module.databasus.backup,
+    module.navidrome.backup,
 
     # audio-archive has no owning module: it lives on samson but is served by
     # filebrowser on mindy. Declared here rather than pretending otherwise.
@@ -118,6 +133,11 @@ variable "backrest_identity_samson" {
 
 # --- outputs --------------------------------------------------------------
 
+
+output "navidrome_admin_password" {
+  value     = module.navidrome.admin_password
+  sensitive = true
+}
 
 output "backrest_samson_password" {
   value     = module.backrest_samson.ui_password
