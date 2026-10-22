@@ -127,7 +127,7 @@ provider "docker" {
 
 provider "docker" {
   alias = "samson"
-  host  = "ssh://root@${var.samson_addr}"
+  host  = "ssh://wim@${var.samson_addr}"
 }
 
 provider "docker" {

@@ -14,9 +14,29 @@
   networking.useDHCP = false;
   networking.interfaces.eno1.useDHCP = true;
 
-  # Samba is NOT configured here. OMV shipped smb.conf with a [global] section
-  # and no shares at all, so nothing was being served over SMB and there is
-  # nothing to port. NFS was doing all of it.
+  # plex runs with host networking, so its ports are the host's and the firewall
+  # sees them. 32400 is the server itself, which the router also forwards for
+  # remote access (manual port mapping); 32410-32414/udp is LAN discovery (GDM).
+  # DLNA is off in plex, so 1900/udp and 32469 stay closed.
+  networking.firewall.allowedTCPPorts = [ 32400 ];
+  networking.firewall.allowedUDPPorts = [ 32410 32412 32413 32414 ];
+
+  # tofu's ftp container, also on host networking: 21 for control and a fixed
+  # passive range for data (the module's passive_ports).
+  networking.firewall.interfaces.eno1.allowedTCPPorts = [ 21 ];
+  networking.firewall.interfaces.eno1.allowedTCPPortRanges = [{ from = 21000; to = 21010; }];
+
+  programs.msmtp = {
+    enable = true;
+    setSendmail = true;
+    accounts.default = {
+      host = "127.0.0.1";
+      port = 2525;
+      from = "samson@mail.wvl.app";
+      auth = false;
+      tls = false;
+    };
+  };
 
   system.stateVersion = "26.05";
 }

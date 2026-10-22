@@ -271,6 +271,17 @@ variable "cpus" {
   EOT
 }
 
+variable "userns_mode" {
+  type    = string
+  default = null
+
+  description = <<-EOT
+    "host" on a daemon with userns-remap when a backed-up path belongs to host
+    users rather than to remapped containers -- remapped root cannot read
+    those. null leaves the daemon's default.
+  EOT
+}
+
 # --- multihost sync ---------------------------------------------------------
 
 variable "sync_identity" {

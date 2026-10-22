@@ -9,6 +9,7 @@ resource "docker_container" "this" {
   restart = "unless-stopped"
 
   network_mode = "host"
+  userns_mode  = "host"
 
   env = [
     "PUID=1000",

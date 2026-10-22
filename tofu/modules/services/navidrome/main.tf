@@ -20,6 +20,8 @@ resource "docker_container" "this" {
   image   = docker_image.this.image_id
   restart = "unless-stopped"
 
+  userns_mode = "host"
+
   capabilities {
     drop = ["ALL"]
     add  = ["CAP_DAC_READ_SEARCH"]

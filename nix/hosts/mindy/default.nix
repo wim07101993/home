@@ -26,14 +26,26 @@
     options = [ "discard" "defaults" "nofail" ];
   };
 
+  # Service data that lives on rafiki rather than the OS disk; tofu still binds
+  # the /docker-volumes paths. `L`, not `L+`: an existing directory there is
+  # left alone instead of deleted.
+  systemd.tmpfiles.rules = [
+    "L /docker-volumes/immich/photos - - - - /mnt/rafiki/photos"
+    "L /docker-volumes/filebrowser/files/audio - - - - /mnt/rafiki/audio"
+    "L /docker-volumes/filebrowser/files/gezin-officieel - - - - /mnt/rafiki/documents/gezin-officieel"
+    "L /docker-volumes/filebrowser/files/gezin-officieel-archive - - - - /mnt/rafiki/documents/gezin-officieel-archive"
+    "L /docker-volumes/filebrowser/files/sara - - - - /mnt/rafiki/documents/sara"
+    "L /docker-volumes/filebrowser/files/wim - - - - /mnt/rafiki/documents/wim"
+  ];
+
   # audio-archive lives on samson and is served by filebrowser here. x-systemd
   # options keep a boot from hanging when samson is down, which it is whenever
   # the residential line is.
   fileSystems."/docker-volumes/filebrowser/files/audio-archive" = {
-    device = "100.71.248.106:/export/audio-archive";
+    device = "100.71.248.106:/nfs-volumes/audio-archive";
     fsType = "nfs";
     options = [
-      "nfsvers=3"
+      "nfsvers=4.2"
       "_netdev"
       "x-systemd.automount"
       "x-systemd.mount-timeout=15"

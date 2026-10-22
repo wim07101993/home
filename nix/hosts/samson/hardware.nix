@@ -1,18 +1,19 @@
 {
-  # APPROXIMATED, NOT GENERATED. These are the modules a SATA + NVMe + USB box
-  # normally needs, not what `nixos-generate-config` observed on this machine.
-  # Run it on samson and reconcile before installing: samson is physical
-  # hardware, and an initrd missing its storage controller does not boot.
+  # From `nixos-generate-config --show-hardware-config` on samson, 2026-10-22,
+  # minus the `dm-snapshot` it asked for: that was for the Synology LVM
+  # leftovers on the nvme, which nothing here mounts.
   boot.initrd.availableKernelModules = [
-    "ahci"
-    "nvme"
-    "sd_mod"
     "xhci_pci"
     "ehci_pci"
+    "ahci"
+    "mpt3sas"
+    "nvme"
     "usbhid"
     "usb_storage"
+    "sd_mod"
   ];
   boot.kernelModules = [ "kvm-intel" ];
 
   hardware.enableRedistributableFirmware = true;
+  hardware.cpu.intel.updateMicrocode = true;
 }
