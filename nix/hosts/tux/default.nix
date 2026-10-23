@@ -16,8 +16,11 @@
     })
   ];
   services.nordvpn.enable = true;
+  # The module brings a manual chapter that 26.05's list of manual pages does
+  # not know, which fails the manual's build.
+  documentation.nixos.checkRedirects = false;
 
-  networking.hostName = "laptop";
+  networking.hostName = "tux";
   networking.networkmanager.enable = true;
 
   # A TUXEDO Pulse 15 Gen1. nixos-hardware only has the Gen2, and the parts of
@@ -89,6 +92,7 @@
     flutter
     jetbrains.goland
     android-studio
+    github-copilot-cli
     bitwarden-cli
     qlcplus
     (callPackage ./wing-edit/package.nix { })

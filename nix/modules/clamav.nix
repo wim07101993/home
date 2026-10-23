@@ -12,22 +12,13 @@ let
   '';
 in
 {
-  # freshclam, hourly, into /var/lib/clamav.
   services.clamav.updater.enable = true;
 
-  # A nightly clamscan instead of the module's own scanner
-  # (services.clamav.scanner). That one needs clamd, which keeps the signatures
-  # in memory around the clock -- about 1 GB, twice that while it reloads after
-  # an update -- for a scan that runs once a day. And clamdscan counts every
-  # socket and device node it walks past as an error; docker's layers are full
-  # of whiteouts, which are character devices, so it would exit 2 every night.
-  # clamscan skips those silently: exit 1 means it found something, 2 that the
-  # scan itself broke.
   systemd.services.clamav-scan = {
     description = "ClamAV scan";
     wants = [ "clamav-freshclam.service" ];
     after = [ "clamav-freshclam.service" ];
-    startAt = "04:00";
+    startAt = "05:00";
 
     serviceConfig = {
       Type = "oneshot";

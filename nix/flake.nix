@@ -33,7 +33,7 @@
         samson = host "samson";
         plop = host "plop";
 
-        laptop = host "laptop";
+        tux = host "tux";
       };
     };
 }
