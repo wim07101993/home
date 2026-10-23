@@ -4,7 +4,7 @@ resource "random_password" "backrest_token" {
 }
 
 resource "docker_image" "this" {
-  name         = "ghcr.io/twin/gatus:v5.36.0"
+  name         = "ghcr.io/twin/gatus:v5.37.0"
   keep_locally = true
 }
 
