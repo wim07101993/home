@@ -10,7 +10,7 @@
   # Every Hetzner Cloud server here boots legacy BIOS -- verified by the absence
   # of /sys/firmware/efi on bumba and mindy. The images ship an ESP as well, so
   # a mounted /boot/efi is not evidence of EFI boot. Hetzner fixes the mode at
-  # creation, and neither cpx11 nor these volumes can be reordered.
+  # creation and keeps it through a resize.
   # The hosts and this module configure eth0, the name Debian used. NixOS would
   # otherwise rename the NIC to enp1s0.
   networking.usePredictableInterfaceNames = false;
