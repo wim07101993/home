@@ -1,5 +1,5 @@
 resource "docker_image" "this" {
-  name         = "neosmemo/memos:0.26.2"
+  name         = "neosmemo/memos:0.31.0"
   keep_locally = true
 }
 

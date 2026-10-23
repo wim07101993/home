@@ -29,7 +29,7 @@ jobs:
   renovate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Renovate manages the github-actions ecosystem too, so once this runs it
       # keeps its own action version current.

@@ -13,7 +13,7 @@ jobs:
   renovate-config:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: npx --yes --package renovate@44 renovate-config-validator --no-global renovate.json
 
   tofu:
@@ -22,10 +22,10 @@ jobs:
       run:
         working-directory: tofu
     steps:
-      - uses: actions/checkout@v4
-      - uses: opentofu/setup-opentofu@v1
+      - uses: actions/checkout@v7
+      - uses: opentofu/setup-opentofu@v2
         with:
-          tofu_version: 1.12.1
+          tofu_version: 1.13.2
       - run: tofu fmt -check -recursive -diff
       # -backend=false: the pg backend is only reachable over Tailscale.
       # validate checks syntax, types and module wiring without it.

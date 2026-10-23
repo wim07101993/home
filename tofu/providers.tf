@@ -4,7 +4,7 @@ terraform {
   required_providers {
     hcloud = {
       source  = "hetznercloud/hcloud"
-      version = "~> 1.69"
+      version = "~> 1.70"
     }
     postgresql = {
       source  = "cyrilgdn/postgresql"
@@ -12,11 +12,11 @@ terraform {
     }
     docker = {
       source  = "kreuzwerker/docker"
-      version = "~> 3.0"
+      version = "~> 4.0"
     }
     zitadel = {
       source  = "zitadel/zitadel"
-      version = "~> 2.12"
+      version = "~> 3.0"
     }
     random = {
       source  = "hashicorp/random"

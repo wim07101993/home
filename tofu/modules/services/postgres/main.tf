@@ -7,7 +7,7 @@ resource "docker_network" "this" {
 }
 
 resource "docker_image" "postgres" {
-  name         = "postgres:18-alpine3.23"
+  name         = "postgres:17.10-alpine3.23"
   keep_locally = true
 }
 
