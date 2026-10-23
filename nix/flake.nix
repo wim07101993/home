@@ -3,16 +3,18 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     disko = {
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs = { self, nixpkgs, disko, ... }:
+  outputs = { self, nixpkgs, nixpkgs-unstable, disko, ... }:
     let
       host = name: nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
+        specialArgs = { inherit nixpkgs-unstable; };
         modules = [
           disko.nixosModules.disko
           ./hosts/${name}
@@ -30,6 +32,8 @@
         # At home.
         samson = host "samson";
         plop = host "plop";
+
+        laptop = host "laptop";
       };
     };
 }
