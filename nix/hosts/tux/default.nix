@@ -3,6 +3,7 @@
 {
   imports = [
     ./hardware.nix
+    ./hyprland
     ../../modules/tailscale.nix
     "${nixpkgs-unstable}/nixos/modules/services/networking/nordvpn.nix"
   ];
@@ -59,7 +60,6 @@
 
   services.displayManager.sddm.enable = true;
   services.desktopManager.plasma6.enable = true;
-  programs.hyprland.enable = true;
 
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
