@@ -147,6 +147,16 @@ endpoints:
     alerts:
       - type: email
 
+  - name: music
+    group: apps
+    url: "https://music.wvl.app/ping"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
+    alerts:
+      - type: email
+
   # ---- hosts ----------------------------------
   - name: mindy
     group: hosts

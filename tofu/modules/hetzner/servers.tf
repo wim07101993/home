@@ -1,6 +1,6 @@
 resource "hcloud_server" "bumba" {
   name        = "bumba"
-  server_type = "cpx11" # cpx11 is NOT orderable
+  server_type = "cx23"
   location    = "fsn1"
   image       = "debian-12"
 

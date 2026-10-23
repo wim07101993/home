@@ -83,6 +83,7 @@ resource "docker_container" "matter" {
   restart = "unless-stopped"
 
   network_mode = "host"
+  userns_mode  = "host"
 
   read_only     = true
   security_opts = ["no-new-privileges:true"]

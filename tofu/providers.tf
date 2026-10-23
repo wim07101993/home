@@ -30,6 +30,10 @@ terraform {
       source  = "hashicorp/tls"
       version = "~> 4.0"
     }
+    http = {
+      source  = "hashicorp/http"
+      version = "~> 3.6"
+    }
   }
 
   # State holds the Storage Box password in cleartext, plus every database
@@ -123,12 +127,12 @@ provider "docker" {
 
 provider "docker" {
   alias = "samson"
-  host  = "ssh://root@${var.samson_addr}"
+  host  = "ssh://wim@${var.samson_addr}"
 }
 
 provider "docker" {
   alias = "plop"
-  host  = "ssh://root@${var.plop_addr}"
+  host  = "ssh://wim@${var.plop_addr}"
 }
 
 provider "zitadel" {

@@ -76,6 +76,8 @@ resource "docker_container" "this" {
   # under compose, not less.
   hostname = var.instance
 
+  userns_mode = var.userns_mode
+
   # The image's entrypoint is tini -> /docker-entrypoint, which applies the
   # BACKREST_* defaults and then runs whatever `command` says. Overriding
   # `command` rather than `entrypoint` keeps both of those -- an entrypoint

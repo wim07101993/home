@@ -59,6 +59,15 @@
         "#\\s*renovate:\\s*datasource=(?<datasource>[a-z-]+?)\\s+depName=(?<depName>[^\\s]+?)\\s*\\n[\\s\\S]*?default\\s*=\\s*\"(?<currentValue>[^\"]+)\""
       ],
       "versioningTemplate": "docker"
+    },
+    {
+      "description": "Navidrome plugins, downloaded from GitHub releases by tofu/modules/services/navidrome/plugins.tf. The sha256 beside the version cannot be bumped by renovate; the plan fails until it is updated.",
+      "customType": "regex",
+      "managerFilePatterns": ["/^tofu/modules/services/navidrome/plugins\\.tf$/"],
+      "matchStrings": [
+        "repo\\s*=\\s*\"(?<depName>[^\"]+)\"\\s*\\n\\s*version\\s*=\\s*\"(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "github-releases"
     }
   ]
 }

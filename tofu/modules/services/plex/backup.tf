@@ -1,6 +1,6 @@
 output "backup" {
   value = {
-    mounts = { media = "/export/media" }
+    mounts = { media = "/srv/dev-disk-by-uuid-25d0f3ec-68a9-4ce0-891e-0966088e5300/media" }
     paths = [
       "/backup/media/live",
       "/backup/media/movies/animated/1990-1999/The Lion King (1994)",

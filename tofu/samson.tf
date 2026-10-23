@@ -1,10 +1,12 @@
-# 9443 is portainer, which tofu does not manage. plex uses
-# network_mode = "host", so it publishes nothing through docker -- 32400 and
-# friends are taken but cannot appear here.
+# plex and ftp use network_mode = "host", so they publish nothing through docker
+# -- plex's 32400 and friends and ftp's 21 and 21000-21010 are taken but cannot
+# appear here.
 locals {
   samson_ports = {
-    databasus = 4005
-    backrest  = 9898
+    databasus  = 4005
+    navidrome  = 4533
+    backrest   = 9898
+    smtp_relay = 2525
   }
 }
 
@@ -25,12 +27,46 @@ module "databasus" {
   host_port = local.samson_ports.databasus
 }
 
+module "smtp_relay" {
+  source = "./modules/services/smtp-relay"
+
+  providers = {
+    docker = docker.samson
+  }
+
+  login     = "samson"
+  host_port = local.samson_ports.smtp_relay
+}
+
+module "ftp" {
+  source = "./modules/services/ftp"
+
+  providers = {
+    docker = docker.samson
+  }
+
+  media_path = "/srv/dev-disk-by-uuid-25d0f3ec-68a9-4ce0-891e-0966088e5300/media"
+}
+
 module "plex" {
   source = "./modules/services/plex"
 
   providers = {
     docker = docker.samson
   }
+}
+
+# Public at music.wvl.app through mindy
+module "navidrome" {
+  source = "./modules/services/navidrome"
+
+  providers = {
+    docker = docker.samson
+  }
+
+  tailscale_ip = var.samson_addr
+
+  host_port = local.samson_ports.navidrome
 }
 
 
@@ -45,16 +81,19 @@ module "backrest_samson" {
   tailscale_ip = var.samson_addr
   config_path  = "/docker-volumes/backrest"
 
+  userns_mode = "host"
+
   cpus = "4.0"
 
 
   backup = [
     module.plex.backup,
     module.databasus.backup,
+    module.navidrome.backup,
 
     # audio-archive has no owning module: it lives on samson but is served by
     # filebrowser on mindy. Declared here rather than pretending otherwise.
-    { mounts = { "audio-archive" = "/export/audio-archive" } },
+    { mounts = { "audio-archive" = "/srv/dev-disk-by-uuid-25d0f3ec-68a9-4ce0-891e-0966088e5300/audio-archive" } },
   ]
 
   excludes = ["pgdata", "temp"]
@@ -97,7 +136,7 @@ locals {
 
 variable "samson_addr" {
   type        = string
-  description = "samson's TAILNET address. Reached as root over SSH for the docker provider, like the other two hosts."
+  description = "samson's TAILNET address. Reached as wim over SSH for the docker provider."
 }
 
 # samson's half of the sync pair, so its backup progress shows up in mindy's
@@ -118,6 +157,16 @@ variable "backrest_identity_samson" {
 
 # --- outputs --------------------------------------------------------------
 
+
+output "navidrome_admin_password" {
+  value     = module.navidrome.admin_password
+  sensitive = true
+}
+
+output "ftp_password" {
+  value     = module.ftp.password
+  sensitive = true
+}
 
 output "backrest_samson_password" {
   value     = module.backrest_samson.ui_password
