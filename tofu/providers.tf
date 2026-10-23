@@ -12,11 +12,11 @@ terraform {
     }
     docker = {
       source  = "kreuzwerker/docker"
-      version = "~> 4.0"
+      version = "~> 3.0"
     }
     zitadel = {
       source  = "zitadel/zitadel"
-      version = "~> 3.0"
+      version = "~> 2.12"
     }
     random = {
       source  = "hashicorp/random"

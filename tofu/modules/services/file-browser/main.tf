@@ -67,7 +67,7 @@ resource "random_password" "admin" {
 }
 
 resource "docker_image" "this" {
-  name         = "gtstef/filebrowser:2.0.1-stable-slim"
+  name         = "gtstef/filebrowser:1.5.8-stable-slim"
   keep_locally = true
 }
 
