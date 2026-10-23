@@ -244,6 +244,10 @@ for spec in "${LOGIN_ITEMS[@]}"; do
 
   li_existing="$(bw get item "$li_name" 2>/dev/null)" || li_existing=""
   if [ -n "$li_existing" ]; then
+    if [ "$li_mod" = "module.navidrome" ]; then
+      printf '  %-36s [kept -- changed in the UI, not by tofu]\n' "$li_name"
+      continue
+    fi
     li_id="$(jq -r '.id' <<<"$li_existing")"
     jq -c --arg u "$li_user" --arg p "$li_pass" --arg uri "$li_uri" --arg n "$login_notes" \
        '.notes = $n

@@ -9,7 +9,7 @@ in
       ${array} = {
         device = "/dev/disk/by-uuid/25d0f3ec-68a9-4ce0-891e-0966088e5300";
         fsType = "btrfs";
-        options = [ "defaults" "nofail" ];
+        options = [ "defaults" "nofail" "x-systemd.before=docker.service" "x-systemd.required-by=docker.service" ];
       };
     }
 
