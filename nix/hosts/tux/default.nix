@@ -59,6 +59,7 @@
 
   services.displayManager.sddm.enable = true;
   services.desktopManager.plasma6.enable = true;
+  programs.hyprland.enable = true;
 
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
@@ -87,6 +88,7 @@
     git
     neovim
     tldr
+    btop
     opentofu
     go
     flutter
@@ -94,9 +96,13 @@
     android-studio
     github-copilot-cli
     bitwarden-cli
+    yubioath-flutter
     qlcplus
     (callPackage ./wing-edit/package.nix { })
   ];
+
+  # Yubico Authenticator reaches the YubiKey as a smart card.
+  services.pcscd.enable = true;
 
   # QLC+'s rules for USB DMX interfaces. Upstream opens them to everyone (0666),
   # including every plain FTDI serial adapter (0403:6001).
