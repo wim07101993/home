@@ -5,6 +5,7 @@
     ../../modules/hetzner.nix
     ../../modules/docker.nix
     ../../modules/tailscale.nix
+    ../../modules/clamav.nix
   ];
 
   networking.hostName = "mindy";
