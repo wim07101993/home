@@ -24,7 +24,7 @@
   fileSystems."/mnt/rafiki" = {
     device = "/dev/disk/by-id/scsi-0HC_Volume_103225027";
     fsType = "ext4";
-    options = [ "discard" "defaults" "nofail" ];
+    options = [ "discard" "defaults" "nofail" "x-systemd.before=docker.service" ];
   };
 
   # Service data that lives on rafiki rather than the OS disk; tofu still binds
