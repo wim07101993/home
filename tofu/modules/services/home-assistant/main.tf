@@ -73,7 +73,7 @@ resource "docker_container" "this" {
 # --- matter server -------------------------------------------------------
 
 resource "docker_image" "matter" {
-  name         = "ghcr.io/matter-js/matterjs-server:1.1.5"
+  name         = "ghcr.io/matter-js/matterjs-server:1.5.2"
   keep_locally = true
 }
 

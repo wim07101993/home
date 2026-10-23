@@ -4,7 +4,7 @@ terraform {
   required_providers {
     hcloud = {
       source  = "hetznercloud/hcloud"
-      version = "~> 1.69"
+      version = "~> 1.70"
     }
     postgresql = {
       source  = "cyrilgdn/postgresql"

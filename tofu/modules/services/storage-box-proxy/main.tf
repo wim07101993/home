@@ -4,7 +4,7 @@ locals {
 }
 
 resource "docker_image" "this" {
-  name         = "alpine/socat:1.8.0.3"
+  name         = "alpine/socat:1.8.1.3"
   keep_locally = true
 }
 

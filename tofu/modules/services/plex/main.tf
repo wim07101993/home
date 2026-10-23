@@ -1,5 +1,5 @@
 resource "docker_image" "this" {
-  name         = "plexinc/pms-docker:1.43.2.10687-563d026ea"
+  name         = "plexinc/pms-docker:1.43.5.11029-6bf8af3f0"
   keep_locally = true
 }
 
