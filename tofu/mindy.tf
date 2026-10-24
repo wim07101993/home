@@ -204,6 +204,8 @@ module "backrest_mindy" {
   instance     = "mindy"
   tailscale_ip = var.mindy_addr
 
+  userns_mode = "host"
+
   # What kopia used to back up, at /backup instead of its old /data -- see the
   # module's var.mounts for why that path moved.
   #

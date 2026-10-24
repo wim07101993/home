@@ -19,6 +19,11 @@ locals {
       # abandoning the real one -- users, shares and all.
       database = "/home/filebrowser/data/database.db"
 
+      # The default, tmp under the image's home directory, cannot be created:
+      # on the remapping daemon the image's files belong to 165536+, which
+      # filebrowser's uid 1000 under userns_mode = "host" does not own.
+      cacheDir = "/home/filebrowser/data/cache"
+
       sources = [for s in local.shares : {
         path = "/files/${s.dir}"
         name = s.name
@@ -75,6 +80,8 @@ resource "docker_container" "this" {
   name    = "filebrowser"
   image   = docker_image.this.image_id
   restart = "unless-stopped"
+
+  userns_mode = "host"
 
   env = ["FILEBROWSER_CONFIG=${local.configPath}"]
 

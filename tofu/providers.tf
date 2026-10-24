@@ -122,7 +122,7 @@ provider "docker" {
 
 provider "docker" {
   alias = "mindy"
-  host  = "ssh://root@${var.mindy_addr}"
+  host  = "ssh://wim@${var.mindy_addr}"
 }
 
 provider "docker" {
