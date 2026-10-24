@@ -1,8 +1,7 @@
-# What filebrowser serves and owns. audio-archive is excluded the same way it
-# is excluded from the mounts, by having no source: it lives on samson, backed
-# up there.
+# What filebrowser serves and owns: the shares on rafiki. audio-archive lives
+# on samson and is backed up there.
 output "backup" {
   value = {
-    mounts = { for s in local.shares : s.dir => s.source if s.source != null }
+    mounts = { for s in local.shares : s.dir => s.source if startswith(s.source, "/mnt/rafiki/") }
   }
 }

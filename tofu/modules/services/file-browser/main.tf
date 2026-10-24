@@ -3,7 +3,7 @@ locals {
     { dir = "gezin-officieel", name = "Gezin officieel", default_enabled = true, source = "/mnt/rafiki/documents/gezin-officieel" },
     { dir = "gezin-officieel-archive", name = "Gezin officieel archive", default_enabled = true, source = "/mnt/rafiki/documents/gezin-officieel-archive" },
     { dir = "audio", name = "Audio", default_enabled = true, source = "/mnt/rafiki/audio" },
-    { dir = "audio-archive", name = "Audio archive", default_enabled = true, source = null },
+    { dir = "audio-archive", name = "Audio archive", default_enabled = true, source = "/mnt/samson/audio-archive" },
     { dir = "wim", name = "Wim privé", default_enabled = false, source = "/mnt/rafiki/documents/wim" },
     { dir = "sara", name = "Sara prive", default_enabled = false, source = "/mnt/rafiki/documents/sara" },
   ]
@@ -108,26 +108,23 @@ resource "docker_container" "this" {
     target = "/home/filebrowser/data"
   }
 
-  mounts {
-    type   = "bind"
-    source = "/docker-volumes/filebrowser/files"
-    target = "/files"
-
-    bind_options {
-      propagation = "rslave"
-    }
-  }
-
-  # Onto directories Docker creates in the /files bind. Never onto a symlink
-  # there: Docker follows a symlinked target inside the container and mounts at
-  # the link's destination, leaving /files/<dir> a link, and filebrowser then
-  # builds paths like /files/audio/mnt/rafiki/audio/... from the resolved name.
+  # Never onto a symlink: Docker follows a symlinked target inside the
+  # container and mounts at the link's destination, leaving /files/<dir> a
+  # link, and filebrowser then builds paths like
+  # /files/audio/mnt/rafiki/audio/... from the resolved name.
+  #
+  # rslave for audio-archive, an automount: the NFS mount the first access
+  # triggers on the host only reaches the container through propagation.
   dynamic "mounts" {
-    for_each = { for s in local.shares : s.dir => s if s.source != null }
+    for_each = { for s in local.shares : s.dir => s }
     content {
       type   = "bind"
       source = mounts.value.source
       target = "/files/${mounts.key}"
+
+      bind_options {
+        propagation = "rslave"
+      }
     }
   }
 

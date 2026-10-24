@@ -30,7 +30,7 @@
   # audio-archive lives on samson and is served by filebrowser here. x-systemd
   # options keep a boot from hanging when samson is down, which it is whenever
   # the residential line is.
-  fileSystems."/docker-volumes/filebrowser/files/audio-archive" = {
+  fileSystems."/mnt/samson/audio-archive" = {
     device = "100.71.248.106:/nfs-volumes/audio-archive";
     fsType = "nfs";
     options = [
