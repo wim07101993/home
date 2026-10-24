@@ -1,4 +1,3 @@
-# 9443 is portainer, which tofu does not manage.
 locals {
   bumba_ports = {
     traefik_http      = 80

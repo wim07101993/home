@@ -1,5 +1,4 @@
-# 9443 is portainer, which tofu does not manage. matterjs-server publishes
-# nothing.
+# matterjs-server publishes nothing.
 locals {
   plop_ports = {
     home_assistant = 8123
