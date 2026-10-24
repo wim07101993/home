@@ -37,10 +37,3 @@ resource "hcloud_server" "mindy" {
     ]
   }
 }
-
-# TEMPORARY: the way back if mindy's move to NixOS fails. Taken with every
-# container stopped. Removing this deletes the snapshot.
-resource "hcloud_snapshot" "mindy_pre_nixos" {
-  server_id   = hcloud_server.mindy.id
-  description = "mindy on Debian, before NixOS"
-}
