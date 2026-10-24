@@ -40,7 +40,7 @@ in
   services.nfs.server = {
     enable = true;
     exports = ''
-      /nfs-volumes/audio-archive 100.127.106.121(fsid=640d5507-9592-4dfe-8709-6d3d0c50ed33,rw,subtree_check,insecure,no_root_squash)
+      /nfs-volumes/audio-archive 100.127.106.121(fsid=640d5507-9592-4dfe-8709-6d3d0c50ed33,rw,subtree_check)
     '';
   };
 
