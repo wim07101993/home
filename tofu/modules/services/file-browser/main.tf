@@ -83,6 +83,11 @@ resource "docker_container" "this" {
 
   userns_mode = "host"
 
+  capabilities {
+    drop = ["ALL"]
+  }
+  security_opts = ["no-new-privileges:true"]
+
   env = ["FILEBROWSER_CONFIG=${local.configPath}"]
 
   upload {

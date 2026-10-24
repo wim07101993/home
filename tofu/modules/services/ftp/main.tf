@@ -21,6 +21,14 @@ resource "docker_container" "this" {
   network_mode = "host"
   userns_mode  = "host"
 
+  # Host network, so ports 21 and 20 need NET_BIND_SERVICE. SYS_CHROOT is for
+  # vsftpd's own unprivileged helper; the users are not chrooted.
+  capabilities {
+    drop = ["ALL"]
+    add  = ["CAP_CHOWN", "CAP_NET_BIND_SERVICE", "CAP_SETGID", "CAP_SETUID", "CAP_SYS_CHROOT"]
+  }
+  security_opts = ["no-new-privileges:true"]
+
   entrypoint = [
     "/sbin/tini", "--", "/bin/sh", "-c",
     "chown root:root /etc/vsftpd/vsftpd.conf && exec /bin/start_vsftpd.sh",

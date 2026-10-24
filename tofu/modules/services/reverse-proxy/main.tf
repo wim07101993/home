@@ -21,6 +21,9 @@ resource "docker_container" "this" {
   image   = docker_image.traefik.image_id
   restart = "unless-stopped"
 
+  capabilities {
+    drop = ["ALL"]
+  }
   security_opts = ["no-new-privileges:true"]
 
   command = ["--configFile=${local.config_path}"]

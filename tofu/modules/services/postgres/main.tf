@@ -16,6 +16,14 @@ resource "docker_container" "this" {
   image   = docker_image.postgres.image_id
   restart = "unless-stopped"
 
+  # The entrypoint walks the data directory, which only postgres may read, as
+  # root before gosu switches to postgres.
+  capabilities {
+    drop = ["ALL"]
+    add  = ["CAP_DAC_READ_SEARCH", "CAP_SETGID", "CAP_SETUID"]
+  }
+  security_opts = ["no-new-privileges:true"]
+
   env = [
     "PGUSER=postgres",
     "POSTGRES_PASSWORD_FILE=/run/secrets/db_password",

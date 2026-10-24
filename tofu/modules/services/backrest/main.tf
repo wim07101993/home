@@ -122,6 +122,12 @@ resource "docker_container" "this" {
   memory_swap = var.memory * 2
   cpus        = var.cpus
 
+  # Enough to read every source. A restore that should keep file owners needs
+  # more, such as CAP_CHOWN and CAP_FOWNER.
+  capabilities {
+    drop = ["ALL"]
+    add  = ["CAP_DAC_READ_SEARCH"]
+  }
   security_opts = ["no-new-privileges:true"]
 
   # Tailnet only. Without the `ip` this is an unauthenticated-by-default

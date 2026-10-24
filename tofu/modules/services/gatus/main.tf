@@ -16,6 +16,12 @@ resource "docker_container" "this" {
   memory      = 256
   memory_swap = 512
 
+  # Running as root, gatus pings over a raw socket: the icmp:// endpoints in
+  # config.yaml need NET_RAW.
+  capabilities {
+    drop = ["ALL"]
+    add  = ["CAP_NET_RAW"]
+  }
   security_opts = ["no-new-privileges:true"]
 
   env = [

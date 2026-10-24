@@ -8,6 +8,12 @@ resource "docker_container" "this" {
   image   = docker_image.this.image_id
   restart = "unless-stopped"
 
+  capabilities {
+    drop = ["ALL"]
+    add  = ["CAP_SETGID", "CAP_SETUID"]
+  }
+  security_opts = ["no-new-privileges:true"]
+
   ports {
     internal = 4005
     external = var.host_port

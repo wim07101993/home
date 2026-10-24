@@ -123,6 +123,11 @@ resource "docker_container" "postgres" {
   wait         = true
   wait_timeout = 180
 
+  # As in ../postgres/main.tf.
+  capabilities {
+    drop = ["ALL"]
+    add  = ["CAP_DAC_READ_SEARCH", "CAP_SETGID", "CAP_SETUID"]
+  }
   security_opts = ["no-new-privileges:true"]
 
   # memory_swap is docker's 2x default. Omitting it does not mean "unset" --
@@ -234,6 +239,9 @@ resource "docker_container" "server" {
 
   env = local.shared_env
 
+  capabilities {
+    drop = ["ALL"]
+  }
   security_opts = ["no-new-privileges:true"]
   memory        = 4096
   memory_swap   = 8192

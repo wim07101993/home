@@ -11,6 +11,15 @@ resource "docker_container" "this" {
   network_mode = "host"
   userns_mode  = "host"
 
+  # CAP_DAC_READ_SEARCH is load-bearing. The image's first-run script looks for
+  # Preferences.xml as root, and if root cannot see it, writes an empty one over
+  # the real file: the server loses its identity and its claim.
+  capabilities {
+    drop = ["ALL"]
+    add  = ["CAP_CHOWN", "CAP_DAC_READ_SEARCH", "CAP_KILL", "CAP_SETGID", "CAP_SETUID"]
+  }
+  security_opts = ["no-new-privileges:true"]
+
   env = [
     "PUID=1000",
     "PGID=1000",
