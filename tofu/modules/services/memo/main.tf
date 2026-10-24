@@ -37,7 +37,7 @@ resource "docker_container" "this" {
   }
 
   networks_advanced {
-    name    = var.traefik_network
+    name    = docker_network.traefik.name
     aliases = ["memo"]
   }
 
@@ -45,4 +45,13 @@ resource "docker_container" "this" {
     name    = var.db_network
     aliases = ["memo"]
   }
+}
+
+# Shared with traefik and nothing else.
+resource "docker_network" "traefik" {
+  name       = "traefik-memos"
+  driver     = "bridge"
+  attachable = false
+  ingress    = false
+  ipv6       = false
 }

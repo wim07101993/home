@@ -1,5 +1,6 @@
 output "traefik" {
   value = {
+    network = docker_network.traefik.name
     routers = {
       "score-api" = {
         rule    = "Host(`score-api.wvl.app`)"

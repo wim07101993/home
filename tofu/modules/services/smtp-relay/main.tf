@@ -14,9 +14,12 @@ resource "docker_container" "this" {
     "RELAYHOST_PASSWORD=${random_password.smtp.result}",
     "ALLOWED_SENDER_DOMAINS=${var.mail_domain}",
 
-    # Without it postfix offers SASL to Mailgun whether or not STARTTLS
-    # succeeded, i.e. possibly in the clear.
-    "POSTFIX_smtp_tls_security_level=encrypt",
+    # Not the image's default `may`, which offers SASL to Mailgun whether or not
+    # STARTTLS succeeded, nor `encrypt`, which insists on TLS but accepts any
+    # certificate: with either, whoever sits in the path gets the password.
+    # `secure` checks the certificate against smtp.eu.mailgun.org and the CA
+    # bundle the image sets as smtp_tls_CAfile.
+    "POSTFIX_smtp_tls_security_level=secure",
   ]
 
   security_opts = ["no-new-privileges:true"]

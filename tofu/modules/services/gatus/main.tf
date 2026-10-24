@@ -16,6 +16,12 @@ resource "docker_container" "this" {
   memory      = 256
   memory_swap = 512
 
+  # Running as root, gatus pings over a raw socket: the icmp:// endpoints in
+  # config.yaml need NET_RAW.
+  capabilities {
+    drop = ["ALL"]
+    add  = ["CAP_NET_RAW"]
+  }
   security_opts = ["no-new-privileges:true"]
 
   env = [
@@ -41,7 +47,7 @@ resource "docker_container" "this" {
   }
 
   networks_advanced {
-    name    = var.traefik_network
+    name    = docker_network.traefik.name
     aliases = ["gatus"]
   }
 
@@ -54,6 +60,15 @@ resource "docker_container" "this" {
     file    = "/config/config.yaml"
     content = file("${path.module}/config.yaml")
   }
+}
+
+# Shared with traefik and nothing else.
+resource "docker_network" "traefik" {
+  name       = "traefik-gatus"
+  driver     = "bridge"
+  attachable = false
+  ingress    = false
+  ipv6       = false
 }
 
 # Consumed by ../backrest on both mindy and samson. One token for both

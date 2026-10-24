@@ -15,3 +15,8 @@ variable "network_alias" {
 variable "host_port" {
   type = number
 }
+
+variable "clients" {
+  type        = set(string)
+  description = "The services that use this postgres. Each gets its own network to it, from the network_names output."
+}

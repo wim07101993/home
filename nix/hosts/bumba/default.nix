@@ -15,5 +15,10 @@
     prefixLength = 64;
   }];
 
+  # gatus checks databasus's health endpoint on samson. See docker.nix.
+  homelab.containers.reachableOnTailnet = [
+    { address = "100.71.248.106"; port = 4005; }
+  ];
+
   system.stateVersion = "26.05";
 }

@@ -11,6 +11,17 @@ resource "docker_container" "this" {
   network_mode = "host"
   userns_mode  = "host"
 
+  # CAP_DAC_OVERRIDE is load-bearing. With userns_mode = "host" the image's files
+  # belong to 165536, not root, and s6 does not start unless root can write to
+  # them. It also lets the first-run script see Preferences.xml as root; if it
+  # cannot, it writes an empty one over the real file: the server loses its
+  # identity and its claim.
+  capabilities {
+    drop = ["ALL"]
+    add  = ["CAP_CHOWN", "CAP_DAC_OVERRIDE", "CAP_KILL", "CAP_SETGID", "CAP_SETUID"]
+  }
+  security_opts = ["no-new-privileges:true"]
+
   env = [
     "PUID=1000",
     "PGID=1000",

@@ -18,6 +18,9 @@ resource "docker_container" "this" {
     "TCP:${var.target_host}:${local.target_port}",
   ]
 
+  capabilities {
+    drop = ["ALL"]
+  }
   security_opts = ["no-new-privileges:true"]
 
   memory      = 64

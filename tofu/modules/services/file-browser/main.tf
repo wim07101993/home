@@ -83,6 +83,11 @@ resource "docker_container" "this" {
 
   userns_mode = "host"
 
+  capabilities {
+    drop = ["ALL"]
+  }
+  security_opts = ["no-new-privileges:true"]
+
   env = ["FILEBROWSER_CONFIG=${local.configPath}"]
 
   upload {
@@ -125,6 +130,15 @@ resource "docker_container" "this" {
   }
 
   networks_advanced {
-    name = var.traefik_network
+    name = docker_network.traefik.name
   }
+}
+
+# Shared with traefik and nothing else.
+resource "docker_network" "traefik" {
+  name       = "traefik-filebrowser"
+  driver     = "bridge"
+  attachable = false
+  ingress    = false
+  ipv6       = false
 }

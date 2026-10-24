@@ -56,5 +56,12 @@
     ];
   };
 
+  # traefik serves navidrome on samson as music.wvl.app. Nothing else on the
+  # tailnet is open to containers here -- not samson's NFS export, which trusts
+  # mindy's address. See docker.nix.
+  homelab.containers.reachableOnTailnet = [
+    { address = "100.71.248.106"; port = 4533; }
+  ];
+
   system.stateVersion = "26.05";
 }

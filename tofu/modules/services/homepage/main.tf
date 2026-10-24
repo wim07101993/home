@@ -44,6 +44,15 @@ resource "docker_container" "this" {
   }
 
   networks_advanced {
-    name = var.traefik_network
+    name = docker_network.traefik.name
   }
+}
+
+# Shared with traefik and nothing else.
+resource "docker_network" "traefik" {
+  name       = "traefik-homepage"
+  driver     = "bridge"
+  attachable = false
+  ingress    = false
+  ipv6       = false
 }

@@ -7,6 +7,7 @@
 # dot, and never applied the limit. Nothing errored.
 output "traefik" {
   value = {
+    network = docker_network.traefik.name
     routers = {
       drive = {
         rule        = "Host(`drive.wvl.app`)"
