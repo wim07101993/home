@@ -2,6 +2,7 @@ locals {
   routers     = merge([for x in var.routing : x.routers]...)
   services    = merge([for x in var.routing : x.services]...)
   middlewares = merge([for x in var.routing : x.middlewares]...)
+  networks    = toset([for x in var.routing : x.network if x.network != null])
 
   config_path = "/etc/traefik/traefik.yml"
 }
@@ -42,8 +43,13 @@ resource "docker_container" "this" {
     container_path = "/letsencrypt"
   }
 
-  networks_advanced {
-    name = var.network_name
+  # One network per service, shared with traefik and nothing else, so a
+  # compromised service cannot reach the others.
+  dynamic "networks_advanced" {
+    for_each = local.networks
+    content {
+      name = networks_advanced.value
+    }
   }
 
   upload {

@@ -6,6 +6,15 @@ resource "docker_network" "internal" {
   ipv6       = false
 }
 
+# The server and traefik, nothing else.
+resource "docker_network" "traefik" {
+  name       = "traefik-immich"
+  driver     = "bridge"
+  attachable = false
+  ingress    = false
+  ipv6       = false
+}
+
 resource "docker_volume" "model_cache" {
   name = "immich_model-cache"
 
@@ -274,7 +283,7 @@ resource "docker_container" "server" {
   }
 
   networks_advanced {
-    name    = var.traefik_network
+    name    = docker_network.traefik.name
     aliases = ["immich"]
   }
 

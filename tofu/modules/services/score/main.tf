@@ -62,7 +62,7 @@ resource "docker_container" "api" {
   }
 
   networks_advanced {
-    name    = var.traefik_network
+    name    = docker_network.traefik.name
     aliases = ["score-api"]
   }
 
@@ -101,7 +101,7 @@ resource "docker_container" "web" {
   }
 
   networks_advanced {
-    name    = var.traefik_network
+    name    = docker_network.traefik.name
     aliases = ["score-web-app"]
   }
 
@@ -112,4 +112,13 @@ resource "docker_container" "web" {
     retries      = 5
     start_period = "20s"
   }
+}
+
+# The api, the frontend and traefik, nothing else.
+resource "docker_network" "traefik" {
+  name       = "traefik-score"
+  driver     = "bridge"
+  attachable = false
+  ingress    = false
+  ipv6       = false
 }

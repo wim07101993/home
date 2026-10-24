@@ -16,6 +16,15 @@ resource "docker_network" "internal" {
   ipv6       = false
 }
 
+# Zitadel, its login and traefik, nothing else.
+resource "docker_network" "traefik" {
+  name       = "traefik-zitadel"
+  driver     = "bridge"
+  attachable = false
+  ingress    = false
+  ipv6       = false
+}
+
 resource "docker_container" "zitadel" {
   name    = "zitadel"
   image   = docker_image.zitadel.image_id
@@ -94,7 +103,7 @@ resource "docker_container" "zitadel" {
   }
 
   networks_advanced {
-    name    = var.traefik_network
+    name    = docker_network.traefik.name
     aliases = ["zitadel"]
   }
 
@@ -138,7 +147,7 @@ resource "docker_container" "login" {
   }
 
   networks_advanced {
-    name    = var.traefik_network
+    name    = docker_network.traefik.name
     aliases = ["zitadel-login"]
   }
 

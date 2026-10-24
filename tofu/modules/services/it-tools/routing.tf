@@ -1,6 +1,7 @@
 # it-tools.wvl.app.
 output "traefik" {
   value = {
+    network = docker_network.traefik.name
     routers = {
       "it-tools" = {
         rule    = "Host(`it-tools.wvl.app`)"

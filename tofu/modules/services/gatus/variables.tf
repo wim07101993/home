@@ -1,7 +1,3 @@
-variable "traefik_network" {
-  type = string
-}
-
 variable "data_path" {
   type        = string
   default     = "/docker-volumes/gatus/data"

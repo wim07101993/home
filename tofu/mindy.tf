@@ -22,14 +22,6 @@ check "mindy_unique_ports" {
   }
 }
 
-module "mindy_traefik_network" {
-  source = "./modules/network"
-
-  providers = { docker = docker.mindy }
-
-  name = "traefik-network"
-}
-
 module "mindy_traefik" {
   source = "./modules/services/reverse-proxy"
 
@@ -53,7 +45,6 @@ module "mindy_traefik" {
     # Runs on samson; this route is the only way in from the internet.
     module.navidrome.traefik,
   ]
-  network_name = module.mindy_traefik_network.name
 
   http_port  = local.mindy_ports.traefik_http
   https_port = local.mindy_ports.traefik_https
@@ -65,8 +56,6 @@ module "it_tools" {
   providers = {
     docker = docker.mindy
   }
-
-  traefik_network = module.mindy_traefik_network.name
 }
 
 module "mindy_postgres" {
@@ -77,6 +66,8 @@ module "mindy_postgres" {
   }
 
   host_port = local.mindy_ports.postgres
+
+  clients = ["memos", "kitchen-owl", "score"]
 }
 
 module "memo" {
@@ -88,8 +79,7 @@ module "memo" {
     zitadel    = zitadel
   }
 
-  traefik_network = module.mindy_traefik_network.name
-  db_network      = module.mindy_postgres.network_name
+  db_network = module.mindy_postgres.network_names["memos"]
 
   zitadel_org_id = module.zitadel.org_home_id
 
@@ -106,8 +96,6 @@ module "file_browser" {
     zitadel = zitadel
   }
 
-  traefik_network = module.mindy_traefik_network.name
-
   zitadel_org_id = module.zitadel.org_home_id
 
   host_port = local.mindy_ports.filebrowser
@@ -119,8 +107,6 @@ module "homepage" {
   providers = {
     docker = docker.mindy
   }
-
-  traefik_network = module.mindy_traefik_network.name
 
   host_port = local.mindy_ports.homepage
 }
@@ -146,8 +132,7 @@ module "score" {
     zitadel    = zitadel
   }
 
-  traefik_network = module.mindy_traefik_network.name
-  db_network      = module.mindy_postgres.network_name
+  db_network = module.mindy_postgres.network_names["score"]
 
   zitadel_org_id = module.zitadel.org_home_id
 
@@ -166,8 +151,7 @@ module "kitchen_owl" {
     zitadel    = zitadel
   }
 
-  traefik_network = module.mindy_traefik_network.name
-  db_network      = module.mindy_postgres.network_name
+  db_network = module.mindy_postgres.network_names["kitchen-owl"]
 
   zitadel_org_id = module.zitadel.org_home_id
 
@@ -182,8 +166,6 @@ module "immich" {
     zitadel    = zitadel
     postgresql = postgresql.immich
   }
-
-  traefik_network = module.mindy_traefik_network.name
 
   zitadel_org_id = module.zitadel.org_home_id
 

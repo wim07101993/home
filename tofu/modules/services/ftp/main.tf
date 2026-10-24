@@ -22,10 +22,12 @@ resource "docker_container" "this" {
   userns_mode  = "host"
 
   # Host network, so ports 21 and 20 need NET_BIND_SERVICE. SYS_CHROOT is for
-  # vsftpd's own unprivileged helper; the users are not chrooted.
+  # vsftpd's own unprivileged helper; the users are not chrooted. DAC_OVERRIDE
+  # because with userns_mode = "host" the image's files belong to 165536, not
+  # root, and the start script writes /etc/passwd and /etc/shadow.
   capabilities {
     drop = ["ALL"]
-    add  = ["CAP_CHOWN", "CAP_NET_BIND_SERVICE", "CAP_SETGID", "CAP_SETUID", "CAP_SYS_CHROOT"]
+    add  = ["CAP_CHOWN", "CAP_DAC_OVERRIDE", "CAP_NET_BIND_SERVICE", "CAP_SETGID", "CAP_SETUID", "CAP_SYS_CHROOT"]
   }
   security_opts = ["no-new-privileges:true"]
 

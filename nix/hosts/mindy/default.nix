@@ -56,23 +56,12 @@
     ];
   };
 
-  # Docker masquerades container traffic as the address of the interface it
-  # leaves by, so over tailscale0 every container here reaches samson as mindy,
-  # and samson's export trusts that address. Without this, a compromised
-  # container could read and rewrite audio-archive. The mount above is the
-  # host's own traffic, which never passes FORWARD.
-  #
-  # DOCKER-USER because Docker jumps to it first and otherwise leaves it alone.
-  # Created here in case the firewall starts before Docker, and flushed so a
-  # reload does not stack copies -- nothing else puts rules in it.
-  networking.firewall.extraCommands = ''
-    iptables -w -N DOCKER-USER 2>/dev/null || true
-    iptables -w -F DOCKER-USER
-    iptables -w -A DOCKER-USER -o tailscale0 -p tcp --dport 2049 -j DROP
-  '';
-  networking.firewall.extraStopCommands = ''
-    iptables -w -F DOCKER-USER 2>/dev/null || true
-  '';
+  # traefik serves navidrome on samson as music.wvl.app. Nothing else on the
+  # tailnet is open to containers here -- not samson's NFS export, which trusts
+  # mindy's address. See docker.nix.
+  homelab.containers.reachableOnTailnet = [
+    { address = "100.71.248.106"; port = 4533; }
+  ];
 
   system.stateVersion = "26.05";
 }

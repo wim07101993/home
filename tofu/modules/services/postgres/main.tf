@@ -1,5 +1,7 @@
-resource "docker_network" "this" {
-  name       = "db-network"
+resource "docker_network" "client" {
+  for_each = var.clients
+
+  name       = "db-${each.key}"
   driver     = "bridge"
   attachable = false
   ingress    = false
@@ -46,9 +48,13 @@ resource "docker_container" "this" {
     read_only      = true
   }
 
-  networks_advanced {
-    name    = docker_network.this.name
-    aliases = [var.network_alias]
+  # One network per client, so clients reach postgres but not each other.
+  dynamic "networks_advanced" {
+    for_each = docker_network.client
+    content {
+      name    = networks_advanced.value.name
+      aliases = [var.network_alias]
+    }
   }
 
   # Block until pg_isready passes. Without it tofu returns as soon as the
@@ -65,6 +71,6 @@ resource "docker_container" "this" {
   }
 }
 
-output "network_name" {
-  value = docker_network.this.name
+output "network_names" {
+  value = { for client, network in docker_network.client : client => network.name }
 }

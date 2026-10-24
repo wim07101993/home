@@ -1,5 +1,6 @@
 output "traefik" {
   value = {
+    network = docker_network.traefik.name
     routers = {
       zitadel = {
         rule    = "Host(`auth.wvl.app`) && !PathPrefix(`/ui/v2/login`)"

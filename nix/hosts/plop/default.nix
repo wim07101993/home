@@ -20,6 +20,9 @@
   # address rather than as replies the firewall can match to a query.
   networking.firewall.interfaces.eno1.allowedUDPPorts = [ 5353 ];
 
+  # Home Assistant talks to devices on the LAN. See docker.nix.
+  homelab.containers.mayReachLan = true;
+
   # The Zigbee/Thread radio: a Nabu Casa SkyConnect on the CP210x UART bridge.
   # OpenTofu's home-assistant module passes /dev/ttyUSB0 into the container by
   # that literal path, so the symlink below is a safety net rather than the thing

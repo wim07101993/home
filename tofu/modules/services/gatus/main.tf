@@ -47,7 +47,7 @@ resource "docker_container" "this" {
   }
 
   networks_advanced {
-    name    = var.traefik_network
+    name    = docker_network.traefik.name
     aliases = ["gatus"]
   }
 
@@ -60,6 +60,15 @@ resource "docker_container" "this" {
     file    = "/config/config.yaml"
     content = file("${path.module}/config.yaml")
   }
+}
+
+# Shared with traefik and nothing else.
+resource "docker_network" "traefik" {
+  name       = "traefik-gatus"
+  driver     = "bridge"
+  attachable = false
+  ingress    = false
+  ipv6       = false
 }
 
 # Consumed by ../backrest on both mindy and samson. One token for both

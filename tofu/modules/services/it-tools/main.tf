@@ -15,7 +15,7 @@ resource "docker_container" "this" {
   security_opts = ["no-new-privileges:true"]
 
   networks_advanced {
-    name = var.traefik_network
+    name = docker_network.traefik.name
   }
 
   healthcheck {
@@ -26,4 +26,13 @@ resource "docker_container" "this" {
     retries      = 5
     start_period = "20s"
   }
+}
+
+# Shared with traefik and nothing else.
+resource "docker_network" "traefik" {
+  name       = "traefik-it-tools"
+  driver     = "bridge"
+  attachable = false
+  ingress    = false
+  ipv6       = false
 }

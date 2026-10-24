@@ -1,6 +1,7 @@
 # status.wvl.app, on BUMBA.
 output "traefik" {
   value = {
+    network = docker_network.traefik.name
     routers = {
       status = {
         rule    = "Host(`status.wvl.app`)"
