@@ -1,3 +1,5 @@
+{ pkgs, ... }:
+
 {
   imports = [
     ./disko.nix
@@ -38,6 +40,10 @@
       tls = false;
     };
   };
+
+  # The server end of tux's Unison profiles (hosts/tux/unison). Without the GUI,
+  # which would pull GTK onto a server.
+  environment.systemPackages = [ (pkgs.unison.override { enableX11 = false; }) ];
 
   system.stateVersion = "26.05";
 }

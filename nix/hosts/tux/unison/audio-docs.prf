@@ -1,0 +1,7 @@
+include common
+
+# root while mindy runs Debian. Its NixOS config refuses root logins: wim@ once
+# it runs that.
+root = /home/wim/drive/audio
+root = ssh://root@100.127.106.121//mnt/rafiki/audio
+path = docs
