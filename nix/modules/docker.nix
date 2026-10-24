@@ -101,5 +101,11 @@ in
       iptables -w -F from-containers 2>/dev/null || true
       iptables -w -X from-containers 2>/dev/null || true
     '';
+
+    # The other half of the traefik exception above. Docker does not DNAT a
+    # published port for traffic from the network it is published on, so gatus,
+    # which shares traefik-gatus with traefik, reaches bumba's sites through
+    # docker-proxy on INPUT instead, and is refused there without this.
+    networking.firewall.interfaces."br-+".allowedTCPPorts = [ 80 443 ];
   };
 }
