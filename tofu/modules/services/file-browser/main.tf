@@ -1,11 +1,11 @@
 locals {
   shares = [
-    { dir = "gezin-officieel", name = "Gezin officieel", default_enabled = true, bind = true },
-    { dir = "gezin-officieel-archive", name = "Gezin officieel archive", default_enabled = true, bind = true },
-    { dir = "audio", name = "Audio", default_enabled = true, bind = true },
-    { dir = "audio-archive", name = "Audio archive", default_enabled = true, bind = false },
-    { dir = "wim", name = "Wim privé", default_enabled = false, bind = true },
-    { dir = "sara", name = "Sara prive", default_enabled = false, bind = true },
+    { dir = "gezin-officieel", name = "Gezin officieel", default_enabled = true, source = "/mnt/rafiki/documents/gezin-officieel" },
+    { dir = "gezin-officieel-archive", name = "Gezin officieel archive", default_enabled = true, source = "/mnt/rafiki/documents/gezin-officieel-archive" },
+    { dir = "audio", name = "Audio", default_enabled = true, source = "/mnt/rafiki/audio" },
+    { dir = "audio-archive", name = "Audio archive", default_enabled = true, source = null },
+    { dir = "wim", name = "Wim privé", default_enabled = false, source = "/mnt/rafiki/documents/wim" },
+    { dir = "sara", name = "Sara prive", default_enabled = false, source = "/mnt/rafiki/documents/sara" },
   ]
 
   configPath = "/home/filebrowser/config.yaml"
@@ -118,13 +118,15 @@ resource "docker_container" "this" {
     }
   }
 
-  # Each is a SYMLINK on the host under /docker-volumes/filebrowser/files,
-  # pointing at the real directory on rafiki. Docker resolves it host-side.
+  # Onto directories Docker creates in the /files bind. Never onto a symlink
+  # there: Docker follows a symlinked target inside the container and mounts at
+  # the link's destination, leaving /files/<dir> a link, and filebrowser then
+  # builds paths like /files/audio/mnt/rafiki/audio/... from the resolved name.
   dynamic "mounts" {
-    for_each = { for s in local.shares : s.dir => s if s.bind }
+    for_each = { for s in local.shares : s.dir => s if s.source != null }
     content {
       type   = "bind"
-      source = "/docker-volumes/filebrowser/files/${mounts.key}"
+      source = mounts.value.source
       target = "/files/${mounts.key}"
     }
   }

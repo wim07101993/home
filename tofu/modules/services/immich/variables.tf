@@ -18,7 +18,7 @@ variable "postgres_image" {
 
 variable "library_path" {
   type        = string
-  default     = "/docker-volumes/immich/photos"
+  default     = "/mnt/rafiki/photos"
   description = <<-EOT
     LOCAL, on the `rafiki` volume attached to mindy. Moved off NFS 2026-09-18.
 
