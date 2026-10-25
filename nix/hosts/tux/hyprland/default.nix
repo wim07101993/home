@@ -19,6 +19,7 @@
       src = ./hyprland.lua;
       substitutions = [ "--replace-fail" "@polkitAgent@" "${pkgs.hyprpolkitagent}/libexec/hyprpolkitagent" ];
     };
+    "xdg/hypr/desktop".source = ./desktop;
     "xdg/hypr/hypridle.conf".source = ./hypridle.conf;
     "xdg/hypr/hyprlock.conf".source = ./hyprlock.conf;
     "xdg/quickshell/desktop".source = ./quickshell;

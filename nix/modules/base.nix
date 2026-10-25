@@ -28,8 +28,8 @@
     isNormalUser = true;
     extraGroups = [ "wheel" ];
     openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAQmx9cM9f22KlG3CUbS4jh1/ZaEZTj4LsyV7gCP8TOQ"
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFYGGYC2DXgPCHbL9538uFbqM+VcTF9XFNVBtkQuwgQN wim@wvl.app" 
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAQmx9cM9f22KlG3CUbS4jh1/ZaEZTj4LsyV7gCP8TOQ framework"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFYGGYC2DXgPCHbL9538uFbqM+VcTF9XFNVBtkQuwgQN tux"
     ];
   };
 

@@ -24,6 +24,9 @@
   networking.hostName = "tux";
   networking.networkmanager.enable = true;
 
+  # Lets wim run `tailscale up`, `set` and the like without sudo.
+  services.tailscale.extraSetFlags = [ "--operator=wim" ];
+
   # A TUXEDO Pulse 15 Gen1. nixos-hardware only has the Gen2, and the parts of
   # it that apply to a Gen1 (AMD graphics, power profiles, SSD trim) Plasma and
   # NixOS already enable.
