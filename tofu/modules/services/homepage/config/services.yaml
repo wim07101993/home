@@ -15,9 +15,6 @@
         href: 'postgresql://100.104.241.49:5432/'
         icon: /icons/postgresql.svg
         description: zitadel, and this layer's tofu state
-    - Portainer:
-        href: 'https://100.104.241.49:9443/'
-        icon: /icons/portainer-dark.svg
 
 - Mindy:
     - Photos:
@@ -54,9 +51,6 @@
     - Traefik:
         href: 'https://traefik.wvl.app'
         icon: /icons/traefik.svg
-    - Portainer:
-        href: 'https://100.127.106.121:9443/'
-        icon: /icons/portainer-dark.svg
 
 - Samson:
     - Plex:
@@ -73,14 +67,8 @@
         href: 'http://100.71.248.106:9898/'
         icon: /icons/backrest.svg
         description: Backups -- the array (selected media, dumps, archive)
-    - Portainer:
-        href: 'https://100.71.248.106:9443/'
-        icon: /icons/portainer-dark.svg
 
 - Plop:
     - HomeAssistant:
         href: 'http://100.117.36.52:8123/'
         icon: /icons/home-assistant.svg
-    - Portainer:
-        href: 'https://100.117.36.52:9443/'
-        icon: /icons/portainer-dark.svg

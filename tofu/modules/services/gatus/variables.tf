@@ -1,7 +1,3 @@
-variable "traefik_network" {
-  type = string
-}
-
 variable "data_path" {
   type        = string
   default     = "/docker-volumes/gatus/data"
@@ -10,7 +6,7 @@ variable "data_path" {
 
     Create it before the first apply:
 
-      ssh root@<bumba> mkdir -p /docker-volumes/gatus/data
+      ssh wim@<bumba> sudo install -d -o 165536 -g 165536 /docker-volumes/gatus/data
 
     Less load-bearing than the same note on other modules: the gatus image is
     FROM scratch with no USER, so it runs as root and can write the root-owned

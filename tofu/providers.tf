@@ -117,12 +117,12 @@ provider "postgresql" {
 
 provider "docker" {
   alias = "bumba"
-  host  = "ssh://root@${var.bumba_addr}"
+  host  = "ssh://wim@${var.bumba_addr}"
 }
 
 provider "docker" {
   alias = "mindy"
-  host  = "ssh://root@${var.mindy_addr}"
+  host  = "ssh://wim@${var.mindy_addr}"
 }
 
 provider "docker" {

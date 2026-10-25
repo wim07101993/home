@@ -122,6 +122,14 @@ resource "docker_container" "this" {
   memory_swap = var.memory * 2
   cpus        = var.cpus
 
+  # DAC_OVERRIDE: with userns_mode = "host" the image's files belong to 165536,
+  # not root, and root has to run start.sh. It also reads every source. A
+  # restore that should keep file owners needs more, such as CAP_CHOWN and
+  # CAP_FOWNER.
+  capabilities {
+    drop = ["ALL"]
+    add  = ["CAP_DAC_OVERRIDE"]
+  }
   security_opts = ["no-new-privileges:true"]
 
   # Tailnet only. Without the `ip` this is an unauthenticated-by-default

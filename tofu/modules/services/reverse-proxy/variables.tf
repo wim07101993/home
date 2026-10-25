@@ -15,6 +15,7 @@ variable "container_name" {
 
 variable "routing" {
   type = list(object({
+    network = optional(string)
     routers = map(object({
       rule        = string
       service     = string
@@ -25,10 +26,13 @@ variable "routing" {
         servers = list(object({ url = string }))
       })
     }))
-    middlewares = optional(any, {})
+    middlewares = optional(map(object({
+      buffering = optional(object({ maxRequestBodyBytes = number }))
+      headers   = optional(object({ customResponseHeaders = map(string) }))
+    })), {})
   }))
   default     = []
-  description = "Per-service traefik fragments, from each service's `traefik` output."
+  description = "Per-service traefik fragments, from each service's `traefik` output. `network` is the service's own network, which traefik joins; a service on another host has none."
 }
 
 variable "dashboard_host" {
@@ -41,8 +45,4 @@ variable "http_port" {
 
 variable "https_port" {
   type = number
-}
-
-variable "network_name" {
-  type = string
 }

@@ -1,7 +1,3 @@
-variable "traefik_network" {
-  type = string
-}
-
 variable "db_network" {
   type        = string
   description = "bumba's postgres network. Zitadel reaches it as `db`."

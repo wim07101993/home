@@ -1,7 +1,10 @@
+{ pkgs, ... }:
+
 {
   imports = [
     ./disko.nix
     ../../modules/base.nix
+    ../../modules/auto-update.nix
     ../../modules/hetzner.nix
     ../../modules/docker.nix
     ../../modules/tailscale.nix
@@ -27,22 +30,10 @@
     options = [ "discard" "defaults" "nofail" "x-systemd.before=docker.service" ];
   };
 
-  # Service data that lives on rafiki rather than the OS disk; tofu still binds
-  # the /docker-volumes paths. `L`, not `L+`: an existing directory there is
-  # left alone instead of deleted.
-  systemd.tmpfiles.rules = [
-    "L /docker-volumes/immich/photos - - - - /mnt/rafiki/photos"
-    "L /docker-volumes/filebrowser/files/audio - - - - /mnt/rafiki/audio"
-    "L /docker-volumes/filebrowser/files/gezin-officieel - - - - /mnt/rafiki/documents/gezin-officieel"
-    "L /docker-volumes/filebrowser/files/gezin-officieel-archive - - - - /mnt/rafiki/documents/gezin-officieel-archive"
-    "L /docker-volumes/filebrowser/files/sara - - - - /mnt/rafiki/documents/sara"
-    "L /docker-volumes/filebrowser/files/wim - - - - /mnt/rafiki/documents/wim"
-  ];
-
   # audio-archive lives on samson and is served by filebrowser here. x-systemd
   # options keep a boot from hanging when samson is down, which it is whenever
   # the residential line is.
-  fileSystems."/docker-volumes/filebrowser/files/audio-archive" = {
+  fileSystems."/mnt/samson/audio-archive" = {
     device = "100.71.248.106:/nfs-volumes/audio-archive";
     fsType = "nfs";
     options = [
@@ -55,6 +46,33 @@
       "retrans=3"
     ];
   };
+
+  # traefik serves navidrome on samson as music.wvl.app. Nothing else on the
+  # tailnet is open to containers here -- not samson's NFS export, which trusts
+  # mindy's address. See docker.nix.
+  homelab.containers.reachableOnTailnet = [
+    { address = "100.71.248.106"; port = 4533; }
+  ];
+
+  # The server end of tux's Unison profiles (hosts/tux/unison). Without the GUI,
+  # which would pull GTK onto a server.
+  environment.systemPackages = [ (pkgs.unison.override { enableX11 = false; }) ];
+
+  # tofu's filebrowser runs as this account instead of the image's uid 1000,
+  # which is wim here. `Z` re-owns its database on every boot and rebuild, so a
+  # restore comes out right.
+  users.users.filebrowser = {
+    isSystemUser = true;
+    uid = 950;
+    group = "filebrowser";
+  };
+  users.groups.filebrowser.gid = 950;
+
+  systemd.tmpfiles.rules = [
+    "d /docker-volumes/filebrowser 0755 root root -"
+    "d /docker-volumes/filebrowser/config 0755 filebrowser filebrowser -"
+    "Z /docker-volumes/filebrowser/config - filebrowser filebrowser -"
+  ];
 
   system.stateVersion = "26.05";
 }

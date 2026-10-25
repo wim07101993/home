@@ -1,5 +1,6 @@
 output "traefik" {
   value = {
+    network = docker_network.traefik.name
     routers = {
       keuken = {
         rule    = "Host(`keuken.wvl.app`)"

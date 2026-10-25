@@ -3,6 +3,7 @@
 # The backend is the CONTAINER port, not the host-published one.
 output "traefik" {
   value = {
+    network = docker_network.traefik.name
     routers = {
       photos = {
         rule    = "Host(`photos.wvl.app`)"

@@ -5,6 +5,7 @@
     ./disko.nix
     ./hardware.nix
     ../../modules/base.nix
+    ../../modules/auto-update.nix
     ../../modules/docker.nix
     ../../modules/tailscale.nix
     ../../modules/clamav.nix
@@ -19,6 +20,9 @@
   # to its device discovery arrive through this firewall, sent to the multicast
   # address rather than as replies the firewall can match to a query.
   networking.firewall.interfaces.eno1.allowedUDPPorts = [ 5353 ];
+
+  # Home Assistant talks to devices on the LAN. See docker.nix.
+  homelab.containers.mayReachLan = true;
 
   # The Zigbee/Thread radio: a Nabu Casa SkyConnect on the CP210x UART bridge.
   # OpenTofu's home-assistant module passes /dev/ttyUSB0 into the container by

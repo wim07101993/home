@@ -98,7 +98,19 @@
     bitwarden-cli
     yubioath-flutter
     qlcplus
+    unison
     (callPackage ./wing-edit/package.nix { })
+  ];
+
+  # Unison reads its profiles from ~/.unison and keeps its archives there, so the
+  # directory is wim's and only the profiles are links. ~/drive has to exist:
+  # Unison creates a missing root, but not its parent.
+  systemd.tmpfiles.rules = [
+    "d /home/wim/drive 0755 wim users -"
+    "d /home/wim/.unison 0700 wim users -"
+    "L+ /home/wim/.unison/common - - - - ${./unison/common}"
+    "L+ /home/wim/.unison/gigs.prf - - - - ${./unison/gigs.prf}"
+    "L+ /home/wim/.unison/audio-docs.prf - - - - ${./unison/audio-docs.prf}"
   ];
 
   # Yubico Authenticator reaches the YubiKey as a smart card.

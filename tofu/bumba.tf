@@ -1,4 +1,3 @@
-# 9443 is portainer, which tofu does not manage.
 locals {
   bumba_ports = {
     traefik_http      = 80
@@ -18,14 +17,6 @@ check "bumba_unique_ports" {
   }
 }
 
-module "network_bumba" {
-  source = "./modules/network"
-
-  providers = { docker = docker.bumba }
-
-  name = "traefik-network"
-}
-
 module "reverse_proxy_bumba" {
   source = "./modules/services/reverse-proxy"
 
@@ -42,8 +33,6 @@ module "reverse_proxy_bumba" {
     module.gatus.traefik,
   ]
 
-  network_name = module.network_bumba.name
-
   http_port  = local.bumba_ports.traefik_http
   https_port = local.bumba_ports.traefik_https
 }
@@ -56,8 +45,7 @@ module "zitadel_server" {
     postgresql = postgresql.bumba
   }
 
-  traefik_network = module.network_bumba.name
-  db_network      = module.postgres_bumba.network_name
+  db_network = module.postgres_bumba.network_names["zitadel"]
 
   depends_on = [module.postgres_bumba]
 
@@ -80,6 +68,8 @@ module "postgres_bumba" {
   }
 
   host_port = local.bumba_ports.postgres
+
+  clients = ["zitadel"]
 }
 
 module "storage_box_proxy" {
@@ -103,8 +93,7 @@ module "gatus" {
     zitadel = zitadel
   }
 
-  traefik_network = module.network_bumba.name
-  tailscale_ip    = var.bumba_addr
+  tailscale_ip = var.bumba_addr
 
   zitadel_org_id = module.zitadel.org_home_id
 

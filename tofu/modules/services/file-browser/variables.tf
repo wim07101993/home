@@ -1,7 +1,3 @@
-variable "traefik_network" {
-  type = string
-}
-
 variable "oidc_issuer_url" {
   type    = string
   default = "https://auth.wvl.app"

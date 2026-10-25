@@ -16,13 +16,9 @@ variable "postgres_image" {
   description = "immich's own postgres, with vectorchord and pgvecto.rs. Not interchangeable with the plain postgres the rest of the estate runs, and a major upgrade needs immich's documented procedure."
 }
 
-variable "traefik_network" {
-  type = string
-}
-
 variable "library_path" {
   type        = string
-  default     = "/docker-volumes/immich/photos"
+  default     = "/mnt/rafiki/photos"
   description = <<-EOT
     LOCAL, on the `rafiki` volume attached to mindy. Moved off NFS 2026-09-18.
 

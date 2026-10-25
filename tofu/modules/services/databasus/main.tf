@@ -8,6 +8,14 @@ resource "docker_container" "this" {
   image   = docker_image.this.image_id
   restart = "unless-stopped"
 
+  # DAC_OVERRIDE is for the image's healthcheck, which runs as root and reads
+  # files the app (uid 999) keeps to itself.
+  capabilities {
+    drop = ["ALL"]
+    add  = ["CAP_DAC_OVERRIDE", "CAP_SETGID", "CAP_SETUID"]
+  }
+  security_opts = ["no-new-privileges:true"]
+
   ports {
     internal = 4005
     external = var.host_port
