@@ -5,6 +5,7 @@
     ./disko.nix
     ./hardware.nix
     ../../modules/base.nix
+    ../../modules/auto-update.nix
     ../../modules/docker.nix
     ../../modules/tailscale.nix
     ../../modules/clamav.nix

@@ -2,6 +2,7 @@
   imports = [
     ./disko.nix
     ../../modules/base.nix
+    ../../modules/auto-update.nix
     ../../modules/hetzner.nix
     ../../modules/docker.nix
     ../../modules/tailscale.nix

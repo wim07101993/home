@@ -6,6 +6,7 @@
     ./hardware.nix
     ./storage.nix
     ../../modules/base.nix
+    ../../modules/auto-update.nix
     ../../modules/docker.nix
     ../../modules/tailscale.nix
     ../../modules/clamav.nix
