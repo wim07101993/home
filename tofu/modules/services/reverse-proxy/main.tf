@@ -1,11 +1,11 @@
 locals {
-  routers     = merge([for x in var.routing : x.routers]...)
-  services    = merge([for x in var.routing : x.services]...)
+  routers  = merge([for x in var.routing : x.routers]...)
+  services = merge([for x in var.routing : x.services]...)
   middlewares = {
     for name, m in merge([for x in var.routing : x.middlewares]...) :
     name => { for kind, config in m : kind => config if config != null }
   }
-  networks    = toset([for x in var.routing : x.network if x.network != null])
+  networks = toset([for x in var.routing : x.network if x.network != null])
 
   config_path = "/etc/traefik/traefik.yml"
 }
