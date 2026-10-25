@@ -1,0 +1,5 @@
+include common
+
+root = /home/wim/drive/audio
+root = ssh://wim@100.127.106.121//mnt/rafiki/audio
+path = docs

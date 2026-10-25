@@ -1,3 +1,5 @@
+{ pkgs, ... }:
+
 {
   imports = [
     ./disko.nix
@@ -63,6 +65,10 @@
     "d /docker-volumes/navidrome/cache 0755 165536 165536 -"
     "Z /docker-volumes/navidrome/cache - 165536 165536 -"
   ];
+
+  # The server end of tux's Unison profiles (hosts/tux/unison). Without the GUI,
+  # which would pull GTK onto a server.
+  environment.systemPackages = [ (pkgs.unison.override { enableX11 = false; }) ];
 
   system.stateVersion = "26.05";
 }

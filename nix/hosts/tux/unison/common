@@ -1,0 +1,14 @@
+# Shared by the profiles next to it. Unison only syncs when started, and shows
+# every change, deletions included, for confirmation before applying it.
+
+# Permissions are not copied. The other side's umask decides them, and the
+# servercmd below makes that 002, so filebrowser (group users) can still change
+# what lands there. Copying the laptop's 644 would lock it out.
+perms = 0
+servercmd = umask 002; unison
+times = true
+
+# Every file Unison overwrites or deletes is kept in ~/.unison/backup on the
+# side it happened, not next to the file where filebrowser would list it.
+backup = Name *
+backuplocation = central

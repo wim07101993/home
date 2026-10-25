@@ -1,3 +1,5 @@
+{ pkgs, ... }:
+
 {
   imports = [
     ./disko.nix
@@ -50,6 +52,10 @@
   homelab.containers.reachableOnTailnet = [
     { address = "100.71.248.106"; port = 4533; }
   ];
+
+  # The server end of tux's Unison profiles (hosts/tux/unison). Without the GUI,
+  # which would pull GTK onto a server.
+  environment.systemPackages = [ (pkgs.unison.override { enableX11 = false; }) ];
 
   system.stateVersion = "26.05";
 }
