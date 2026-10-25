@@ -20,11 +20,8 @@ resource "docker_container" "this" {
   image   = docker_image.this.image_id
   restart = "unless-stopped"
 
-  userns_mode = "host"
-
   capabilities {
     drop = ["ALL"]
-    add  = ["CAP_DAC_READ_SEARCH"]
   }
   security_opts = ["no-new-privileges:true"]
 
@@ -42,6 +39,7 @@ resource "docker_container" "this" {
     ip       = var.tailscale_ip
   }
 
+  # Remapped, so navidrome reads the library as "other": files need a+r.
   volumes {
     host_path      = "/srv/dev-disk-by-uuid-25d0f3ec-68a9-4ce0-891e-0966088e5300/media/music"
     container_path = "/music"

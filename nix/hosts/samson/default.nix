@@ -54,5 +54,15 @@
     };
   };
 
+  # navidrome runs remapped: its root is 165536 on this host. `Z` re-owns its
+  # volumes on every boot and rebuild, so a restore comes out right.
+  systemd.tmpfiles.rules = [
+    "d /docker-volumes/navidrome 0755 root root -"
+    "d /docker-volumes/navidrome/data 0755 165536 165536 -"
+    "Z /docker-volumes/navidrome/data - 165536 165536 -"
+    "d /docker-volumes/navidrome/cache 0755 165536 165536 -"
+    "Z /docker-volumes/navidrome/cache - 165536 165536 -"
+  ];
+
   system.stateVersion = "26.05";
 }
