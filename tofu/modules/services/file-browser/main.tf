@@ -21,8 +21,16 @@ locals {
 
       # The default, tmp under the image's home directory, cannot be created:
       # on the remapping daemon the image's files belong to 165536+, which
-      # filebrowser's uid 1000 under userns_mode = "host" does not own.
+      # filebrowser's uid 950 under userns_mode = "host" does not own.
       cacheDir = "/home/filebrowser/data/cache"
+
+      # Group-writable and setgid, so what filebrowser creates stays users' and
+      # wim's Unison can still write to it. Filebrowser chmods new folders to
+      # this mode, so the default, 755, also drops the setgid bit.
+      filesystem = {
+        createFilePermission      = "664"
+        createDirectoryPermission = "2775"
+      }
 
       sources = [for s in local.shares : {
         path = "/files/${s.dir}"
@@ -95,7 +103,12 @@ resource "docker_container" "this" {
     content = yamlencode(local.config)
   }
 
-  group_add = ["100"]
+  # 950 is the filebrowser account in nix/hosts/mindy/default.nix; the image's
+  # 1000 is wim on mindy. users (100) opens the shares to it. umask 002 keeps
+  # the parent folders an upload creates group-writable too.
+  user       = "950:950"
+  group_add  = ["100"]
+  entrypoint = ["/bin/sh", "-c", "umask 002 && exec ./filebrowser"]
 
   ports {
     internal = 80

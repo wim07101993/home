@@ -57,5 +57,21 @@
   # which would pull GTK onto a server.
   environment.systemPackages = [ (pkgs.unison.override { enableX11 = false; }) ];
 
+  # tofu's filebrowser runs as this account instead of the image's uid 1000,
+  # which is wim here. `Z` re-owns its database on every boot and rebuild, so a
+  # restore comes out right.
+  users.users.filebrowser = {
+    isSystemUser = true;
+    uid = 950;
+    group = "filebrowser";
+  };
+  users.groups.filebrowser.gid = 950;
+
+  systemd.tmpfiles.rules = [
+    "d /docker-volumes/filebrowser 0755 root root -"
+    "d /docker-volumes/filebrowser/config 0755 filebrowser filebrowser -"
+    "Z /docker-volumes/filebrowser/config - filebrowser filebrowser -"
+  ];
+
   system.stateVersion = "26.05";
 }
