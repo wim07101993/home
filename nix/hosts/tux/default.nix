@@ -1,4 +1,4 @@
-{ pkgs, nixpkgs-unstable, ... }:
+{ lib, pkgs, nixpkgs-unstable, ... }:
 
 {
   imports = [
@@ -60,6 +60,13 @@
 
   services.displayManager.sddm.enable = true;
   services.desktopManager.plasma6.enable = true;
+
+  security.pam.services.login.kwallet.enable = lib.mkForce false;
+  security.pam.services.kde.kwallet.enable = lib.mkForce false;
+  environment.etc."xdg/kwalletrc".text = ''
+    [Wallet][$i]
+    Enabled=false
+  '';
 
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
