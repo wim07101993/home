@@ -95,21 +95,33 @@
   programs.nix-ld.enable = true;
 
   environment.systemPackages = with pkgs; [
-    git
-    neovim
-    tldr
+    # system
     btop
     opentofu
-    go
-    flutter
-    jetbrains.goland
-    android-studio
-    github-copilot-cli
+    tldr
+    unison
+    # secret
     bitwarden-cli
     yubioath-flutter
+    # dev
+    android-studio
+    flutter
+    git
+    github-copilot-cli
+    go
+    jetbrains.goland
+    neovim
+    # audio / light
+    audacity
+    musescore
     qlcplus
-    unison
+    spotdl
+    yt-dlp
     (callPackage ./wing-edit/package.nix { })
+    # internet
+    filezilla
+    qbittorrent
+    tor-browser
   ];
 
   systemd.tmpfiles.rules = [
