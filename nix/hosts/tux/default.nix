@@ -115,6 +115,7 @@
     audacity
     musescore
     qlcplus
+    spotify
     spotdl
     yt-dlp
     (callPackage ./wing-edit/package.nix { })
