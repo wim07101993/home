@@ -57,13 +57,13 @@
     "d /docker-volumes/homeassistant/matterjs-server 0755 matter matter -"
     "Z /docker-volumes/homeassistant/matterjs-server - matter matter -"
 
-    # adguard-home runs remapped too, without CAP_DAC_OVERRIDE, so its root
-    # must own what it writes.
+    # adguard-home runs remapped too, as 65532: 231068 on this host. Without
+    # CAP_DAC_OVERRIDE, so it must own what it writes.
     "d /docker-volumes/adguard-home 0755 root root -"
-    "d /docker-volumes/adguard-home/conf 0700 165536 165536 -"
-    "Z /docker-volumes/adguard-home/conf - 165536 165536 -"
-    "d /docker-volumes/adguard-home/work 0700 165536 165536 -"
-    "Z /docker-volumes/adguard-home/work - 165536 165536 -"
+    "d /docker-volumes/adguard-home/conf 0700 231068 231068 -"
+    "Z /docker-volumes/adguard-home/conf - 231068 231068 -"
+    "d /docker-volumes/adguard-home/work 0700 231068 231068 -"
+    "Z /docker-volumes/adguard-home/work - 231068 231068 -"
   ];
 
   # tofu's matterjs-server runs as this account instead of the image's uid

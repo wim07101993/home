@@ -45,7 +45,8 @@ module "ftp" {
     docker = docker.samson
   }
 
-  media_path = "/srv/dev-disk-by-uuid-25d0f3ec-68a9-4ce0-891e-0966088e5300/media"
+  media_path         = "/srv/dev-disk-by-uuid-25d0f3ec-68a9-4ce0-891e-0966088e5300/media"
+  audio_archive_path = "/srv/dev-disk-by-uuid-25d0f3ec-68a9-4ce0-891e-0966088e5300/audio-archive"
 }
 
 module "plex" {
@@ -91,8 +92,6 @@ module "backrest_samson" {
     module.databasus.backup,
     module.navidrome.backup,
 
-    # audio-archive has no owning module: it lives on samson but is served by
-    # filebrowser on mindy. Declared here rather than pretending otherwise.
     { mounts = { "audio-archive" = "/srv/dev-disk-by-uuid-25d0f3ec-68a9-4ce0-891e-0966088e5300/audio-archive" } },
   ]
 

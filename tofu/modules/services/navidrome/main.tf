@@ -20,6 +20,8 @@ resource "docker_container" "this" {
   image   = docker_image.this.image_id
   restart = "unless-stopped"
 
+  user = "1000:1000"
+
   capabilities {
     drop = ["ALL"]
   }

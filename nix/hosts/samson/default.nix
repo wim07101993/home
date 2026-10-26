@@ -57,15 +57,54 @@
     };
   };
 
-  # navidrome runs remapped: its root is 165536 on this host. `Z` re-owns its
+  # navidrome runs remapped as 1000:1000: 166536 on this host. `Z` re-owns its
   # volumes on every boot and rebuild, so a restore comes out right.
   systemd.tmpfiles.rules = [
     "d /docker-volumes/navidrome 0755 root root -"
-    "d /docker-volumes/navidrome/data 0755 165536 165536 -"
-    "Z /docker-volumes/navidrome/data - 165536 165536 -"
-    "d /docker-volumes/navidrome/cache 0755 165536 165536 -"
-    "Z /docker-volumes/navidrome/cache - 165536 165536 -"
+    "d /docker-volumes/navidrome/data 0755 166536 166536 -"
+    "Z /docker-volumes/navidrome/data - 166536 166536 -"
+    "d /docker-volumes/navidrome/cache 0755 166536 166536 -"
+    "Z /docker-volumes/navidrome/cache - 166536 166536 -"
   ];
+
+  # Who may write the media library: tofu's ftp logs its users in as 951, and
+  # wim. plex and navidrome only read it, as "other". ftp also writes the audio
+  # archive, through an ACL; its group stays users.
+  users.groups.media.gid = 951;
+  users.users.ftp-media = {
+    isSystemUser = true;
+    uid = 951;
+    group = "media";
+  };
+  users.users.wim.extraGroups = [ "media" ];
+
+  # Keeps the library in that group and group-writable, wim's trash aside. New
+  # entries inherit the group from the setgid folders; this catches the rest.
+  #
+  # The audio archive gets media as an extra ACL entry instead. -n keeps the
+  # mask at the group bits, so media can do what users can and no more; the
+  # default entries on the folders carry it to new entries.
+  systemd.services.media-permissions =
+    let
+      media = "/srv/dev-disk-by-uuid-25d0f3ec-68a9-4ce0-891e-0966088e5300/media";
+      audioArchive = "/srv/dev-disk-by-uuid-25d0f3ec-68a9-4ce0-891e-0966088e5300/audio-archive";
+    in
+    {
+      description = "Keep the media library and the audio archive writable by the media group";
+      wantedBy = [ "multi-user.target" ];
+      unitConfig.RequiresMountsFor = [ media audioArchive ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
+      path = [ pkgs.findutils pkgs.coreutils pkgs.acl ];
+      script = ''
+        find ${media} -xdev -path '*/.Trash-*' -prune -o ! -group media -exec chgrp -h media {} +
+        find ${media} -xdev -path '*/.Trash-*' -prune -o ! -type l ! -perm -g+w -exec chmod g+w {} +
+        setfacl -R -P -n -m g:media:rwX ${audioArchive}
+        find ${audioArchive} -xdev -type d -exec setfacl -n -m d:g:media:rwx {} +
+      '';
+    };
 
   # The server end of tux's Unison profiles (hosts/tux/unison). Without the GUI,
   # which would pull GTK onto a server.
