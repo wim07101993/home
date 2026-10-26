@@ -21,6 +21,12 @@ in
       default = false;
       description = "Whether this host's containers may connect to 10.0.0.0/8. DNS there is allowed either way.";
     };
+
+    mayReachPublishedDns = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Whether this host's containers may connect to port 53 published by another container on this host. Needed where that container is the host's own resolver: Docker's embedded resolver forwards to it from inside the containers' networks.";
+    };
   };
 
   config = {
@@ -76,6 +82,10 @@ in
       # which the internet reaches anyway: gatus checks bumba's own sites there.
       iptables -w -A from-containers -p tcp -m conntrack --ctstate DNAT --ctorigdstport 80 -j RETURN
       iptables -w -A from-containers -p tcp -m conntrack --ctstate DNAT --ctorigdstport 443 -j RETURN
+    '' + lib.optionalString cfg.mayReachPublishedDns ''
+      iptables -w -A from-containers -p udp -m conntrack --ctstate DNAT --ctorigdstport 53 -j RETURN
+      iptables -w -A from-containers -p tcp -m conntrack --ctstate DNAT --ctorigdstport 53 -j RETURN
+    '' + ''
       iptables -w -A from-containers -m conntrack --ctstate DNAT -j DROP
 
       # Cloud metadata, which hands the server's user data to whoever asks.

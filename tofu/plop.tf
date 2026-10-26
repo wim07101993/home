@@ -1,7 +1,9 @@
 # matterjs-server publishes nothing.
 locals {
   plop_ports = {
-    home_assistant = 8123
+    home_assistant   = 8123
+    adguard_home     = 3000
+    adguard_home_dns = 53
   }
 }
 
@@ -24,6 +26,21 @@ module "home_assistant" {
   tailscale_ip   = var.plop_addr
 
   host_port = local.plop_ports.home_assistant
+}
+
+# The house's DNS resolver, handed out by the router. If this container is
+# down, nothing on the LAN resolves.
+module "adguard_home" {
+  source = "./modules/services/adguard-home"
+
+  providers = {
+    docker = docker.plop
+  }
+
+  tailscale_ip = var.plop_addr
+
+  host_port = local.plop_ports.adguard_home
+  dns_port  = local.plop_ports.adguard_home_dns
 }
 
 # --- inputs ---------------------------------------------------------------
