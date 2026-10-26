@@ -1,8 +1,9 @@
-{ pkgs, nixpkgs-unstable, ... }:
+{ lib, pkgs, nixpkgs-unstable, ... }:
 
 {
   imports = [
     ./hardware.nix
+    ./hyprland
     ../../modules/tailscale.nix
     "${nixpkgs-unstable}/nixos/modules/services/networking/nordvpn.nix"
   ];
@@ -22,6 +23,9 @@
 
   networking.hostName = "tux";
   networking.networkmanager.enable = true;
+
+  # Lets wim run `tailscale up`, `set` and the like without sudo.
+  services.tailscale.extraSetFlags = [ "--operator=wim" ];
 
   # A TUXEDO Pulse 15 Gen1. nixos-hardware only has the Gen2, and the parts of
   # it that apply to a Gen1 (AMD graphics, power profiles, SSD trim) Plasma and
@@ -59,7 +63,13 @@
 
   services.displayManager.sddm.enable = true;
   services.desktopManager.plasma6.enable = true;
-  programs.hyprland.enable = true;
+
+  security.pam.services.login.kwallet.enable = lib.mkForce false;
+  security.pam.services.kde.kwallet.enable = lib.mkForce false;
+  environment.etc."xdg/kwalletrc".text = ''
+    [Wallet][$i]
+    Enabled=false
+  '';
 
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
