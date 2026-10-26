@@ -72,6 +72,11 @@
     "d /docker-volumes/filebrowser 0755 root root -"
     "d /docker-volumes/filebrowser/config 0755 filebrowser filebrowser -"
     "Z /docker-volumes/filebrowser/config - filebrowser filebrowser -"
+
+    # tofu's traefik runs as 65532 in the remapped namespace: 231068 here.
+    "d /docker-volumes/traefik 0755 root root -"
+    "d /docker-volumes/traefik/letsencrypt 0755 231068 231068 -"
+    "Z /docker-volumes/traefik/letsencrypt - 231068 231068 -"
   ];
 
   system.stateVersion = "26.05";

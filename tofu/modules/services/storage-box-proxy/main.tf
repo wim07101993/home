@@ -18,6 +18,8 @@ resource "docker_container" "this" {
     "TCP:${var.target_host}:${local.target_port}",
   ]
 
+  user = "65534:65534"
+
   capabilities {
     drop = ["ALL"]
   }

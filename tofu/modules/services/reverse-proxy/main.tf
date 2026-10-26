@@ -25,6 +25,8 @@ resource "docker_container" "this" {
   image   = docker_image.traefik.image_id
   restart = "unless-stopped"
 
+  user = "65532:65532"
+
   capabilities {
     drop = ["ALL"]
   }

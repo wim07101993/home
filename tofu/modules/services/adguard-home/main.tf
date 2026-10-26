@@ -27,6 +27,8 @@ resource "docker_container" "this" {
 
   env = ["TZ=Europe/Brussels"]
 
+  user = "65532:65532"
+
   # The binary carries cap_net_bind_service as a file capability, and the
   # kernel refuses to exec it when that is outside the bounding set.
   capabilities {

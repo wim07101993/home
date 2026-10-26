@@ -49,22 +49,31 @@
   # backup taken anywhere comes out right.
   #
   # home-assistant runs remapped: its root is 165536 on this host.
-  # matterjs-server runs with userns_mode = "host", as the image's uid 1000.
+  # matterjs-server runs with userns_mode = "host", as the matter account below.
   systemd.tmpfiles.rules = [
     "d /docker-volumes/homeassistant 0755 root root -"
     "d /docker-volumes/homeassistant/config 0755 165536 165536 -"
     "Z /docker-volumes/homeassistant/config - 165536 165536 -"
-    "d /docker-volumes/homeassistant/matterjs-server 0755 1000 1000 -"
-    "Z /docker-volumes/homeassistant/matterjs-server - 1000 1000 -"
+    "d /docker-volumes/homeassistant/matterjs-server 0755 matter matter -"
+    "Z /docker-volumes/homeassistant/matterjs-server - matter matter -"
 
-    # adguard-home runs remapped too, without CAP_DAC_OVERRIDE, so its root
-    # must own what it writes.
+    # adguard-home runs remapped too, as 65532: 231068 on this host. Without
+    # CAP_DAC_OVERRIDE, so it must own what it writes.
     "d /docker-volumes/adguard-home 0755 root root -"
-    "d /docker-volumes/adguard-home/conf 0700 165536 165536 -"
-    "Z /docker-volumes/adguard-home/conf - 165536 165536 -"
-    "d /docker-volumes/adguard-home/work 0700 165536 165536 -"
-    "Z /docker-volumes/adguard-home/work - 165536 165536 -"
+    "d /docker-volumes/adguard-home/conf 0700 231068 231068 -"
+    "Z /docker-volumes/adguard-home/conf - 231068 231068 -"
+    "d /docker-volumes/adguard-home/work 0700 231068 231068 -"
+    "Z /docker-volumes/adguard-home/work - 231068 231068 -"
   ];
+
+  # tofu's matterjs-server runs as this account instead of the image's uid
+  # 1000, which is wim here.
+  users.users.matter = {
+    isSystemUser = true;
+    uid = 950;
+    group = "matter";
+  };
+  users.groups.matter.gid = 950;
 
   system.stateVersion = "26.05";
 }

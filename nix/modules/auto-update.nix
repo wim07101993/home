@@ -13,7 +13,6 @@ let
       pkgs.gitMinimal
       pkgs.util-linux
       config.nix.package
-      config.system.build.nixos-rebuild
     ];
     text = ''
       if [ "$(id -u)" -ne 0 ]; then
@@ -29,7 +28,13 @@ let
       fi
       as_wim git -C ${repo} pull --ff-only
 
-      nixos-rebuild switch --flake ${repo}/nix
+      # Nix refuses a git repository that root does not own (sudo is the
+      # exception), so wim builds the system and root only switches to it.
+      system=$(as_wim nix --extra-experimental-features "nix-command flakes" \
+        build --no-link --print-out-paths \
+        "${repo}/nix#nixosConfigurations.${config.networking.hostName}.config.system.build.toplevel")
+      nix-env -p /nix/var/nix/profiles/system --set "$system"
+      "$system/bin/switch-to-configuration" switch
     '';
   };
 in

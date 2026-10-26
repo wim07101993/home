@@ -33,7 +33,8 @@ resource "docker_container" "this" {
 
   entrypoint = [
     "/sbin/tini", "--", "/bin/sh", "-c",
-    "chown root:root /etc/vsftpd/vsftpd.conf && exec /bin/start_vsftpd.sh",
+    # umask 002 so wim, through the media group, can change what is uploaded.
+    "chown root:root /etc/vsftpd/vsftpd.conf && sed -i 's/^local_umask=.*/local_umask=002/' /etc/vsftpd/vsftpd.conf && exec /bin/start_vsftpd.sh",
   ]
 
   env = [
@@ -46,5 +47,11 @@ resource "docker_container" "this" {
     type   = "bind"
     source = var.media_path
     target = "${local.home}/media"
+  }
+
+  mounts {
+    type   = "bind"
+    source = var.audio_archive_path
+    target = "${local.home}/audio-archive"
   }
 }

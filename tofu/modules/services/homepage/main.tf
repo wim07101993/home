@@ -10,13 +10,12 @@ resource "docker_container" "this" {
 
   env = [
     "HOMEPAGE_ALLOWED_HOSTS=wvl.app,homepage.wvl.app,100.127.106.121:3001",
-    "PUID=1000",
-    "PGID=1000",
   ]
+
+  user = "1000:1000"
 
   capabilities {
     drop = ["ALL"]
-    add  = ["CAP_SETGID", "CAP_SETUID"]
   }
   security_opts = ["no-new-privileges:true"]
 

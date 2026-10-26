@@ -5,18 +5,23 @@ variable "user" {
 
 variable "uid" {
   type        = number
-  default     = 1000
-  description = "Owner of uploaded files on the host. With host user namespaces this is the real uid -- wim, like the rest of the media library."
+  default     = 951
+  description = "Owner of uploaded files on the host. With host user namespaces this is the real uid -- ftp-media in nix/hosts/samson/default.nix, not wim."
 }
 
 variable "gid" {
   type        = number
-  default     = 100
-  description = "users, which owns the media library and has write access to it."
+  default     = 951
+  description = "media, which owns the media library and has write access to it; wim is a member."
 }
 
 variable "media_path" {
   type = string
+}
+
+variable "audio_archive_path" {
+  type        = string
+  description = "Its group is users; gid writes it through an ACL that nix/hosts/samson/default.nix keeps."
 }
 
 variable "passive_ports" {
