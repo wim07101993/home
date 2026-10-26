@@ -50,6 +50,7 @@
     rsync
     tldr
     tmux
+    lazydocker
   ];
 
   boot.loader.grub.enable = true;
