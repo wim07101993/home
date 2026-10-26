@@ -85,6 +85,10 @@ resource "docker_container" "matter" {
   network_mode = "host"
   userns_mode  = "host"
 
+  # 950 is the matter account in nix/hosts/plop/default.nix; the image's 1000
+  # is wim on plop.
+  user = "950:950"
+
   read_only     = true
   security_opts = ["no-new-privileges:true"]
 

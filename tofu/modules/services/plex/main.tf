@@ -43,9 +43,9 @@ resource "docker_container" "this" {
     container_path = "/config"
   }
 
-  # PMS reads the media as "other": files need a+r.
   volumes {
     host_path      = "/srv/dev-disk-by-uuid-25d0f3ec-68a9-4ce0-891e-0966088e5300/media"
     container_path = "/media"
+    read_only      = true
   }
 }
