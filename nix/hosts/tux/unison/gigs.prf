@@ -1,7 +1,0 @@
-include common
-
-# audio-archive lives on samson. mindy only serves it through an NFS mount, so
-# this goes to samson directly.
-root = /home/wim/drive/audio-archive
-root = ssh://wim@100.71.248.106//nfs-volumes/audio-archive
-path = gigs
