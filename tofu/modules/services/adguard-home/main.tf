@@ -10,6 +10,11 @@ resource "docker_network" "this" {
   ipv6       = false
 }
 
+resource "random_password" "admin" {
+  length  = 32
+  special = false
+}
+
 resource "docker_image" "this" {
   name         = "adguard/adguardhome:v0.107.79"
   keep_locally = true
@@ -30,9 +35,6 @@ resource "docker_container" "this" {
   }
   security_opts = ["no-new-privileges:true"]
 
-  # DNS for the whole LAN, on every address: the router hands out plop as the
-  # resolver. Docker DNATs published ports, so AdGuard Home sees each client's
-  # own address, which is what its per-client settings key on.
   ports {
     internal = 53
     external = var.dns_port
@@ -45,17 +47,21 @@ resource "docker_container" "this" {
     protocol = "tcp"
   }
 
-  # The UI on the tailnet only. Published ports bypass the host firewall, so on
-  # any other address the kids could reach it from the LAN.
   ports {
     internal = 3000
     external = var.host_port
-    ip       = var.tailscale_ip
   }
 
   volumes {
     host_path      = "${local.data_path}/conf"
     container_path = "/opt/adguardhome/conf"
+  }
+
+  upload {
+    file = "/opt/adguardhome/conf/AdGuardHome.yaml"
+    content = templatefile("${path.module}/AdGuardHome.yaml.tftpl", {
+      password_hash = random_password.admin.bcrypt_hash
+    })
   }
 
   # Blocklists, query log and statistics.
@@ -66,5 +72,17 @@ resource "docker_container" "this" {
 
   networks_advanced {
     name = docker_network.this.name
+  }
+
+  # So config.tf, which runs right after a create, finds the API up.
+  wait = true
+
+  healthcheck {
+    test = ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/"]
+
+    interval     = "1m0s"
+    timeout      = "10s"
+    retries      = 3
+    start_period = "30s"
   }
 }

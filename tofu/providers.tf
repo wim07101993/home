@@ -34,6 +34,10 @@ terraform {
       source  = "hashicorp/http"
       version = "~> 3.6"
     }
+    adguard = {
+      source  = "gmichels/adguard"
+      version = "~> 1.7"
+    }
   }
 
   # State holds the Storage Box password in cleartext, plus every database
@@ -147,6 +151,13 @@ provider "zitadel" {
 
 provider "mailgun" {
   api_key = var.mailgun_api_key
+}
+
+provider "adguard" {
+  host     = "${var.plop_addr}:${local.plop_ports.adguard_home}"
+  scheme   = "http"
+  username = "wim"
+  password = module.adguard_home.admin_password
 }
 
 # --- inputs ---------------------------------------------------------------

@@ -28,16 +28,20 @@ module "home_assistant" {
   host_port = local.plop_ports.home_assistant
 }
 
-# The house's DNS resolver, handed out by the router. If this container is
-# down, nothing on the LAN resolves.
 module "adguard_home" {
   source = "./modules/services/adguard-home"
 
   providers = {
-    docker = docker.plop
+    docker  = docker.plop
+    adguard = adguard
   }
 
-  tailscale_ip = var.plop_addr
+  router_addr = "10.0.0.1"
+
+  dns_records = {
+    "mindy.home" = var.mindy_addr
+    "bumba.home" = var.bumba_addr
+  }
 
   host_port = local.plop_ports.adguard_home
   dns_port  = local.plop_ports.adguard_home_dns
@@ -47,5 +51,12 @@ module "adguard_home" {
 
 variable "plop_addr" {
   type        = string
-  description = "plop's TAILNET address. Home Assistant and the Matter server; reached as wim over SSH for the docker provider."
+  description = "plop's TAILNET address. Home Assistant, the Matter server and AdGuard Home's API; reached as wim over SSH for the docker provider."
+}
+
+# --- outputs --------------------------------------------------------------
+
+output "adguard_home_password" {
+  value     = module.adguard_home.admin_password
+  sensitive = true
 }
