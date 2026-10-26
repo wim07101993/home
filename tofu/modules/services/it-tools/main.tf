@@ -8,9 +8,14 @@ resource "docker_container" "this" {
   image   = docker_image.this.image_id
   restart = "unless-stopped"
 
+  user = "101:101"
+  tmpfs = {
+    "/var/cache/nginx" = "uid=101,gid=101"
+    "/run"             = "uid=101,gid=101"
+  }
+
   capabilities {
     drop = ["ALL"]
-    add  = ["CAP_CHOWN", "CAP_SETGID", "CAP_SETUID"]
   }
   security_opts = ["no-new-privileges:true"]
 

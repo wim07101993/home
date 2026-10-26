@@ -25,9 +25,10 @@ resource "docker_container" "this" {
     ])
   }
 
+  user = "10001:10001"
+
   capabilities {
     drop = ["ALL"]
-    add  = ["CAP_SETGID", "CAP_SETUID"]
   }
   security_opts = ["no-new-privileges:true"]
 

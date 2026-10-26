@@ -132,10 +132,10 @@ resource "docker_container" "postgres" {
   wait         = true
   wait_timeout = 180
 
-  # As in ../postgres/main.tf.
+  user = "999:999"
+
   capabilities {
     drop = ["ALL"]
-    add  = ["CAP_DAC_READ_SEARCH", "CAP_SETGID", "CAP_SETUID"]
   }
   security_opts = ["no-new-privileges:true"]
 
@@ -175,9 +175,11 @@ resource "docker_container" "redis" {
   image   = docker_image.redis.image_id
   restart = "always"
 
+  # valkey from the start, instead of setpriv.
+  user = "999:999"
+
   capabilities {
     drop = ["ALL"]
-    add  = ["CAP_SETGID", "CAP_SETUID"]
   }
   security_opts = ["no-new-privileges:true"]
   memory        = 2048

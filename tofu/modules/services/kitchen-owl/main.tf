@@ -36,7 +36,6 @@ resource "docker_container" "this" {
 
   capabilities {
     drop = ["ALL"]
-    add  = ["CAP_SETGID", "CAP_SETUID"]
   }
   security_opts = ["no-new-privileges:true"]
 
