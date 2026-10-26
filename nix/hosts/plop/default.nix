@@ -24,6 +24,10 @@
   # Home Assistant talks to devices on the LAN. See docker.nix.
   homelab.containers.mayReachLan = true;
 
+  # AdGuard Home, OpenTofu's adguard-home module, is the resolver the router
+  # hands out, plop included. See docker.nix.
+  homelab.containers.mayReachPublishedDns = true;
+
   # The Zigbee/Thread radio: a Nabu Casa SkyConnect on the CP210x UART bridge.
   # OpenTofu's home-assistant module passes /dev/ttyUSB0 into the container by
   # that literal path, so the symlink below is a safety net rather than the thing
@@ -39,7 +43,8 @@
     SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", SYMLINK+="zigbee", RUN+="${pkgs.coreutils}/bin/chown 165536 $devnode"
   '';
 
-  # Ownership of the volumes OpenTofu's home-assistant module mounts. `Z` re-owns
+  # Ownership of the volumes OpenTofu's home-assistant and adguard-home modules
+  # mount. `Z` re-owns
   # everything below the path on every boot and rebuild, so a restore from a
   # backup taken anywhere comes out right.
   #
@@ -51,6 +56,14 @@
     "Z /docker-volumes/homeassistant/config - 165536 165536 -"
     "d /docker-volumes/homeassistant/matterjs-server 0755 1000 1000 -"
     "Z /docker-volumes/homeassistant/matterjs-server - 1000 1000 -"
+
+    # adguard-home runs remapped too, without CAP_DAC_OVERRIDE, so its root
+    # must own what it writes.
+    "d /docker-volumes/adguard-home 0755 root root -"
+    "d /docker-volumes/adguard-home/conf 0700 165536 165536 -"
+    "Z /docker-volumes/adguard-home/conf - 165536 165536 -"
+    "d /docker-volumes/adguard-home/work 0700 165536 165536 -"
+    "Z /docker-volumes/adguard-home/work - 165536 165536 -"
   ];
 
   system.stateVersion = "26.05";
