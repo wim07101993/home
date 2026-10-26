@@ -115,8 +115,8 @@
     audacity
     musescore
     qlcplus
-    spotify
     spotdl
+    spotify
     yt-dlp
     (callPackage ./wing-edit/package.nix { })
     # internet
