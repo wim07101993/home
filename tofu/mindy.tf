@@ -3,6 +3,7 @@ locals {
     traefik_http    = 80
     traefik_https   = 443
     immich          = 2283
+    smtp_relay      = 2525
     homepage        = 3001
     score_web       = 3006
     memos           = 5230
@@ -19,6 +20,17 @@ check "mindy_unique_ports" {
     condition     = length(values(local.mindy_ports)) == length(distinct(values(local.mindy_ports)))
     error_message = "two services in mindy.tf are published on the same host port"
   }
+}
+
+module "smtp_relay_mindy" {
+  source = "./modules/services/smtp-relay"
+
+  providers = {
+    docker = docker.mindy
+  }
+
+  login     = "mindy"
+  host_port = local.mindy_ports.smtp_relay
 }
 
 module "mindy_traefik" {
