@@ -4,7 +4,7 @@ on:
   schedule:
     # Monday 06:00 UTC. This decides when Renovate RUNS; the `schedule` in
     # renovate.json decides when it is allowed to open PRs.
-    - cron: "0 6 * * 1"
+    - cron: "0 6 * * *"
   workflow_dispatch:
     inputs:
       dryRun:
