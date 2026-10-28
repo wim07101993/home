@@ -70,7 +70,7 @@
 
   systemd.tmpfiles.rules = [
     "d /docker-volumes/filebrowser 0755 root root -"
-    "d /docker-volumes/filebrowser/config 0755 filebrowser filebrowser -"
+    "d /docker-volumes/filebrowser/config 0750 filebrowser filebrowser -"
     "Z /docker-volumes/filebrowser/config - filebrowser filebrowser -"
 
     # tofu's traefik runs as 65532 in the remapped namespace: 231068 here.
