@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.8.0"
+  required_version = ">= 1.11.0"
 
   required_providers {
     hcloud = {
@@ -16,7 +16,7 @@ terraform {
     }
     zitadel = {
       source  = "zitadel/zitadel"
-      version = "~> 2.12"
+      version = "~> 3.0"
     }
     random = {
       source  = "hashicorp/random"
