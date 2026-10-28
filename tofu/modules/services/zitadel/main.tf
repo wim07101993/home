@@ -1,10 +1,10 @@
 resource "docker_image" "zitadel" {
-  name         = "ghcr.io/zitadel/zitadel:v4.17.3"
+  name         = "ghcr.io/zitadel/zitadel:v4.20.0"
   keep_locally = true
 }
 
 resource "docker_image" "login" {
-  name         = "ghcr.io/zitadel/zitadel-login:v4.17.3"
+  name         = "ghcr.io/zitadel/zitadel-login:v4.20.0"
   keep_locally = true
 }
 
@@ -128,6 +128,7 @@ resource "docker_container" "login" {
     "NEXT_PUBLIC_BASE_PATH=/ui/v2/login",
     "ZITADEL_SERVICE_USER_TOKEN_FILE=/login-client/login-client.pat",
     "CUSTOM_REQUEST_HEADERS=Host:auth.wvl.app",
+    "ZITADEL_SESSION_COOKIE_SECRET=${random_password.session_cookie.result}",
   ]
 
   capabilities {
@@ -162,6 +163,12 @@ resource "docker_container" "login" {
 resource "tls_private_key" "system_api" {
   algorithm = "RSA"
   rsa_bits  = 2048
+}
+
+# Signs the login's session cookie. Changing it signs everyone out of the login.
+resource "random_password" "session_cookie" {
+  length  = 48
+  special = false
 }
 
 resource "random_password" "masterkey" {
