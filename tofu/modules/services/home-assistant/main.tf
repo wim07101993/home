@@ -9,7 +9,7 @@ resource "docker_network" "this" {
 # --- home assistant ------------------------------------------------------
 
 resource "docker_image" "this" {
-  name         = "homeassistant/home-assistant:2026.6.4"
+  name         = "homeassistant/home-assistant:2026.10.4"
   keep_locally = true
 }
 
