@@ -12,6 +12,8 @@ let
   '';
 in
 {
+  imports = [ ./mail.nix ];
+
   services.clamav.updater.enable = true;
 
   systemd.services.clamav-scan = {
@@ -19,6 +21,7 @@ in
     wants = [ "clamav-freshclam.service" ];
     after = [ "clamav-freshclam.service" ];
     startAt = "05:00";
+    onFailure = [ "clamav-scan-report.service" ];
 
     serviceConfig = {
       Type = "oneshot";
@@ -34,10 +37,6 @@ in
         # are in the layers under /var/lib/docker already), samson's rpc_pipefs,
         # mindy's NFS automount of samson's audio archive.
         "--cross-fs=no"
-        # The layers sit five directories below /var/lib
-        # (docker/165536.165536/overlay2/<id>/diff), which leaves the default of
-        # 15 only ten inside an image. node_modules goes deeper, and clamscan
-        # skips whatever is past the limit without saying so.
         "--max-dir-recursion=40"
         # The signatures themselves, which freshclam may be replacing mid-scan.
         "--exclude-dir=^/var/lib/clamav/"
@@ -53,15 +52,6 @@ in
       Nice = 19;
       IOSchedulingClass = "idle";
 
-      # The parsers run over whatever a compromised container left behind, so
-      # not as root: read access to everything, write access only to the temp
-      # directory, no network. The module's scanner gets the same separation by
-      # having a root clamdscan pass open files to an unprivileged clamd.
-      #
-      # clamscan checks every file with access(), and access() ignores a
-      # non-root process's capabilities unless no-setuid-fixup is set. Without
-      # it, every file clamav could not read on its own is "Access denied" and
-      # the scan exits 2.
       User = "clamav";
       AmbientCapabilities = "CAP_DAC_READ_SEARCH";
       CapabilityBoundingSet = "CAP_DAC_READ_SEARCH";
@@ -70,6 +60,41 @@ in
       ProtectSystem = "strict";
       CacheDirectory = "clamav-scan";
       PrivateNetwork = true;
+    };
+  };
+
+  # clamscan exits 1 when it found something and 2 when it could not finish.
+  systemd.services.clamav-scan-report = {
+    description = "Mail the ClamAV scan's findings";
+    path = [ config.systemd.package "/run/wrappers" ];
+    script = ''
+      host=${config.networking.hostName}
+      status=$(systemctl show clamav-scan.service --property=ExecMainStatus --value)
+      if [ "$status" = 1 ]; then
+        subject="ClamAV found something on $host"
+        body=$(journalctl --unit=clamav-scan.service --invocation=0 --output=cat --grep='FOUND$')
+      else
+        subject="ClamAV could not finish scanning $host"
+        body=$(journalctl --unit=clamav-scan.service --invocation=0 --output=cat --lines=50)
+      fi
+
+      sendmail -t <<EOF
+      To: status@wvl.app
+      Subject: $subject
+
+      $body
+
+      journalctl -u clamav-scan on $host has the whole run.
+      EOF
+    '';
+
+    serviceConfig = {
+      Type = "oneshot";
+      DynamicUser = true;
+      # To read the scan's findings from the journal.
+      SupplementaryGroups = [ "systemd-journal" ];
+      NoNewPrivileges = true;
+      ProtectSystem = "strict";
     };
   };
 }

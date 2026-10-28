@@ -10,6 +10,7 @@
     ../../modules/docker.nix
     ../../modules/tailscale.nix
     ../../modules/clamav.nix
+    ../../modules/mail.nix
   ];
 
   networking.hostName = "samson";
@@ -44,18 +45,6 @@
     { address = "100.104.241.49"; port = 2223; }
     { address = "100.127.106.121"; port = 9898; }
   ];
-
-  programs.msmtp = {
-    enable = true;
-    setSendmail = true;
-    accounts.default = {
-      host = "127.0.0.1";
-      port = 2525;
-      from = "samson@mail.wvl.app";
-      auth = false;
-      tls = false;
-    };
-  };
 
   # navidrome runs remapped as 1000:1000: 166536 on this host. `Z` re-owns its
   # volumes on every boot and rebuild, so a restore comes out right.

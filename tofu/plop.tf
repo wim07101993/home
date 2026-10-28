@@ -4,6 +4,7 @@ locals {
     home_assistant   = 8123
     adguard_home     = 3000
     adguard_home_dns = 53
+    smtp_relay       = 2525
   }
 }
 
@@ -12,6 +13,17 @@ check "plop_unique_ports" {
     condition     = length(values(local.plop_ports)) == length(distinct(values(local.plop_ports)))
     error_message = "two services in plop.tf are published on the same host port"
   }
+}
+
+module "smtp_relay_plop" {
+  source = "./modules/services/smtp-relay"
+
+  providers = {
+    docker = docker.plop
+  }
+
+  login     = "plop"
+  host_port = local.plop_ports.smtp_relay
 }
 
 module "home_assistant" {

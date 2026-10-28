@@ -3,6 +3,7 @@ locals {
     traefik_http      = 80
     traefik_https     = 443
     storage_box_proxy = 2223
+    smtp_relay        = 2525
     zitadel           = 3001
     zitadel_login     = 3002
     gatus             = 3009
@@ -15,6 +16,17 @@ check "bumba_unique_ports" {
     condition     = length(values(local.bumba_ports)) == length(distinct(values(local.bumba_ports)))
     error_message = "two services in bumba.tf are published on the same host port"
   }
+}
+
+module "smtp_relay_bumba" {
+  source = "./modules/services/smtp-relay"
+
+  providers = {
+    docker = docker.bumba
+  }
+
+  login     = "bumba"
+  host_port = local.bumba_ports.smtp_relay
 }
 
 module "reverse_proxy_bumba" {
