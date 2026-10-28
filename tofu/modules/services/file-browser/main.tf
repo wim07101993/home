@@ -10,14 +10,20 @@ locals {
 
   configPath = "/home/filebrowser/config.yaml"
   config = {
-    server = {
+    http = {
       port = 80
 
-      # EXPLICIT because the config file moved. The database path defaults
-      # relative to the config, so leaving it out risks filebrowser creating a
-      # fresh, empty database next to the new config location and silently
-      # abandoning the real one -- users, shares and all.
-      database = "/home/filebrowser/data/database.db"
+      # Traefik terminates TLS. Without this the OIDC redirect_uri is built as
+      # http://, which zitadel rejects.
+      trustProxyHeaders = true
+    }
+
+    server = {
+      # EXPLICIT so filebrowser never creates a fresh, empty database somewhere
+      # else and silently abandons the real one -- users, shares and all.
+      database = {
+        path = "/home/filebrowser/data/database.sqlite"
+      }
 
       # The default, tmp under the image's home directory, cannot be created:
       # on the remapping daemon the image's files belong to 165536+, which
@@ -36,8 +42,9 @@ locals {
         path = "/files/${s.dir}"
         name = s.name
         config = {
-          defaultEnabled   = s.default_enabled
-          defaultUserScope = "/"
+          defaultEnabled     = s.default_enabled
+          defaultUserScope   = "/"
+          defaultPermissions = var.file_permissions
         }
       }]
     }
@@ -80,7 +87,7 @@ resource "random_password" "admin" {
 }
 
 resource "docker_image" "this" {
-  name         = "gtstef/filebrowser:1.5.8-stable-slim"
+  name         = "gtstef/filebrowser:2.0.2-stable-slim"
   keep_locally = true
 }
 

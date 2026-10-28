@@ -22,22 +22,34 @@ variable "user_permissions" {
   type = object({
     api      = bool
     admin    = bool
-    modify   = bool
     share    = bool
     realtime = bool
-    delete   = bool
-    create   = bool
-    download = bool
   })
   default = {
     api      = false
     admin    = false
-    modify   = true
     share    = false
     realtime = false
+  }
+}
+
+# What a user may do in a share, set on every source. Applied only to a user's
+# source that has no permissions yet: a new user, or a source newly enabled for
+# an existing one. Existing accounts keep theirs -- change those in the admin UI.
+variable "file_permissions" {
+  type = object({
+    view     = bool
+    download = bool
+    modify   = bool
+    delete   = bool
+    create   = bool
+  })
+  default = {
+    view     = true
+    download = true
+    modify   = true
     delete   = true
     create   = true
-    download = true
   }
 }
 
