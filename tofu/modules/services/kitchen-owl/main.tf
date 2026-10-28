@@ -22,8 +22,6 @@ resource "docker_container" "this" {
     "OIDC_CLIENT_ID=${zitadel_application_oidc.this.client_id}",
     "OIDC_CLIENT_SECRET=${zitadel_application_oidc.this.client_secret}",
 
-    "OIDC_RFC_COMPLIANT_REDIRECT=false",
-
     "JWT_SECRET_KEY=${random_password.jwt.result}",
 
     "DB_DRIVER=postgresql",

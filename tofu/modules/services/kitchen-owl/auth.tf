@@ -20,9 +20,12 @@ resource "zitadel_application_oidc" "this" {
   project_id = zitadel_project.this.id
   name       = "kitchen owl web-app"
 
-  redirect_uris    = ["https://keuken.wvl.app/signin/redirect"]
+  redirect_uris = [
+    "https://keuken.wvl.app/signin/redirect",
+    "kitchenowl:/signin/redirect",
+  ]
   response_types   = ["OIDC_RESPONSE_TYPE_CODE"]
   grant_types      = ["OIDC_GRANT_TYPE_AUTHORIZATION_CODE", "OIDC_GRANT_TYPE_REFRESH_TOKEN"]
-  app_type         = "OIDC_APP_TYPE_WEB"
+  app_type         = "OIDC_APP_TYPE_NATIVE"
   auth_method_type = "OIDC_AUTH_METHOD_TYPE_BASIC"
 }
