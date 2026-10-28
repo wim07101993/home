@@ -10,6 +10,7 @@ resource "docker_container" "this" {
 
   env = [
     "HOMEPAGE_ALLOWED_HOSTS=wvl.app,homepage.wvl.app,100.127.106.121:3001",
+    "LOG_TARGETS=stdout",
   ]
 
   user = "1000:1000"
