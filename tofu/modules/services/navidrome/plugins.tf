@@ -4,8 +4,10 @@ locals {
   plugins = {
     "navibeat-mixes" = {
       repo    = "nenadjokic/navibeat-mixes"
-      version = "v0.9.19"
-      sha256  = "e5ebb285249166810688ecea73ec2343076c2ced33e5fd41e78739445e6be9cf"
+      version = "v0.9.25"
+      sha256  = "3549574e5b915e7321b1392c8153f9ce9b50b3005b8a32997bcf77d7b0f9c6e2"
+      # Since 0.9.20 there is a separate build for navidrome 0.64+.
+      asset = "navibeat-mixes-navidrome-0.64.ndp"
     }
   }
 }
@@ -13,7 +15,7 @@ locals {
 data "http" "plugin" {
   for_each = local.plugins
 
-  url = "https://github.com/${each.value.repo}/releases/download/${each.value.version}/${each.key}.ndp"
+  url = "https://github.com/${each.value.repo}/releases/download/${each.value.version}/${each.value.asset}"
 
   lifecycle {
     postcondition {
