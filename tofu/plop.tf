@@ -5,6 +5,7 @@ locals {
     adguard_home     = 3000
     adguard_home_dns = 53
     smtp_relay       = 2525
+    backrest         = 9898
   }
 }
 
@@ -59,6 +60,41 @@ module "adguard_home" {
   dns_port  = local.plop_ports.adguard_home_dns
 }
 
+module "backrest_plop" {
+  source = "./modules/services/backrest"
+
+  providers = {
+    docker = docker.plop
+  }
+
+  instance     = "plop"
+  tailscale_ip = var.plop_addr
+
+  # The matter server's folder belongs to the host's matter account, and
+  # AdGuard Home's to its remapped uid, mode 0700: remapped root reads neither.
+  userns_mode = "host"
+
+  backup = [
+    module.home_assistant.backup,
+    module.adguard_home.backup,
+  ]
+
+  repository_password = random_password.backrest_repository.result
+  repo_path           = "restic"
+  storage_box_id      = module.hetzner.storage_box_id
+  sftp_host           = module.hetzner.storage_box_host
+
+  # Through bumba, like samson: from home the Storage Box offers no way in.
+  connect_host = var.bumba_addr
+  connect_port = module.storage_box_proxy.listen_port
+
+  gatus_token    = module.gatus.backrest_push_token
+  gatus_base_url = module.gatus.external_endpoint_base_url
+  gatus_endpoint = "backups_backrest-plop"
+
+  port = local.plop_ports.backrest
+}
+
 # --- inputs ---------------------------------------------------------------
 
 variable "plop_addr" {
@@ -70,5 +106,10 @@ variable "plop_addr" {
 
 output "adguard_home_password" {
   value     = module.adguard_home.admin_password
+  sensitive = true
+}
+
+output "backrest_plop_password" {
+  value     = module.backrest_plop.ui_password
   sensitive = true
 }

@@ -34,6 +34,12 @@
   # hands out, plop included. See docker.nix.
   homelab.containers.mayReachPublishedDns = true;
 
+  # What plop's containers may reach on the tailnet. See docker.nix.
+  homelab.containers.reachableOnTailnet = [
+    # backrest: the Storage Box through bumba's proxy.
+    { address = "100.104.241.49"; port = 2223; }
+  ];
+
   # The Zigbee/Thread radio: a Nabu Casa SkyConnect on the CP210x UART bridge.
   # OpenTofu's home-assistant module passes /dev/ttyUSB0 into the container by
   # that literal path, so the symlink below is a safety net rather than the thing
@@ -70,6 +76,12 @@
     "Z /docker-volumes/adguard-home/conf - 231068 231068 -"
     "d /docker-volumes/adguard-home/work 0700 231068 231068 -"
     "Z /docker-volumes/adguard-home/work - 231068 231068 -"
+
+    # backrest runs as the host's root (userns_mode = "host"). Docker refuses
+    # to start it while these are missing.
+    "d /docker-volumes/backrest 0755 root root -"
+    "d /docker-volumes/backrest/data 0700 root root -"
+    "d /docker-volumes/backrest/cache 0700 root root -"
   ];
 
   # tofu's matterjs-server runs as this account instead of the image's uid

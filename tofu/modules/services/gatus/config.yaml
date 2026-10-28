@@ -212,3 +212,11 @@ external-endpoints:
       interval: 26h
     alerts:
       - type: email
+
+  - name: backrest-plop
+    group: backups
+    token: "${GATUS_BACKREST_TOKEN}"
+    heartbeat:
+      interval: 26h
+    alerts:
+      - type: email
