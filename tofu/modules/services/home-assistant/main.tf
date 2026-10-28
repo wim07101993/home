@@ -4,6 +4,12 @@ resource "docker_network" "this" {
   attachable = false
   ingress    = false
   ipv6       = false
+
+  # A fixed bridge name, so plop's firewall can let this network, and only this
+  # one, reach the matter server. See nix/hosts/plop/default.nix.
+  options = {
+    "com.docker.network.bridge.name" = "br-homeassist"
+  }
 }
 
 # --- home assistant ------------------------------------------------------

@@ -21,6 +21,12 @@
   # address rather than as replies the firewall can match to a query.
   networking.firewall.interfaces.eno1.allowedUDPPorts = [ 5353 ];
 
+  # The same server's websocket, for Home Assistant. Host networking makes it a
+  # service on plop itself, so Home Assistant's container reaches it on INPUT.
+  # Only from its network: the bridge name is pinned in OpenTofu's
+  # home-assistant module. The websocket has no authentication.
+  networking.firewall.interfaces.br-homeassist.allowedTCPPorts = [ 5580 ];
+
   # Home Assistant talks to devices on the LAN. See docker.nix.
   homelab.containers.mayReachLan = true;
 
