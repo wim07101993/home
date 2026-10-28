@@ -1,5 +1,5 @@
 resource "docker_image" "this" {
-  name         = "ghcr.io/gethomepage/homepage:v2.6.0"
+  name         = "ghcr.io/gethomepage/homepage:v2.7.0"
   keep_locally = true
 }
 
