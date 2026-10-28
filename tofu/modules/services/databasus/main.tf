@@ -9,10 +9,12 @@ resource "docker_container" "this" {
   restart = "unless-stopped"
 
   # DAC_OVERRIDE is for the image's healthcheck, which runs as root and reads
-  # files the app (uid 999) keeps to itself.
+  # files the app (uid 999) keeps to itself. CHOWN lets start.sh hand
+  # root-owned files in the data dir back to 999; without it the chown fails
+  # silently and startup refuses to continue.
   capabilities {
     drop = ["ALL"]
-    add  = ["CAP_DAC_OVERRIDE", "CAP_SETGID", "CAP_SETUID"]
+    add  = ["CAP_CHOWN", "CAP_DAC_OVERRIDE", "CAP_SETGID", "CAP_SETUID"]
   }
   security_opts = ["no-new-privileges:true"]
 
