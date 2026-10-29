@@ -55,3 +55,12 @@ output "backup" {
 }
 ```
 
+### Auth
+
+Authorization is done by Zitadel where possible. It holds users and clients. Clients are
+defined in tofu in the service it represents in an `auth.tf`. E.g.: immich defines a
+project so that users can be authorised to use immich, and an OIDC client.
+
+If an authorisation cannot be defined in Zitadel (e.g. database roles, ftp-credentials),
+then these are likewise stored in tofu together with the consumer of those credentials. 
+E.g.: Zitadel defines an `database.tf` which contains db-users and passwords.
