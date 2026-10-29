@@ -207,6 +207,7 @@ module "backrest_mindy" {
   backup = [
     module.immich.backup,
     module.file_browser.backup,
+    module.kitchen_owl.backup,
   ]
 
   # `paths` unset: nothing to exclude, so every mount is backed up.
