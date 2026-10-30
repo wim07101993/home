@@ -34,6 +34,7 @@
         plop = host "plop";
 
         tux = host "tux";
+        soundbox = host "soundbox";
       };
     };
 }
