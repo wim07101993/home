@@ -1,12 +1,3 @@
-# A restic REST server: where the other hosts' backrest instances keep their
-# second copy, next to the one on the Storage Box.
-resource "random_password" "client" {
-  for_each = toset(var.clients)
-
-  length  = 32
-  special = false
-}
-
 resource "docker_image" "this" {
   name         = "restic/rest-server:0.14.0"
   keep_locally = true
@@ -43,7 +34,7 @@ resource "docker_container" "this" {
 
   upload {
     file    = "/etc/rest-server/htpasswd"
-    content = join("", [for name, p in random_password.client : "${name}:${p.bcrypt_hash}\n"])
+    content = join("", [for client in var.clients : "${client.username}:${client.bcrypt_hash}\n"])
   }
 
   mounts {

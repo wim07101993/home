@@ -36,8 +36,10 @@
 
   # What plop's containers may reach on the tailnet. See docker.nix.
   homelab.containers.reachableOnTailnet = [
-    # backrest: the Storage Box through bumba's proxy.
+    # backrest: the Storage Box through bumba's proxy
     { address = "100.104.241.49"; port = 2223; }
+    # backrest: samson's rest-server
+    { address = "100.71.248.106"; port = 8000; }
   ];
 
   # The Zigbee/Thread radio: a Nabu Casa SkyConnect on the CP210x UART bridge.

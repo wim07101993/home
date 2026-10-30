@@ -70,27 +70,25 @@ module "backrest_plop" {
   instance     = "plop"
   tailscale_ip = var.plop_addr
 
-  # The matter server's folder belongs to the host's matter account, and
-  # AdGuard Home's to its remapped uid, mode 0700: remapped root reads neither.
-  userns_mode = "host"
-
   backup = [
     module.home_assistant.backup,
     module.adguard_home.backup,
   ]
 
   repository_password = random_password.backrest_repository.result
-  repo_path           = "restic"
-  storage_box_id      = module.hetzner.storage_box_id
-  sftp_host           = module.hetzner.storage_box_host
 
-  # Through bumba, like samson: from home the Storage Box offers no way in.
-  connect_host = var.bumba_addr
-  connect_port = module.storage_box_proxy.listen_port
+  storage_box = {
+    id   = module.hetzner.storage_box_id
+    host = module.hetzner.storage_box_host
 
-  gatus_token    = module.gatus.backrest_push_token
-  gatus_base_url = module.gatus.external_endpoint_base_url
-  gatus_endpoint = "backups_backrest-plop"
+    # Through bumba, like samson: from home the Storage Box offers no way in.
+    via = { host = var.bumba_addr, port = module.storage_box_proxy.listen_port }
+  }
+
+  rest_server = {
+    name = "samson"
+    url  = "http://${var.samson_addr}:${local.samson_ports.rest_server}"
+  }
 
   port = local.plop_ports.backrest
 }

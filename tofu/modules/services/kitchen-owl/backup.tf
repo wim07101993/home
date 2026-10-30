@@ -1,8 +1,8 @@
 output "backup" {
   value = {
-    mounts = {
+    paths = [
       # uploaded photos of recipes and households.
-      kitchen-owl = "/docker-volumes/kitchen-owl/data"
-    }
+      "/docker-volumes/kitchen-owl/data",
+    ]
   }
 }

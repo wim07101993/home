@@ -1,10 +1,10 @@
 output "backup" {
   value = {
-    mounts = merge(
+    paths = concat(
       # data directories, but only thw ones on rafiki, not the ones on samson
-      { for s in local.shares : s.dir => s.source if startswith(s.source, "/mnt/rafiki/") },
+      [for s in local.shares : s.source if startswith(s.source, "/mnt/rafiki/")],
       # config directory
-      { filebrowser = "/docker-volumes/filebrowser/config" },
+      ["/docker-volumes/filebrowser/config"],
     )
   }
 }

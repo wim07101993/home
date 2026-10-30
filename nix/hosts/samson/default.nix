@@ -41,19 +41,22 @@
     { address = "100.127.106.121"; port = 5434; } # mindy, immich's
     { address = "100.104.241.49"; port = 5432; } # bumba
 
-    # backrest: the Storage Box through bumba's proxy, and sync to mindy's.
+    # backrest: the Storage Box through bumba's proxy.
     { address = "100.104.241.49"; port = 2223; }
-    { address = "100.127.106.121"; port = 9898; }
   ];
 
-  # navidrome runs remapped as 1000:1000: 166536 on this host. `Z` re-owns its
-  # volumes on every boot and rebuild, so a restore comes out right.
   systemd.tmpfiles.rules = [
+    # navidrome runs remapped as 1000:1000: 166536 on this host. `Z` re-owns its
+    # volumes on every boot and rebuild, so a restore comes out right.
     "d /docker-volumes/navidrome 0755 root root -"
     "d /docker-volumes/navidrome/data 0755 166536 166536 -"
     "Z /docker-volumes/navidrome/data - 166536 166536 -"
     "d /docker-volumes/navidrome/cache 0755 166536 166536 -"
     "Z /docker-volumes/navidrome/cache - 166536 166536 -"
+
+    # tofu's rest-server: the other hosts' second backup copy. It runs as the
+    # remapped root, 165536 here.
+    "d /srv/dev-disk-by-uuid-25d0f3ec-68a9-4ce0-891e-0966088e5300/backups/rest-server 0700 165536 165536 -"
   ];
 
   # Who may write the media library: tofu's ftp logs its users in as 951, and
