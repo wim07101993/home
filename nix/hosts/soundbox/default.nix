@@ -6,6 +6,7 @@
     ../../modules/laptop.nix
     ../../modules/hyprland
     ../../modules/live-shows
+    ./technician.nix
   ];
 
   networking.hostName = "soundbox";
