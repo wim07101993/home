@@ -81,6 +81,7 @@
     btop
     tldr
     git
+    neovim
   ];
 
   services.flatpak.enable = true;
