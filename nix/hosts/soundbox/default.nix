@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ lib, pkgs, ... }:
 
 {
   imports = [
@@ -10,6 +10,20 @@
   ];
 
   networking.hostName = "soundbox";
+
+  services.fprintd.enable = true;
+  security.pam.services.login.fprintAuth = false;
+  security.pam.services.hyprlock.fprintAuth = false;
+  environment.etc."xdg/hypr/hyprlock.conf".source = lib.mkForce (pkgs.writeText "hyprlock.conf" (
+    lib.replaceStrings [ "Password, or Enter for your face" ] [ "Password, or your finger" ]
+      (builtins.readFile ../../modules/hyprland/hyprlock.conf)
+    + ''
+
+      auth {
+          fingerprint:enabled = true
+      }
+    ''
+  ));
 
   systemd.sleep.settings.Sleep = {
     AllowSuspend = "no";
