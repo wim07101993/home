@@ -80,6 +80,7 @@
     # system
     btop
     tldr
+    git
   ];
 
   services.flatpak.enable = true;
