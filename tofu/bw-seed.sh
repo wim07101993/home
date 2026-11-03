@@ -222,6 +222,7 @@ LOGIN_ITEMS=(
   "navidrome|admin|https://music.wvl.app|module.navidrome|admin"
   "backrest (mindy)|wim|http://${MINDY_ADDR:-100.127.106.121}:9898|module.backrest_mindy|ui"
   "backrest (samson)|wim|http://${SAMSON_ADDR:-100.71.248.106}:9898|module.backrest_samson|ui"
+  "ftp (samson)|wim|ftp://${SAMSON_ADDR:-100.71.248.106}|module.ftp|this"
   "adguard home|wim|http://plop.home:3000|module.adguard_home|admin"
   "traefik (bumba)|admin|https://wvl.app/dashboard/|module.reverse_proxy_bumba|dashboard"
   "traefik (mindy)|admin|https://traefik.wvl.app/dashboard/|module.mindy_traefik|dashboard"
