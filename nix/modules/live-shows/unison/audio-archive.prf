@@ -1,0 +1,4 @@
+include common
+
+root = /home/wim/drive/audio-archive
+root = ssh://wim@100.71.248.106//nfs-volumes/audio-archive
