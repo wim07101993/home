@@ -4,7 +4,7 @@ resource "docker_image" "zitadel" {
 }
 
 resource "docker_image" "login" {
-  name         = "ghcr.io/zitadel/zitadel-login:v4.20.0"
+  name         = "ghcr.io/zitadel/zitadel-login:v4.20.1"
   keep_locally = true
 }
 
