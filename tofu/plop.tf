@@ -77,6 +77,7 @@ module "backrest_plop" {
 
   repository_password = random_password.backrest_repository.result
 
+  # backup everything to both snow-white and samson
   storage_box = {
     id   = module.hetzner.storage_box_id
     host = module.hetzner.storage_box_host
@@ -84,7 +85,6 @@ module "backrest_plop" {
     # Through bumba, like samson: from home the Storage Box offers no way in.
     via = { host = var.bumba_addr, port = module.storage_box_proxy.listen_port }
   }
-
   rest_server = {
     name = "samson"
     url  = "http://${var.samson_addr}:${local.samson_ports.rest_server}"

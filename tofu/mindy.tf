@@ -197,10 +197,7 @@ module "backrest_mindy" {
   instance     = "mindy"
   tailscale_ip = var.mindy_addr
 
-  # What kopia used to back up.
-  #
-  # audio-archive, backups and media are absent on purpose: they live on samson
-  # and are backed up there.
+  # audio-archive, backups and media live on samson and are backed up there
   backup = [
     module.immich.backup,
     module.file_browser.backup,
@@ -209,11 +206,11 @@ module "backrest_mindy" {
 
   repository_password = random_password.backrest_repository.result
 
+  # backup everything to both snow-white and samson
   storage_box = {
     id   = module.hetzner.storage_box_id
     host = module.hetzner.storage_box_host
   }
-
   rest_server = {
     name = "samson"
     url  = "http://${var.samson_addr}:${local.samson_ports.rest_server}"

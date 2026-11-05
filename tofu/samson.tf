@@ -111,6 +111,7 @@ module "backrest_samson" {
 
   repository_password = random_password.backrest_repository.result
 
+  # backup everything to snow-white
   storage_box = {
     id   = module.hetzner.storage_box_id
     host = module.hetzner.storage_box_host
