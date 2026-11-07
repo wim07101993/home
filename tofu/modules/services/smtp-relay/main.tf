@@ -1,5 +1,5 @@
 resource "docker_image" "this" {
-  name         = "boky/postfix:5.1.0-alpine"
+  name         = "boky/postfix:5.2.1-alpine"
   keep_locally = true
 }
 

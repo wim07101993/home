@@ -8,6 +8,9 @@ locals {
     backrest    = 9898
     smtp_relay  = 2525
     rest_server = 8000
+
+    adguard_home     = 3000
+    adguard_home_dns = 53
   }
 }
 
@@ -90,6 +93,22 @@ module "rest_server" {
   ]
 }
 
+# redundancy in dns. Otherwise when plop gows doen because of updates, everybody breaks
+module "adguard_home_samson" {
+  source = "./modules/services/adguard-home"
+
+  providers = {
+    docker  = docker.samson
+    adguard = adguard.samson
+  }
+
+  router_addr = local.adguard.router_addr
+  dns_records = local.adguard.dns_records
+
+  host_port = local.samson_ports.adguard_home
+  dns_port  = local.samson_ports.adguard_home_dns
+}
+
 module "backrest_samson" {
   source = "./modules/services/backrest"
 
@@ -137,6 +156,11 @@ variable "samson_addr" {
 
 # --- outputs --------------------------------------------------------------
 
+
+output "adguard_home_samson_password" {
+  value     = module.adguard_home_samson.admin_password
+  sensitive = true
+}
 
 output "navidrome_admin_password" {
   value     = module.navidrome.admin_password

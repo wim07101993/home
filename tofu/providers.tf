@@ -160,6 +160,14 @@ provider "adguard" {
   password = module.adguard_home.admin_password
 }
 
+provider "adguard" {
+  alias    = "samson"
+  host     = "${var.samson_addr}:${local.samson_ports.adguard_home}"
+  scheme   = "http"
+  username = "wim"
+  password = module.adguard_home_samson.admin_password
+}
+
 # --- inputs ---------------------------------------------------------------
 
 # Read by the `encryption` block, which OpenTofu evaluates before the resource

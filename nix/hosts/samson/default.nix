@@ -45,6 +45,10 @@
     { address = "100.104.241.49"; port = 2223; }
   ];
 
+  # tofu's adguard-home runs here too, as the second resolver the router hands
+  # out, samson included. See docker.nix.
+  homelab.containers.mayReachPublishedDns = true;
+
   systemd.tmpfiles.rules = [
     # navidrome runs remapped as 1000:1000: 166536 on this host. `Z` re-owns its
     # volumes on every boot and rebuild, so a restore comes out right.
@@ -53,6 +57,14 @@
     "Z /docker-volumes/navidrome/data - 166536 166536 -"
     "d /docker-volumes/navidrome/cache 0755 166536 166536 -"
     "Z /docker-volumes/navidrome/cache - 166536 166536 -"
+
+    # adguard-home runs remapped as 65532: 231068 on this host. Without
+    # CAP_DAC_OVERRIDE, so it must own what it writes.
+    "d /docker-volumes/adguard-home 0755 root root -"
+    "d /docker-volumes/adguard-home/conf 0700 231068 231068 -"
+    "Z /docker-volumes/adguard-home/conf - 231068 231068 -"
+    "d /docker-volumes/adguard-home/work 0700 231068 231068 -"
+    "Z /docker-volumes/adguard-home/work - 231068 231068 -"
 
     # tofu's rest-server: the other hosts' second backup copy. It runs as the
     # remapped root, 165536 here.

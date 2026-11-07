@@ -18,6 +18,12 @@ resource "random_password" "admin" {
 resource "docker_image" "this" {
   name         = "adguard/adguardhome:v0.107.80"
   keep_locally = true
+
+  # Pulled while the old container still runs. The other way round, the host
+  # loses its resolver before the pull, which then fails and leaves it down.
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "docker_container" "this" {

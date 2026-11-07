@@ -1,5 +1,5 @@
 resource "docker_image" "this" {
-  name         = "ghcr.io/twin/gatus:v5.37.0"
+  name         = "ghcr.io/twin/gatus:v5.38.0"
   keep_locally = true
 }
 

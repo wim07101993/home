@@ -41,6 +41,18 @@ module "home_assistant" {
   host_port = local.plop_ports.home_assistant
 }
 
+# Shared by both AdGuard Home instances, this one and samson's, which the
+# router hands out side by side. Clients use either, so they must answer alike.
+locals {
+  adguard = {
+    router_addr = "10.0.0.1"
+    dns_records = {
+      "mindy.home" = var.mindy_addr
+      "bumba.home" = var.bumba_addr
+    }
+  }
+}
+
 module "adguard_home" {
   source = "./modules/services/adguard-home"
 
@@ -49,12 +61,8 @@ module "adguard_home" {
     adguard = adguard
   }
 
-  router_addr = "10.0.0.1"
-
-  dns_records = {
-    "mindy.home" = var.mindy_addr
-    "bumba.home" = var.bumba_addr
-  }
+  router_addr = local.adguard.router_addr
+  dns_records = local.adguard.dns_records
 
   host_port = local.plop_ports.adguard_home
   dns_port  = local.plop_ports.adguard_home_dns
