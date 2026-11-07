@@ -45,6 +45,7 @@ module "mindy_traefik" {
   dashboard_host = "traefik.wvl.app"
 
   routing = [
+    module.feishin.traefik,
     module.file_browser.traefik,
     module.immich.traefik,
     module.homepage.traefik,
@@ -59,6 +60,14 @@ module "mindy_traefik" {
 
   http_port  = local.mindy_ports.traefik_http
   https_port = local.mindy_ports.traefik_https
+}
+
+module "feishin" {
+  source = "./modules/services/feishin"
+
+  providers = {
+    docker = docker.mindy
+  }
 }
 
 module "it_tools" {
