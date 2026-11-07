@@ -11,7 +11,7 @@ locals {
   repo_settings = {
     commandPrefix = {
       # CPU only after normal processes
-      ioNice  = "IO_IDLE"
+      ioNice = "IO_IDLE"
       # disk reads go in the "idle" class: served only when nobody else is using the disk
       cpuNice = "CPU_LOW"
     }

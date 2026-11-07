@@ -23,8 +23,8 @@ variable "config_path" {
 # --- where backups go -------------------------------------------------------
 
 variable "repository_password" {
-  type        = string
-  sensitive   = true
+  type      = string
+  sensitive = true
 }
 
 variable "storage_box" {
