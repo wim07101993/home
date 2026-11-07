@@ -47,11 +47,11 @@
     ];
   };
 
-  # traefik serves navidrome on samson as music.wvl.app. Nothing else on the
-  # tailnet is open to containers here -- not samson's NFS export, which trusts
-  # mindy's address. See docker.nix.
   homelab.containers.reachableOnTailnet = [
+    # navidrome, exposed as music.wvl.app
     { address = "100.71.248.106"; port = 4533; }
+    # backrest: samson's rest-server.
+    { address = "100.71.248.106"; port = 8000; }
   ];
 
   # The server end of the laptops' Unison profiles (modules/live-shows/unison).
@@ -70,7 +70,7 @@
 
   systemd.tmpfiles.rules = [
     "d /docker-volumes/filebrowser 0755 root root -"
-    "d /docker-volumes/filebrowser/config 0755 filebrowser filebrowser -"
+    "d /docker-volumes/filebrowser/config 0750 filebrowser filebrowser -"
     "Z /docker-volumes/filebrowser/config - filebrowser filebrowser -"
 
     # tofu's traefik runs as 65532 in the remapped namespace: 231068 here.

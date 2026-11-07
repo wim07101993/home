@@ -5,6 +5,7 @@ locals {
     adguard_home     = 3000
     adguard_home_dns = 53
     smtp_relay       = 2525
+    backrest         = 9898
   }
 }
 
@@ -59,6 +60,39 @@ module "adguard_home" {
   dns_port  = local.plop_ports.adguard_home_dns
 }
 
+module "backrest_plop" {
+  source = "./modules/services/backrest"
+
+  providers = {
+    docker = docker.plop
+  }
+
+  instance     = "plop"
+  tailscale_ip = var.plop_addr
+
+  backup = [
+    module.home_assistant.backup,
+    module.adguard_home.backup,
+  ]
+
+  repository_password = random_password.backrest_repository.result
+
+  # backup everything to both snow-white and samson
+  storage_box = {
+    id   = module.hetzner.storage_box_id
+    host = module.hetzner.storage_box_host
+
+    # Through bumba, like samson: from home the Storage Box offers no way in.
+    via = { host = var.bumba_addr, port = module.storage_box_proxy.listen_port }
+  }
+  rest_server = {
+    name = "samson"
+    url  = "http://${var.samson_addr}:${local.samson_ports.rest_server}"
+  }
+
+  port = local.plop_ports.backrest
+}
+
 # --- inputs ---------------------------------------------------------------
 
 variable "plop_addr" {
@@ -70,5 +104,10 @@ variable "plop_addr" {
 
 output "adguard_home_password" {
   value     = module.adguard_home.admin_password
+  sensitive = true
+}
+
+output "backrest_plop_password" {
+  value     = module.backrest_plop.ui_password
   sensitive = true
 }

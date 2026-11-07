@@ -25,10 +25,9 @@ locals {
         path = "/home/filebrowser/data/database.sqlite"
       }
 
-      # The default, tmp under the image's home directory, cannot be created:
-      # on the remapping daemon the image's files belong to 165536+, which
-      # filebrowser's uid 950 under userns_mode = "host" does not own.
-      cacheDir = "/home/filebrowser/data/cache"
+      # The default, tmp under the image's home directory, cannot be created
+      # because uid remapping
+      cacheDir = "/tmp/filebrowser"
 
       # Group-writable and setgid, so what filebrowser creates stays users' and
       # wim's Unison can still write to it. Filebrowser chmods new folders to

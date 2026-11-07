@@ -47,6 +47,11 @@ in
       };
     };
 
+    # Ports published on the tailnet address need that address to bind. When
+    # Docker starts or restarts before tailscaled has put it on tailscale0, the
+    # container fails to start and stays down; this lets the bind go through.
+    boot.kernel.sysctl."net.ipv4.ip_nonlocal_bind" = 1;
+
     users.users.dockremap = {
       isSystemUser = true;
       group = "dockremap";
