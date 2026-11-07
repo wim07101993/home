@@ -1,5 +1,5 @@
 resource "docker_image" "zitadel" {
-  name         = "ghcr.io/zitadel/zitadel:v4.20.0"
+  name         = "ghcr.io/zitadel/zitadel:v4.20.1"
   keep_locally = true
 }
 
