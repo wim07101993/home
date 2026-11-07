@@ -13,6 +13,8 @@ resource "adguard_config" "this" {
     local_ptr_upstreams       = [var.router_addr]
   }
 
+  blocked_services = ["kik", "mail_ru", "ok", "tiktok", "zhihu"]
+
   lifecycle {
     replace_triggered_by = [docker_container.this]
   }
