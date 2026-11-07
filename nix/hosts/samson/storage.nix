@@ -23,6 +23,15 @@ in
     }
 
     {
+      "/nfs-volumes/media" = {
+        device = "${array}/media";
+        fsType = "none";
+        options = [ "bind" "ro" "nofail" ];
+        depends = [ array ];
+      };
+    }
+
+    {
       # Attached but not mounted at boot, as today.
       "/mnt/backup-14t" = {
         device = "/dev/disk/by-uuid/fbc74530-17f6-4f65-9e40-f4b2537086ca";
@@ -32,15 +41,15 @@ in
     }
   ];
 
-  # One export, one client: mindy (100.127.106.121), whose filebrowser serves
-  # audio-archive. Nothing on the LAN mounts anything, so there is no LAN export
-  # and no explicit NFSv4 root (fsid=0): nfsd builds one from the exports, so the
-  # path is /nfs-volumes/audio-archive under v4 too. mindy comes in over
+  # One client: mindy (100.127.106.121) for filebrowser. Nothing on the LAN mounts anything, so
+  # there is no LAN export and no explicit NFSv4 root (fsid=0): nfsd builds one
+  # from the exports, so the paths are /nfs-volumes/<name> under v4 too. mindy comes in over
   # tailscale0, which the firewall trusts, so no NFS port is opened.
   services.nfs.server = {
     enable = true;
     exports = ''
       /nfs-volumes/audio-archive 100.127.106.121(fsid=640d5507-9592-4dfe-8709-6d3d0c50ed33,rw,subtree_check)
+      /nfs-volumes/media 100.127.106.121(fsid=bace8aa7-5366-4578-aa5e-af1d2babd5de,ro,subtree_check)
     '';
   };
 

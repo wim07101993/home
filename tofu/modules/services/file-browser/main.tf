@@ -1,11 +1,12 @@
 locals {
   shares = [
-    { dir = "gezin-officieel", name = "Gezin officieel", default_enabled = true, source = "/mnt/rafiki/documents/gezin-officieel" },
-    { dir = "gezin-officieel-archive", name = "Gezin officieel archive", default_enabled = true, source = "/mnt/rafiki/documents/gezin-officieel-archive" },
-    { dir = "audio", name = "Audio", default_enabled = true, source = "/mnt/rafiki/audio" },
-    { dir = "audio-archive", name = "Audio archive", default_enabled = true, source = "/mnt/samson/audio-archive" },
-    { dir = "wim", name = "Wim privé", default_enabled = false, source = "/mnt/rafiki/documents/wim" },
-    { dir = "sara", name = "Sara prive", default_enabled = false, source = "/mnt/rafiki/documents/sara" },
+    { dir = "gezin-officieel", name = "Gezin officieel", default_enabled = true, read_only = false, source = "/mnt/rafiki/documents/gezin-officieel" },
+    { dir = "gezin-officieel-archive", name = "Gezin officieel archive", default_enabled = true, read_only = false, source = "/mnt/rafiki/documents/gezin-officieel-archive" },
+    { dir = "audio", name = "Audio", default_enabled = true, read_only = false, source = "/mnt/rafiki/audio" },
+    { dir = "audio-archive", name = "Audio archive", default_enabled = true, read_only = false, source = "/mnt/samson/audio-archive" },
+    { dir = "wim", name = "Wim privé", default_enabled = false, read_only = false, source = "/mnt/rafiki/documents/wim" },
+    { dir = "sara", name = "Sara prive", default_enabled = false, read_only = false, source = "/mnt/rafiki/documents/sara" },
+    { dir = "media", name = "Media", default_enabled = false, read_only = true, source = "/mnt/samson/media" },
   ]
 
   configPath = "/home/filebrowser/config.yaml"
@@ -42,6 +43,7 @@ locals {
         name = s.name
         config = {
           defaultEnabled     = s.default_enabled
+          readOnly           = s.read_only
           defaultUserScope   = "/"
           defaultPermissions = var.file_permissions
         }
@@ -137,9 +139,10 @@ resource "docker_container" "this" {
   dynamic "mounts" {
     for_each = { for s in local.shares : s.dir => s }
     content {
-      type   = "bind"
-      source = mounts.value.source
-      target = "/files/${mounts.key}"
+      type      = "bind"
+      source    = mounts.value.source
+      target    = "/files/${mounts.key}"
+      read_only = mounts.value.read_only
 
       bind_options {
         propagation = "rslave"
