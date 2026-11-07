@@ -47,6 +47,22 @@
     ];
   };
 
+  # samson's media library, for filebrowser's read-only Media share.
+  fileSystems."/mnt/samson/media" = {
+    device = "100.71.248.106:/nfs-volumes/media";
+    fsType = "nfs";
+    options = [
+      "ro"
+      "nfsvers=4.2"
+      "_netdev"
+      "x-systemd.automount"
+      "x-systemd.mount-timeout=15"
+      "hard"
+      "timeo=150"
+      "retrans=3"
+    ];
+  };
+
   homelab.containers.reachableOnTailnet = [
     # navidrome, exposed as music.wvl.app
     { address = "100.71.248.106"; port = 4533; }
