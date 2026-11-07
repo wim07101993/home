@@ -16,7 +16,7 @@ resource "random_password" "admin" {
 }
 
 resource "docker_image" "this" {
-  name         = "adguard/adguardhome:v0.107.79"
+  name         = "adguard/adguardhome:v0.107.80"
   keep_locally = true
 }
 
