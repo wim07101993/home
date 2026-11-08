@@ -1,5 +1,5 @@
 resource "docker_image" "this" {
-  name         = "databasus/databasus:v3.64.0"
+  name         = "databasus/databasus:v3.66.0"
   keep_locally = true
 }
 
