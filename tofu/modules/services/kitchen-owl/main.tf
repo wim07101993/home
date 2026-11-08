@@ -32,6 +32,10 @@ resource "docker_container" "this" {
     "DB_PASSWORD=${random_password.db.result}",
   ]
 
+  # kitchenowl from the start, instead of the entrypoint's chown + gosu, which
+  # needs CHOWN, SETUID and SETGID.
+  user = "1000:1000"
+
   capabilities {
     drop = ["ALL"]
   }

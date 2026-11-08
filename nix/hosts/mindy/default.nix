@@ -93,6 +93,11 @@
     "d /docker-volumes/traefik 0755 root root -"
     "d /docker-volumes/traefik/letsencrypt 0755 231068 231068 -"
     "Z /docker-volumes/traefik/letsencrypt - 231068 231068 -"
+
+    # tofu's kitchen-owl runs as 1000 in the remapped namespace: 166536 here.
+    "d /docker-volumes/kitchen-owl 0755 root root -"
+    "d /docker-volumes/kitchen-owl/data 0755 166536 166536 -"
+    "Z /docker-volumes/kitchen-owl/data - 166536 166536 -"
   ];
 
   system.stateVersion = "26.05";
