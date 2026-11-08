@@ -4,7 +4,7 @@ resource "random_password" "jwt" {
 }
 
 resource "docker_image" "this" {
-  name         = "tombursch/kitchenowl:v0.7.10"
+  name         = "tombursch/kitchenowl:v0.8.1"
   keep_locally = true
 }
 
