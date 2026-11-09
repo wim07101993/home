@@ -9,7 +9,9 @@ resource "docker_network" "client" {
 }
 
 resource "docker_image" "postgres" {
-  name         = "postgres:17.10-alpine3.23"
+  # When changing the postgres version check whether databasus is still able
+  # to make backups. It could be that the db-driver needs to be changed.
+  name         = "postgres:18.6-alpine3.23"
   keep_locally = true
 }
 

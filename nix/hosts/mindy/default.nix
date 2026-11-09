@@ -47,15 +47,31 @@
     ];
   };
 
-  # traefik serves navidrome on samson as music.wvl.app. Nothing else on the
-  # tailnet is open to containers here -- not samson's NFS export, which trusts
-  # mindy's address. See docker.nix.
+  # samson's media library, for filebrowser's read-only Media share.
+  fileSystems."/mnt/samson/media" = {
+    device = "100.71.248.106:/nfs-volumes/media";
+    fsType = "nfs";
+    options = [
+      "ro"
+      "nfsvers=4.2"
+      "_netdev"
+      "x-systemd.automount"
+      "x-systemd.mount-timeout=15"
+      "hard"
+      "timeo=150"
+      "retrans=3"
+    ];
+  };
+
   homelab.containers.reachableOnTailnet = [
+    # navidrome, exposed as music.wvl.app
     { address = "100.71.248.106"; port = 4533; }
+    # backrest: samson's rest-server.
+    { address = "100.71.248.106"; port = 8000; }
   ];
 
-  # The server end of tux's Unison profiles (hosts/tux/unison). Without the GUI,
-  # which would pull GTK onto a server.
+  # The server end of the laptops' Unison profiles (modules/live-shows/unison).
+  # Without the GUI, which would pull GTK onto a server.
   environment.systemPackages = [ (pkgs.unison.override { enableX11 = false; }) ];
 
   # tofu's filebrowser runs as this account instead of the image's uid 1000,
@@ -70,13 +86,18 @@
 
   systemd.tmpfiles.rules = [
     "d /docker-volumes/filebrowser 0755 root root -"
-    "d /docker-volumes/filebrowser/config 0755 filebrowser filebrowser -"
+    "d /docker-volumes/filebrowser/config 0750 filebrowser filebrowser -"
     "Z /docker-volumes/filebrowser/config - filebrowser filebrowser -"
 
     # tofu's traefik runs as 65532 in the remapped namespace: 231068 here.
     "d /docker-volumes/traefik 0755 root root -"
     "d /docker-volumes/traefik/letsencrypt 0755 231068 231068 -"
     "Z /docker-volumes/traefik/letsencrypt - 231068 231068 -"
+
+    # tofu's kitchen-owl runs as 1000 in the remapped namespace: 166536 here.
+    "d /docker-volumes/kitchen-owl 0755 root root -"
+    "d /docker-volumes/kitchen-owl/data 0755 166536 166536 -"
+    "Z /docker-volumes/kitchen-owl/data - 166536 166536 -"
   ];
 
   system.stateVersion = "26.05";

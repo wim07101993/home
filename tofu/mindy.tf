@@ -3,6 +3,7 @@ locals {
     traefik_http    = 80
     traefik_https   = 443
     immich          = 2283
+    smtp_relay      = 2525
     homepage        = 3001
     score_web       = 3006
     memos           = 5230
@@ -21,6 +22,17 @@ check "mindy_unique_ports" {
   }
 }
 
+module "smtp_relay_mindy" {
+  source = "./modules/services/smtp-relay"
+
+  providers = {
+    docker = docker.mindy
+  }
+
+  login     = "mindy"
+  host_port = local.mindy_ports.smtp_relay
+}
+
 module "mindy_traefik" {
   source = "./modules/services/reverse-proxy"
 
@@ -33,6 +45,7 @@ module "mindy_traefik" {
   dashboard_host = "traefik.wvl.app"
 
   routing = [
+    module.feishin.traefik,
     module.file_browser.traefik,
     module.immich.traefik,
     module.homepage.traefik,
@@ -47,6 +60,14 @@ module "mindy_traefik" {
 
   http_port  = local.mindy_ports.traefik_http
   https_port = local.mindy_ports.traefik_https
+}
+
+module "feishin" {
+  source = "./modules/services/feishin"
+
+  providers = {
+    docker = docker.mindy
+  }
 }
 
 module "it_tools" {
@@ -185,40 +206,24 @@ module "backrest_mindy" {
   instance     = "mindy"
   tailscale_ip = var.mindy_addr
 
-  userns_mode = "host"
-
-  # What kopia used to back up, at /backup instead of its old /data -- see the
-  # module's var.mounts for why that path moved.
-  #
-  # audio-archive, backups and media are absent on purpose: they live on samson
-  # and are backed up there.
+  # audio-archive, backups and media live on samson and are backed up there
   backup = [
     module.immich.backup,
     module.file_browser.backup,
+    module.kitchen_owl.backup,
   ]
 
-  # `paths` unset: nothing to exclude, so every mount is backed up.
-
   repository_password = random_password.backrest_repository.result
-  repo_path           = "restic"
-  storage_box_id      = module.hetzner.storage_box_id
-  sftp_host           = module.hetzner.storage_box_host
 
-  gatus_token    = module.gatus.backrest_push_token
-  gatus_base_url = module.gatus.external_endpoint_base_url
-  gatus_endpoint = "backups_backrest-mindy"
-
-  # THE HOST of the sync pair -- the dashboard you actually open. samson pushes
-  # its operations here, so this one shows both.
-  #
-  # No permissions on the client entry: the grant lives on samson's known-host
-  # entry, because that is the side doing the pushing. See the module's
-  # var.sync_authorized_clients.
-  sync_identity = var.backrest_identity_mindy
-  sync_authorized_clients = var.backrest_identity_samson == null ? [] : [{
-    instance_id = "samson"
-    keyid       = var.backrest_identity_samson.keyid
-  }]
+  # backup everything to both snow-white and samson
+  storage_box = {
+    id   = module.hetzner.storage_box_id
+    host = module.hetzner.storage_box_host
+  }
+  rest_server = {
+    name = "samson"
+    url  = "http://${var.samson_addr}:${local.samson_ports.rest_server}"
+  }
 
   port = local.mindy_ports.backrest
 }
@@ -238,16 +243,6 @@ variable "mindy_pg_superuser_password" {
 
 variable "immich_pg_superuser_password" {
   type      = string
-  sensitive = true
-}
-
-variable "backrest_identity_mindy" {
-  type = object({
-    keyid = string
-    priv  = string
-    pub   = string
-  })
-  default   = null
   sensitive = true
 }
 

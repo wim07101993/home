@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.8.0"
+  required_version = ">= 1.11.0"
 
   required_providers {
     hcloud = {
@@ -12,11 +12,11 @@ terraform {
     }
     docker = {
       source  = "kreuzwerker/docker"
-      version = "~> 3.0"
+      version = "~> 4.0"
     }
     zitadel = {
       source  = "zitadel/zitadel"
-      version = "~> 2.12"
+      version = "~> 3.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -158,6 +158,14 @@ provider "adguard" {
   scheme   = "http"
   username = "wim"
   password = module.adguard_home.admin_password
+}
+
+provider "adguard" {
+  alias    = "samson"
+  host     = "${var.samson_addr}:${local.samson_ports.adguard_home}"
+  scheme   = "http"
+  username = "wim"
+  password = module.adguard_home_samson.admin_password
 }
 
 # --- inputs ---------------------------------------------------------------

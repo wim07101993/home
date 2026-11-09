@@ -4,12 +4,18 @@ resource "docker_network" "this" {
   attachable = false
   ingress    = false
   ipv6       = false
+
+  # A fixed bridge name, so plop's firewall can let this network, and only this
+  # one, reach the matter server. See nix/hosts/plop/default.nix.
+  options = {
+    "com.docker.network.bridge.name" = "br-homeassist"
+  }
 }
 
 # --- home assistant ------------------------------------------------------
 
 resource "docker_image" "this" {
-  name         = "homeassistant/home-assistant:2026.6.4"
+  name         = "homeassistant/home-assistant:2026.11.0"
   keep_locally = true
 }
 
@@ -73,7 +79,7 @@ resource "docker_container" "this" {
 # --- matter server -------------------------------------------------------
 
 resource "docker_image" "matter" {
-  name         = "ghcr.io/matter-js/matterjs-server:1.5.2"
+  name         = "ghcr.io/matter-js/matterjs-server:1.5.5"
   keep_locally = true
 }
 

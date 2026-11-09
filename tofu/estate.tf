@@ -88,5 +88,6 @@ output "backrest_urls" {
   value = {
     mindy  = module.backrest_mindy.url
     samson = module.backrest_samson.url
+    plop   = module.backrest_plop.url
   }
 }

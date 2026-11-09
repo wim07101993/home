@@ -1,10 +1,5 @@
-resource "random_password" "backrest_token" {
-  length  = 40
-  special = false
-}
-
 resource "docker_image" "this" {
-  name         = "ghcr.io/twin/gatus:v5.37.0"
+  name         = "ghcr.io/twin/gatus:v5.38.0"
   keep_locally = true
 }
 
@@ -29,7 +24,6 @@ resource "docker_container" "this" {
     "GATUS_OIDC_CLIENT_SECRET=${zitadel_application_oidc.this.client_secret}",
     "GATUS_SMTP_USERNAME=${mailgun_domain_credential.smtp.login}@${var.mail_domain}",
     "GATUS_SMTP_PASSWORD=${random_password.smtp.result}",
-    "GATUS_BACKREST_TOKEN=${random_password.backrest_token.result}",
   ]
 
   # Reached by traefik over the shared network, and directly over tailscale so
@@ -69,21 +63,4 @@ resource "docker_network" "traefik" {
   attachable = false
   ingress    = false
   ipv6       = false
-}
-
-# Consumed by ../backrest on both mindy and samson. One token for both
-# instances -- they are pushed by processes on different hosts, but anything
-# able to read one config.json is already on a host that holds a repository
-# password, so per-host tokens would divide nothing.
-output "backrest_push_token" {
-  value     = random_password.backrest_token.result
-  sensitive = true
-}
-
-# backrest appends "/<gatus_endpoint>/external?success=<bool>". Each
-# gatus_endpoint in mindy.tf and samson.tf must match an external-endpoint in
-# config.yaml here. Nothing enforces that match -- a typo on either side reads
-# as a permanently-down endpoint, which is at least the safe direction to fail.
-output "external_endpoint_base_url" {
-  value = "https://status.wvl.app/api/v1/endpoints"
 }

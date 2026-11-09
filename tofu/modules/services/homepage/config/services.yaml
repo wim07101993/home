@@ -21,6 +21,10 @@
         href: 'https://photos.wvl.app'
         icon: /icons/immich.svg
         description: immich
+    - Music:
+        href: 'https://music.wvl.app'
+        icon: /icons/feishin.svg
+        description: Feishin, on top of Navidrome on samson
     - Drive:
         href: 'https://drive.wvl.app'
         icon: /icons/filebrowser-quantum.svg
@@ -43,7 +47,7 @@
     - Backrest:
         href: 'http://100.127.106.121:9898/'
         icon: /icons/backrest.svg
-        description: Backups -- rafiki (photos, audio, documents)
+        description: Backups -- rafiki (photos, documents, recipes) to snow-white and samson
     - Database:
         href: 'postgresql://100.127.106.121:5432/'
         icon: /icons/postgresql.svg
@@ -56,9 +60,14 @@
     - Plex:
         href: 'https://app.plex.tv/'
         icon: /icons/plex.svg
-    - OpenMediaVault:
-        href: 'http://100.71.248.106/'
-        icon: /icons/openmediavault.svg
+    - Navidrome:
+        href: 'https://music.wvl.app/app/'
+        icon: /icons/navidrome.svg
+        description: Music server, behind Feishin
+    - AdGuard:
+        href: 'http://100.71.248.106:3000/'
+        icon: /icons/adguard-home.svg
+        description: Second DNS server, ad blocking
     - Databasus:
         href: 'http://100.71.248.106:4005/'
         icon: /icons/databasus.svg
@@ -66,9 +75,17 @@
     - Backrest:
         href: 'http://100.71.248.106:9898/'
         icon: /icons/backrest.svg
-        description: Backups -- the array (selected media, dumps, archive)
+        description: Backups -- plex, navidrome, dumps, audio archive to snow-white
 
 - Plop:
     - HomeAssistant:
         href: 'http://100.117.36.52:8123/'
         icon: /icons/home-assistant.svg
+    - AdGuard:
+        href: 'http://100.117.36.52:3000/'
+        icon: /icons/adguard-home.svg
+        description: DNS server, ad blocking
+    - Backrest:
+        href: 'http://100.117.36.52:9898/'
+        icon: /icons/backrest.svg
+        description: Backups -- home assistant, adguard to snow-white and samson
