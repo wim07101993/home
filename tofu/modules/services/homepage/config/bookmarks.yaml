@@ -1,10 +1,28 @@
 ---
 - Developer:
+    - "GitHub":
+        - abbr: GH
+          href: https://github.com/wim07101993
     - "Dashboard Icons":
         - abbr: DI
           href: https://dashboardicons.com/
 
+- Infrastructure:
+    - "Hetzner":
+        - abbr: HZ
+          href: https://console.hetzner.com/projects/11217490/dashboard
+    - "Namecheap DNS":
+        - abbr: NC
+          href: https://ap.www.namecheap.com/Domains/DomainControlPanel/wvl.app/advancedns
+          description: wvl.app
+    - "UniFi":
+        - abbr: UI
+          href: https://unifi.ui.com/
+
 - Audio:
+    - "7digital":
+        - abbr: 7D
+          href: https://nl-be.7digital.com/
     - "Ambient Mixer":
         - abbr: AM
           href: https://www.ambient-mixer.com/
