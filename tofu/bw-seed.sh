@@ -224,6 +224,7 @@ LOGIN_ITEMS=(
   "backrest (samson)|wim|http://${SAMSON_ADDR:-100.71.248.106}:9898|module.backrest_samson|ui"
   "ftp (samson)|wim|ftp://${SAMSON_ADDR:-100.71.248.106}|module.ftp|this"
   "adguard home|wim|http://plop.home:3000|module.adguard_home|admin"
+  "forgejo|wim|http://${PLOP_ADDR:-100.117.36.52}:3001|module.forgejo|admin"
   "adguard home (samson)|wim|http://samson.home:3000|module.adguard_home_samson|admin"
   "traefik (bumba)|admin|https://wvl.app/dashboard/|module.reverse_proxy_bumba|dashboard"
   "traefik (mindy)|admin|https://traefik.wvl.app/dashboard/|module.mindy_traefik|dashboard"

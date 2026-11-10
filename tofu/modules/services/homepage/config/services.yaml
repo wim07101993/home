@@ -85,7 +85,11 @@
         href: 'http://100.117.36.52:3000/'
         icon: /icons/adguard-home.svg
         description: DNS server, ad blocking
+    - Forgejo:
+        href: 'http://100.117.36.52:3001/'
+        icon: /icons/forgejo.svg
+        description: Mirrors of GitHub repos
     - Backrest:
         href: 'http://100.117.36.52:9898/'
         icon: /icons/backrest.svg
-        description: Backups -- home assistant, adguard to snow-white and samson
+        description: Backups -- home assistant, adguard, forgejo to snow-white and samson
