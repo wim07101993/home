@@ -6,6 +6,7 @@ locals {
     adguard_home_dns = 53
     smtp_relay       = 2525
     backrest         = 9898
+    forgejo          = 3001
   }
 }
 
@@ -68,6 +69,17 @@ module "adguard_home" {
   dns_port  = local.plop_ports.adguard_home_dns
 }
 
+module "forgejo" {
+  source = "./modules/services/forgejo"
+
+  providers = {
+    docker = docker.plop
+  }
+
+  tailscale_ip = var.plop_addr
+  host_port    = local.plop_ports.forgejo
+}
+
 module "backrest_plop" {
   source = "./modules/services/backrest"
 
@@ -81,6 +93,7 @@ module "backrest_plop" {
   backup = [
     module.home_assistant.backup,
     module.adguard_home.backup,
+    module.forgejo.backup,
   ]
 
   repository_password = random_password.backrest_repository.result
@@ -112,6 +125,11 @@ variable "plop_addr" {
 
 output "adguard_home_password" {
   value     = module.adguard_home.admin_password
+  sensitive = true
+}
+
+output "forgejo_admin_password" {
+  value     = module.forgejo.admin_password
   sensitive = true
 }
 

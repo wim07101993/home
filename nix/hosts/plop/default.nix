@@ -57,14 +57,9 @@
     SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", SYMLINK+="zigbee", RUN+="${pkgs.coreutils}/bin/chown 165536 $devnode"
   '';
 
-  # Ownership of the volumes OpenTofu's home-assistant and adguard-home modules
-  # mount. `Z` re-owns
-  # everything below the path on every boot and rebuild, so a restore from a
-  # backup taken anywhere comes out right.
-  #
-  # home-assistant runs remapped: its root is 165536 on this host.
-  # matterjs-server runs with userns_mode = "host", as the matter account below.
   systemd.tmpfiles.rules = [
+    # home-assistant runs remapped: its   root is 165536 on this host.
+    # matterjs-server runs with userns_mode = "host", as the matter account below.
     "d /docker-volumes/homeassistant 0755 root root -"
     "d /docker-volumes/homeassistant/config 0755 165536 165536 -"
     "Z /docker-volumes/homeassistant/config - 165536 165536 -"
@@ -78,6 +73,11 @@
     "Z /docker-volumes/adguard-home/conf - 231068 231068 -"
     "d /docker-volumes/adguard-home/work 0700 231068 231068 -"
     "Z /docker-volumes/adguard-home/work - 231068 231068 -"
+
+    # forgejo runs remapped too, as the rootless image's 1000: 166536 on this
+    # host.
+    "d /docker-volumes/forgejo 0700 166536 166536 -"
+    "Z /docker-volumes/forgejo - 166536 166536 -"
 
     # backrest runs as the host's root (userns_mode = "host"). Docker refuses
     # to start it while these are missing.
