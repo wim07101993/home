@@ -16,7 +16,7 @@ resource "random_password" "dashboard" {
 }
 
 resource "docker_image" "traefik" {
-  name         = "traefik:v3.7.17"
+  name         = "traefik:v3.7.19"
   keep_locally = true
 }
 
