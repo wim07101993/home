@@ -89,6 +89,10 @@
         href: 'http://100.117.36.52:3001/'
         icon: /icons/forgejo.svg
         description: Mirrors of GitHub repos
+    - Arcane:
+        href: 'http://100.117.36.52:3552/'
+        icon: /icons/arcane.svg
+        description: Compose stacks for testing
     - Backrest:
         href: 'http://100.117.36.52:9898/'
         icon: /icons/backrest.svg

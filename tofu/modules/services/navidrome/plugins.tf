@@ -5,7 +5,7 @@ locals {
     "navibeat-mixes" = {
       repo    = "nenadjokic/navibeat-mixes"
       version = "v0.9.28"
-      sha256  = "07acc47dbc5a40e123bf4760059e8c830c16f9c119052e1a7cbde86fecdd6d14"
+      sha256  = "ffe0d7bbe48e9baa03f74fb9c9312db6cf5dff3d9ccec0d684d413f3703d04fd"
       # Since 0.9.20 there is a separate build for navidrome 0.64+.
       asset = "navibeat-mixes-navidrome-0.64.ndp"
     }
