@@ -7,6 +7,7 @@ locals {
     smtp_relay       = 2525
     backrest         = 9898
     forgejo          = 3001
+    arcane           = 3552
   }
 }
 
@@ -78,6 +79,20 @@ module "forgejo" {
 
   tailscale_ip = var.plop_addr
   host_port    = local.plop_ports.forgejo
+}
+
+# Compose stacks for testing, managed from a browser.
+module "arcane" {
+  source = "./modules/services/arcane"
+
+  providers = {
+    docker  = docker.plop
+    zitadel = zitadel
+  }
+
+  zitadel_org_id = module.zitadel.org_home_id
+  tailscale_ip   = var.plop_addr
+  host_port      = local.plop_ports.arcane
 }
 
 module "backrest_plop" {

@@ -140,6 +140,7 @@ output "zitadel_apps" {
       "photos/immich"              = module.immich.zitadel_app
       "drive/drive"                = module.file_browser.zitadel_app
       "portal/home portal (dev)"   = module.portal.zitadel_app_dev
+      "docker/arcane"              = module.arcane.zitadel_app
     },
   )
 }
@@ -154,6 +155,7 @@ output "zitadel_project_ids" {
     "drive"  = module.file_browser.zitadel_project_id
     "Score"  = module.score.zitadel_project_id
     "portal" = module.portal.zitadel_project_id
+    "docker" = module.arcane.zitadel_project_id
   }
 }
 

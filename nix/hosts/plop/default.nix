@@ -79,6 +79,13 @@
     "d /docker-volumes/forgejo 0700 166536 166536 -"
     "Z /docker-volumes/forgejo - 166536 166536 -"
 
+    # arcane runs as the arcane account below, with host ids. Its projects get
+    # no `Z`: the stacks in them write there as other users.
+    "d /docker-volumes/arcane 0755 root root -"
+    "d /docker-volumes/arcane/data 0700 arcane arcane -"
+    "Z /docker-volumes/arcane/data - arcane arcane -"
+    "d /docker-volumes/arcane/projects 0755 arcane arcane -"
+
     # backrest runs as the host's root (userns_mode = "host"). Docker refuses
     # to start it while these are missing.
     "d /docker-volumes/backrest 0755 root root -"
@@ -94,6 +101,15 @@
     group = "matter";
   };
   users.groups.matter.gid = 950;
+
+  # tofu's arcane runs as this account, with the docker group added to reach
+  # the socket.
+  users.users.arcane = {
+    isSystemUser = true;
+    uid = 951;
+    group = "arcane";
+  };
+  users.groups.arcane.gid = 951;
 
   system.stateVersion = "26.05";
 }
