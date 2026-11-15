@@ -96,4 +96,4 @@
     - Backrest:
         href: 'http://100.117.36.52:9898/'
         icon: /icons/backrest.svg
-        description: Backups -- home assistant, adguard, forgejo, arcane to snow-white and samson
+        description: Backups -- home assistant, adguard, forgejo to snow-white and samson
