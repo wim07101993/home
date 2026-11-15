@@ -1,7 +1,7 @@
 resource "hcloud_volume" "data" {
   name     = "rafiki"
   location = "fsn1"
-  size     = 100
+  size     = 150
 
   delete_protection = true
 
