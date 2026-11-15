@@ -4,7 +4,7 @@ locals {
   plugins = {
     "navibeat-mixes" = {
       repo    = "nenadjokic/navibeat-mixes"
-      version = "v0.9.26"
+      version = "v0.9.28"
       sha256  = "07acc47dbc5a40e123bf4760059e8c830c16f9c119052e1a7cbde86fecdd6d14"
       # Since 0.9.20 there is a separate build for navidrome 0.64+.
       asset = "navibeat-mixes-navidrome-0.64.ndp"
