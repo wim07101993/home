@@ -19,7 +19,10 @@ resource "zitadel_application_oidc" "this" {
   project_id = zitadel_project.this.id
   name       = "arcane"
 
-  redirect_uris  = ["http://${var.tailscale_ip}:${var.host_port}/auth/oidc/callback"]
+  redirect_uris = [
+    "http://${var.tailscale_ip}:${var.host_port}/auth/oidc/callback",
+    "http://plop.home:${var.host_port}/auth/oidc/callback",
+  ]
   response_types = ["OIDC_RESPONSE_TYPE_CODE"]
   grant_types    = ["OIDC_GRANT_TYPE_AUTHORIZATION_CODE"]
 

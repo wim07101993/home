@@ -1,6 +1,6 @@
 variable "tailscale_ip" {
   type        = string
-  description = "plop's tailnet address. Arcane binds HERE and nowhere else, and it is the host in the OIDC redirect URI."
+  description = "plop's tailnet address: the host in APP_URL and in one of the OIDC redirect URIs."
 }
 
 variable "host_port" {

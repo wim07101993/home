@@ -68,7 +68,6 @@ resource "docker_container" "this" {
   ports {
     internal = 3552
     external = var.host_port
-    ip       = var.tailscale_ip
   }
 
   volumes {
