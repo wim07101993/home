@@ -9,7 +9,7 @@ resource "random_password" "this" {
 }
 
 resource "docker_image" "this" {
-  name         = "delfer/alpine-ftp-server@sha256:3ad587aa1b0822a54e3f570fdcd87e2c2a2c5b27537b2780d97f1284b6872914"
+  name         = "delfer/alpine-ftp-server@sha256:8bb646a1dca7b0e796650c138c6318a369afa5a0399b8e6410188d245b7c7a5a"
   keep_locally = true
 }
 
