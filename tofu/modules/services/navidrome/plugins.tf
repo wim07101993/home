@@ -5,7 +5,7 @@ locals {
     "navibeat-mixes" = {
       repo    = "nenadjokic/navibeat-mixes"
       version = "v0.9.33"
-      sha256  = "c5097b081fab92c82147304fcb4bc1deed4b1dee1c2acdf30d499bf376b84fb2"
+      sha256  = "9d1d465b5b9717f2b05286212d7e54b7c5c2569f45a8252b64879912907d54dd"
       # Since 0.9.20 there is a separate build for navidrome 0.64+.
       asset = "navibeat-mixes-navidrome-0.64.ndp"
     }
@@ -20,7 +20,7 @@ data "http" "plugin" {
   lifecycle {
     postcondition {
       condition     = sha256(self.response_body_base64) == each.value.sha256
-      error_message = "${each.key} ${each.value.version} does not match its pinned sha256. After a version bump, update the hash -- see the top of plugins.tf."
+      error_message = "${each.key} ${each.value.version} does not match its pinned sha256. The pin hashes the base64 of the asset, not the file: curl -sL <asset url> | base64 -w0 | sha256sum."
     }
   }
 }
