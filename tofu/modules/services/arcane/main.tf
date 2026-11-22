@@ -9,7 +9,7 @@ resource "random_password" "encryption_key" {
 }
 
 resource "docker_image" "this" {
-  name         = "ghcr.io/getarcaneapp/manager:v2.17.3"
+  name         = "ghcr.io/getarcaneapp/manager:v3.1.1"
   keep_locally = true
 }
 
@@ -36,33 +36,33 @@ resource "docker_container" "this" {
 
   env = [
     "TZ=Europe/Brussels",
-    "APP_URL=http://${var.tailscale_ip}:${var.host_port}",
-    "ENCRYPTION_KEY=${random_password.encryption_key.result}",
-    "PROJECTS_DIRECTORY=${local.projects_path}",
-    "ANALYTICS_DISABLED=true",
+    "ARCANE_APP_URL=http://${var.tailscale_ip}:${var.host_port}",
+    "ARCANE_ENCRYPTION_KEY=${random_password.encryption_key.result}",
+    "ARCANE_PROJECTS_DIRECTORY=${local.projects_path}",
+    "ARCANE_ANALYTICS_ENABLED=false",
 
     # Versions come from renovate. An upgrade from the UI would replace the
     # container behind tofu's back.
-    "UPDATE_CHECK_DISABLED=true",
+    "ARCANE_UPDATE_CHECK_ENABLED=false",
 
     # Every setting from here, none from the UI. That is what lets tofu turn
     # off local login, and with it the default arcane / arcane-admin account.
-    "UI_CONFIGURATION_DISABLED=true",
-    "AUTH_LOCAL_ENABLED=false",
+    "ARCANE_UI_CONFIGURATION_DISABLED=true",
+    "ARCANE_AUTH_LOCAL_ENABLED=false",
 
-    "OIDC_ENABLED=true",
-    "OIDC_ISSUER_URL=${var.oidc_issuer_url}",
-    "OIDC_CLIENT_ID=${zitadel_application_oidc.this.client_id}",
-    "OIDC_CLIENT_SECRET=${zitadel_application_oidc.this.client_secret}",
-    "OIDC_PROVIDER_NAME=Home",
-    "OIDC_AUTO_REDIRECT_TO_PROVIDER=true",
+    "ARCANE_OIDC_ENABLED=true",
+    "ARCANE_OIDC_ISSUER_URL=${var.oidc_issuer_url}",
+    "ARCANE_OIDC_CLIENT_ID=${zitadel_application_oidc.this.client_id}",
+    "ARCANE_OIDC_CLIENT_SECRET=${zitadel_application_oidc.this.client_secret}",
+    "ARCANE_OIDC_PROVIDER_NAME=Home",
+    "ARCANE_OIDC_AUTO_REDIRECT_TO_PROVIDER=true",
 
     # Zitadel decides who gets in (see auth.tf), so everyone who does is admin.
     # Arcane only reads groups from a list or a string, and zitadel's roles
     # claim is an object, so the mapping matches the issuer, which every token
     # from zitadel carries.
-    "OIDC_GROUPS_CLAIM=iss",
-    "OIDC_ROLE_MAPPINGS=${jsonencode([{ claimValue = var.oidc_issuer_url, roleId = "role_admin" }])}",
+    "ARCANE_OIDC_GROUPS_CLAIM=iss",
+    "ARCANE_OIDC_ROLE_MAPPINGS=${jsonencode([{ claimValue = var.oidc_issuer_url, roleId = "role_admin" }])}",
   ]
 
   ports {

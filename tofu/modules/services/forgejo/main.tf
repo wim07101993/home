@@ -10,7 +10,7 @@ resource "random_password" "admin" {
 }
 
 resource "docker_image" "this" {
-  name         = "codeberg.org/forgejo/forgejo:17.0.1-rootless"
+  name         = "codeberg.org/forgejo/forgejo:17.0.2-rootless"
   keep_locally = true
 }
 
