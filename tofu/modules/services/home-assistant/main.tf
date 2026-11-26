@@ -15,7 +15,7 @@ resource "docker_network" "this" {
 # --- home assistant ------------------------------------------------------
 
 resource "docker_image" "this" {
-  name         = "homeassistant/home-assistant:2026.11.2"
+  name         = "homeassistant/home-assistant:2026.11.3"
   keep_locally = true
 }
 
@@ -79,7 +79,7 @@ resource "docker_container" "this" {
 # --- matter server -------------------------------------------------------
 
 resource "docker_image" "matter" {
-  name         = "ghcr.io/matter-js/matterjs-server:1.6.0"
+  name         = "ghcr.io/matter-js/matterjs-server:1.6.1"
   keep_locally = true
 }
 
