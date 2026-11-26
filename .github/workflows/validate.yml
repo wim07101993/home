@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: opentofu/setup-opentofu@v2
         with:
-          tofu_version: v1.13.9
+          tofu_version: v1.13.10
       - run: tofu fmt -check -recursive -diff
       # -backend=false: the pg backend is only reachable over Tailscale.
       # validate checks syntax, types and module wiring without it.
