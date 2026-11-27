@@ -29,6 +29,7 @@ module "databasus" {
   }
 
   host_port = local.samson_ports.databasus
+  url       = "http://${var.samson_addr}:${local.samson_ports.databasus}"
 }
 
 module "smtp_relay" {

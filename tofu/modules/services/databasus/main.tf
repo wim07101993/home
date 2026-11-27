@@ -18,6 +18,16 @@ resource "docker_container" "this" {
   }
   security_opts = ["no-new-privileges:true"]
 
+  env = [
+    "DATABASUS_URL=${var.url}",
+    "SMTP_HOST=smtp.eu.mailgun.org",
+    "SMTP_PORT=587",
+    "SMTP_SECURITY=starttls",
+    "SMTP_USER=${mailgun_domain_credential.smtp.login}@${var.mail_domain}",
+    "SMTP_PASSWORD=${random_password.smtp.result}",
+    "SMTP_FROM=${mailgun_domain_credential.smtp.login}@${var.mail_domain}",
+  ]
+
   ports {
     internal = 4005
     external = var.host_port
