@@ -24,6 +24,9 @@ resource "docker_container" "this" {
     "GATUS_OIDC_CLIENT_SECRET=${zitadel_application_oidc.this.client_secret}",
     "GATUS_SMTP_USERNAME=${mailgun_domain_credential.smtp.login}@${var.mail_domain}",
     "GATUS_SMTP_PASSWORD=${random_password.smtp.result}",
+    "GATUS_NTFY_URL=${var.ntfy.url}",
+    "GATUS_NTFY_TOPIC=${var.ntfy.topic}",
+    "GATUS_NTFY_TOKEN=${var.ntfy_token}",
   ]
 
   # Reached by traefik over the shared network, and directly over tailscale so
@@ -43,6 +46,10 @@ resource "docker_container" "this" {
   networks_advanced {
     name    = docker_network.traefik.name
     aliases = ["gatus"]
+  }
+
+  networks_advanced {
+    name = var.ntfy.network
   }
 
   # Gatus reads /config/config.yaml. Uploaded rather than bind-mounted: a bound

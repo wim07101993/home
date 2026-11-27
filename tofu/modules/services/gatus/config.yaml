@@ -44,174 +44,210 @@ alerting:
       failure-threshold: 3
       success-threshold: 2
 
+  ntfy:
+    url: "${GATUS_NTFY_URL}"
+    topic: "${GATUS_NTFY_TOPIC}"
+    token: "${GATUS_NTFY_TOKEN}"
+    priority: 2
+    click: "https://status.wvl.app"
+    default-alert:
+      description: "healthcheck failed"
+      send-on-resolved: true
+      failure-threshold: 3
+      success-threshold: 2
+    overrides:
+      - group: auth
+        priority: 4
+      - group: hosts
+        priority: 4
+      - group: backups
+        priority: 4
+
 endpoints:
   - name: zitadel
     group: auth
     url: "https://auth.wvl.app/debug/ready"
-    interval: 5m
+    interval: 15m
     conditions:
       - "[STATUS] == 200"
       - "[CERTIFICATE_EXPIRATION] > 240h"
     alerts:
       - type: email
+      - type: ntfy
 
   - name: keuken
     group: apps
     url: "https://keuken.wvl.app/"
-    interval: 5m
+    interval: 15m
     conditions:
       - "[STATUS] == 200"
       - "[CERTIFICATE_EXPIRATION] > 240h"
     alerts:
       - type: email
+      - type: ntfy
 
   - name: memo
     group: apps
     url: "https://memo.wvl.app/healthz"
-    interval: 5m
+    interval: 15m
     conditions:
       - "[STATUS] == 200"
       - "[CERTIFICATE_EXPIRATION] > 240h"
     alerts:
       - type: email
+      - type: ntfy
 
   - name: drive
     group: apps
     url: "https://drive.wvl.app/health"
-    interval: 5m
+    interval: 15m
     conditions:
       - "[STATUS] == 200"
       - "[BODY].message == ok"
       - "[CERTIFICATE_EXPIRATION] > 240h"
     alerts:
       - type: email
+      - type: ntfy
 
   - name: photos
     group: apps
     url: "https://photos.wvl.app/api/server/ping"
-    interval: 5m
+    interval: 15m
     conditions:
       - "[STATUS] == 200"
       - "[BODY].res == pong"
       - "[CERTIFICATE_EXPIRATION] > 240h"
     alerts:
       - type: email
+      - type: ntfy
 
   - name: score
     group: apps
     url: "https://score.wvl.app/"
-    interval: 5m
+    interval: 15m
     conditions:
       - "[STATUS] == 200"
       - "[CERTIFICATE_EXPIRATION] > 240h"
     alerts:
       - type: email
+      - type: ntfy
 
   - name: score-api
     group: apps
     url: "https://score-api.wvl.app/healthz"
-    interval: 5m
+    interval: 15m
     conditions:
       - "[STATUS] == 200"
       - "[CERTIFICATE_EXPIRATION] > 240h"
     alerts:
       - type: email
+      - type: ntfy
 
   - name: partituren
     group: apps
     url: "https://partituren.wvl.app/"
-    interval: 5m
+    interval: 15m
     conditions:
       - "[STATUS] == 200"
       - "[CERTIFICATE_EXPIRATION] > 240h"
     alerts:
       - type: email
+      - type: ntfy
 
   - name: homepage
     group: apps
     url: "https://homepage.wvl.app/"
-    interval: 5m
+    interval: 15m
     conditions:
       - "[STATUS] == 200"
       - "[CERTIFICATE_EXPIRATION] > 240h"
     alerts:
       - type: email
+      - type: ntfy
 
   - name: it-tools
     group: apps
     url: "https://it-tools.wvl.app/"
-    interval: 5m
+    interval: 15m
     conditions:
       - "[STATUS] == 200"
       - "[CERTIFICATE_EXPIRATION] > 240h"
     alerts:
       - type: email
+      - type: ntfy
 
   - name: music
     group: apps
     url: "https://music.wvl.app/ping"
-    interval: 5m
+    interval: 15m
     conditions:
       - "[STATUS] == 200"
       - "[CERTIFICATE_EXPIRATION] > 240h"
     alerts:
       - type: email
+      - type: ntfy
 
   - name: music-player
     group: apps
     url: "https://music.wvl.app/"
-    interval: 5m
+    interval: 15m
     conditions:
       - "[STATUS] == 200"
       - "[CERTIFICATE_EXPIRATION] > 240h"
     alerts:
       - type: email
+      - type: ntfy
 
   # ---- hosts ----------------------------------
   - name: mindy
     group: hosts
     url: "icmp://100.127.106.121"
-    interval: 5m
+    interval: 15m
     conditions:
       - "[CONNECTED] == true"
     alerts:
       - type: email
+      - type: ntfy
 
   - name: samson
     group: hosts
     url: "icmp://100.71.248.106"
-    interval: 5m
+    interval: 15m
     conditions:
       - "[CONNECTED] == true"
     alerts:
       - type: email
+      - type: ntfy
 
   - name: plop
     group: hosts
     url: "icmp://100.117.36.52"
-    interval: 5m
+    interval: 15m
     conditions:
       - "[CONNECTED] == true"
     alerts:
       - type: email
+      - type: ntfy
 
   # ---- backups ---------------------------------
 
   - name: databasus
     group: backups
     url: "http://100.71.248.106:4005/api/v1/system/health"
-    interval: 5m
+    interval: 15m
     conditions:
       - "[STATUS] == 200"
       - "[BODY].status == HEALTHY"
     alerts:
       - type: email
+      - type: ntfy
 
   - name: rest-server
     group: backups
     url: "http://100.71.248.106:8000/healthz"
-    interval: 5m
+    interval: 15m
     conditions:
       - "[STATUS] == 204"
     alerts:
       - type: email
+      - type: ntfy

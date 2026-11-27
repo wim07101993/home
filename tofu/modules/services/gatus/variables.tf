@@ -48,6 +48,20 @@ variable "mail_domain" {
   default = "mail.wvl.app"
 }
 
+variable "ntfy" {
+  type = object({
+    url     = string
+    topic   = string
+    network = string
+  })
+  description = "Where alerts are pushed to the phone: ../ntfy's gatus output."
+}
+
+variable "ntfy_token" {
+  type      = string
+  sensitive = true
+}
+
 # The org this project lives in. Passed from ../../zitadel, which owns the org
 # objects -- those are instance-level and not part of any one service.
 variable "zitadel_org_id" {

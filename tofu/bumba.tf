@@ -43,6 +43,7 @@ module "reverse_proxy_bumba" {
   routing = [
     module.zitadel_server.traefik,
     module.gatus.traefik,
+    module.ntfy.traefik,
   ]
 
   http_port  = local.bumba_ports.traefik_http
@@ -109,7 +110,18 @@ module "gatus" {
 
   zitadel_org_id = module.zitadel.org_home_id
 
+  ntfy       = module.ntfy.gatus
+  ntfy_token = module.ntfy.gatus_token
+
   host_port = local.bumba_ports.gatus
+}
+
+module "ntfy" {
+  source = "./modules/services/ntfy"
+
+  providers = {
+    docker = docker.bumba
+  }
 }
 
 # --- inputs ---------------------------------------------------------------
@@ -157,6 +169,12 @@ output "zitadel_project_ids" {
     "portal" = module.portal.zitadel_project_id
     "docker" = module.arcane.zitadel_project_id
   }
+}
+
+output "ntfy_password" {
+  description = "The phone app's login on https://ntfy.wvl.app, user wim. `tofu output -raw ntfy_password`."
+  value       = module.ntfy.wim_password
+  sensitive   = true
 }
 
 output "traefik_bumba_password" {
