@@ -58,7 +58,7 @@ endpoints:
   - name: keuken
     group: apps
     url: "https://keuken.wvl.app/"
-    interval: 65m
+    interval: 5m
     conditions:
       - "[STATUS] == 200"
       - "[CERTIFICATE_EXPIRATION] > 240h"
