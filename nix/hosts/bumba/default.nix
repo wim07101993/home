@@ -16,9 +16,11 @@
     prefixLength = 64;
   }];
 
-  # gatus checks databasus's health endpoint on samson. See docker.nix.
+  # gatus checks the health endpoints of databasus and rest-server on samson.
+  # See docker.nix.
   homelab.containers.reachableOnTailnet = [
     { address = "100.71.248.106"; port = 4005; }
+    { address = "100.71.248.106"; port = 8000; }
   ];
 
   # tofu's traefik runs as 65532 in the remapped namespace: 231068 here. `Z`

@@ -199,10 +199,11 @@ endpoints:
 
   - name: databasus
     group: backups
-    url: "http://100.71.248.106:4005/healthz"
+    url: "http://100.71.248.106:4005/api/v1/system/health"
     interval: 5m
     conditions:
       - "[STATUS] == 200"
+      - "[BODY].status == HEALTHY"
     alerts:
       - type: email
 
