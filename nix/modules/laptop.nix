@@ -82,6 +82,7 @@
     tldr
     git
     neovim
+    vlc
   ];
 
   services.flatpak.enable = true;
