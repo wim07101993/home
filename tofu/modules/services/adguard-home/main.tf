@@ -16,7 +16,7 @@ resource "random_password" "admin" {
 }
 
 resource "docker_image" "this" {
-  name         = "adguard/adguardhome:v0.107.80"
+  name         = "adguard/adguardhome:v1.0.0"
   keep_locally = true
 
   # Pulled while the old container still runs. The other way round, the host

@@ -1,5 +1,5 @@
 resource "docker_image" "this" {
-  name         = "restic/rest-server:0.14.0"
+  name         = "restic/rest-server:0.15.0"
   keep_locally = true
 }
 
