@@ -205,3 +205,12 @@ endpoints:
       - "[STATUS] == 200"
     alerts:
       - type: email
+
+  - name: rest-server
+    group: backups
+    url: "http://100.71.248.106:8000/healthz"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 204"
+    alerts:
+      - type: email
