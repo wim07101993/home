@@ -8,6 +8,12 @@ resource "adguard_config" "this" {
     bootstrap_dns  = ["9.9.9.10", "149.112.112.10", "2620:fe::10", "2620:fe::fe:10"]
     dnssec_enabled = true
 
+    # Not the default load_balance: the provider sends that as "", which AdGuard
+    # Home 1.0 rejects with a 400 (gmichels/terraform-provider-adguard#179).
+    # With one general upstream, parallel asks that same single server, so it
+    # resolves exactly as load_balance did. Back to the default once #179 is fixed.
+    upstream_mode = "parallel"
+
     # Device names in the query log, from the router, instead of bare addresses.
     use_private_ptr_resolvers = true
     local_ptr_upstreams       = [var.router_addr]
