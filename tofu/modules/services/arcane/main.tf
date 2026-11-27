@@ -9,7 +9,7 @@ resource "random_password" "encryption_key" {
 }
 
 resource "docker_image" "this" {
-  name         = "ghcr.io/getarcaneapp/manager:v3.1.1"
+  name         = "ghcr.io/getarcaneapp/manager:v3.2.0"
   keep_locally = true
 }
 
