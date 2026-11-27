@@ -14,3 +14,14 @@ resource "random_password" "gatus_token" {
   special = false
   upper   = false
 }
+
+resource "random_password" "donetick" {
+  length  = 32
+  special = false
+}
+
+resource "random_password" "donetick_token" {
+  length  = 29
+  special = false
+  upper   = false
+}

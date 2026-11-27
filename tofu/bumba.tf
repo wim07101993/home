@@ -153,6 +153,7 @@ output "zitadel_apps" {
       "drive/drive"                = module.file_browser.zitadel_app
       "portal/home portal (dev)"   = module.portal.zitadel_app_dev
       "docker/arcane"              = module.arcane.zitadel_app
+      "tasks/donetick"             = module.donetick.zitadel_app
     },
   )
 }
@@ -168,12 +169,19 @@ output "zitadel_project_ids" {
     "Score"  = module.score.zitadel_project_id
     "portal" = module.portal.zitadel_project_id
     "docker" = module.arcane.zitadel_project_id
+    "tasks"  = module.donetick.zitadel_project_id
   }
 }
 
 output "ntfy_password" {
   description = "The phone app's login on https://ntfy.wvl.app, user wim. `tofu output -raw ntfy_password`."
   value       = module.ntfy.wim_password
+  sensitive   = true
+}
+
+output "donetick_webhook_url" {
+  description = "Donetick's circle webhook (Settings -> Webhook): ntfy's tasks topic, with its token. `tofu output -raw donetick_webhook_url`."
+  value       = module.ntfy.donetick_webhook_url
   sensitive   = true
 }
 

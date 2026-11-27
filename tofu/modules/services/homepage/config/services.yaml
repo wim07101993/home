@@ -39,6 +39,10 @@
         href: 'https://keuken.wvl.app'
         icon: /icons/kitchenowl.svg
         description: KitchenOwl
+    - Tasks:
+        href: 'https://tasks.wvl.app'
+        icon: /icons/donetick.svg
+        description: Donetick -- recurring tasks, reminders through ntfy
     - Score:
         href: 'https://score.wvl.app'
         description: Moved here from bumba on 2026-09-17

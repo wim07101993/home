@@ -176,6 +176,17 @@ endpoints:
       - type: email
       - type: ntfy
 
+  - name: tasks
+    group: apps
+    url: "https://tasks.wvl.app/api/v1/health"
+    interval: 15m
+    conditions:
+      - "[STATUS] == 200"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
+    alerts:
+      - type: email
+      - type: ntfy
+
   - name: music
     group: apps
     url: "https://music.wvl.app/ping"

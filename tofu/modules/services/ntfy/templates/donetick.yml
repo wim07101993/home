@@ -1,0 +1,13 @@
+title: |
+  {{- if eq .type "task.reminder" -}}
+    {{- if eq .data.type "overdue" }}Overdue: {{ else if eq .data.type "pre_due" }}Coming up: {{ else }}Due: {{ end }}{{ .data.name }}
+  {{- else if eq .type "task.completed" }}Done: {{ .data.chore.name }}
+  {{- else if eq .type "task.skipped" }}Skipped: {{ .data.chore.name }}
+  {{- else if eq .type "task.created" }}New task: {{ .data.chore.name }}
+  {{- else }}Donetick: {{ .type }}{{ end }}
+message: |
+  {{- if eq .type "task.reminder" }}{{ .data.name }}
+  {{- else if .data.display_name }}by {{ .data.display_name }}
+  {{- else }}{{ .type }}{{ end }}
+priority: |
+  {{- if eq .type "task.reminder" }}{{ if eq .data.type "pre_due" }}3{{ else }}4{{ end }}{{ else }}1{{ end }}

@@ -52,6 +52,7 @@ module "mindy_traefik" {
     module.it_tools.traefik,
     module.kitchen_owl.traefik,
     module.memo.traefik,
+    module.donetick.traefik,
     module.score.traefik,
 
     # Runs on samson; this route is the only way in from the internet.
@@ -87,7 +88,7 @@ module "mindy_postgres" {
 
   host_port = local.mindy_ports.postgres
 
-  clients = ["memos", "kitchen-owl", "score"]
+  clients = ["memos", "kitchen-owl", "score", "donetick"]
 }
 
 module "memo" {
@@ -106,6 +107,22 @@ module "memo" {
   depends_on = [module.mindy_postgres]
 
   host_port = local.mindy_ports.memos
+}
+
+module "donetick" {
+  source = "./modules/services/donetick"
+
+  providers = {
+    docker     = docker.mindy
+    postgresql = postgresql.mindy
+    zitadel    = zitadel
+  }
+
+  db_network = module.mindy_postgres.network_names["donetick"]
+
+  zitadel_org_id = module.zitadel.org_home_id
+
+  depends_on = [module.mindy_postgres]
 }
 
 module "file_browser" {
