@@ -7,6 +7,10 @@
         href: 'https://status.wvl.app'
         icon: /icons/gatus.svg
         description: gatus -- uptime and backup heartbeats
+    - Ntfy:
+        href: 'https://ntfy.wvl.app'
+        icon: /icons/ntfy.svg
+        description: Push notifications -- gatus alerts to the phone
     - Traefik:
         href: 'https://wvl.app'
         icon: /icons/traefik.svg

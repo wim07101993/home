@@ -63,9 +63,8 @@ locals {
     #
     #   NOTICE: No host key validation is being performed. Set known_hosts_file
     #
-    # kopia pinned these and dropping the property silently would be the wrong
-    # way to migrate. restic encrypts client-side, so the risk is not disclosure
-    # -- it is talking to something that is not the Storage Box and believing the
+    # restic encrypts client-side, so the risk is not disclosure -- it is
+    # talking to something that is not the Storage Box and believing the
     # repository it serves.
     "RCLONE_CONFIG_STORAGEBOX_KNOWN_HOSTS_FILE=/app/known_hosts",
   ]
@@ -80,8 +79,6 @@ locals {
   # different address and validation fails. Only the pattern changes; the key
   # material is untouched, so a forwarder pointing somewhere else is still
   # caught.
-  #
-  # Its own copy rather than ../kopia/known_hosts: that module is being deleted.
   storage_box_known_hosts = replace(
     file("${path.module}/known_hosts"),
     "[${var.storage_box.host}]:${local.storage_box_port}",

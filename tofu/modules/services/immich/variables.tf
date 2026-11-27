@@ -25,7 +25,7 @@ variable "library_path" {
     It was 100.71.248.106:/export/photos -- a hard NFS v3 mount from samson,
     over a residential WAN, per mindy's /etc/fstab. That is the failure class
     the 2026-08 array incident ran entirely through: filebrowser blocking in
-    stat(), kopia's nightly tree-walk stalling, `nfs: server not responding`.
+    stat(), the nightly backup's tree-walk stalling, `nfs: server not responding`.
     Measured 2026-09-18: `du` over that mount took ~2 HOURS to walk 67 GB in
     45,549 files, and could not finish `thumbs` in 30 minutes.
 
@@ -33,7 +33,7 @@ variable "library_path" {
     a one-line move: immich stores asset paths relative to /data in its
     database, so nothing in postgres needs migrating.
 
-    Restored from the kopia repository on the Storage Box rather than copied
+    Restored from the backup on the Storage Box rather than copied
     from samson -- Hetzner-internal, and it avoids pushing 67 GB up an ADSL
     uplink whose upstream is the weak direction.
 
